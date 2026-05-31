@@ -1,15 +1,17 @@
-import type { ReactNode } from 'react'
+export type BubbleClasses = {
+  wrapper:        string
+  bubble:         string
+  contentWrapper: string
+  time:           string
+}
 
 export type BubbleProps = {
-  wrapperClass:        string
-  bubbleClass:         string
-  contentWrapperClass: string
-  timeClass:           string
-  content:             string
-  time:                string
-  senderName:          string
-  senderInitials:      string
-  senderNameNode:      ReactNode
+  classes:        BubbleClasses
+  content:        string
+  time:           string
+  senderName:     string
+  senderInitials: string
+  showSenderName: boolean
 }
 
 export type BubbleContainerProps = {
@@ -17,5 +19,5 @@ export type BubbleContainerProps = {
   sentAt:         string
   senderName:     string
   senderInitials: string
-  isOwn:          boolean
+  isFromCurrentUser:          boolean
 }

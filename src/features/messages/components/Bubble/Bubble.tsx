@@ -1,14 +1,15 @@
-import type { BubbleProps }  from './Bubble.types'
-import { UserAvatar }         from '@/features/user/components/UserAvatar/UserAvatar'
+import type { BubbleProps } from './Bubble.types'
+import { SENDER_NAME_CLASS } from './Bubble.constants'
+import { UserAvatar }        from '@/features/user/components/UserAvatar/UserAvatar'
 
-export function Bubble({ wrapperClass, bubbleClass, contentWrapperClass, timeClass, content, time, senderName, senderInitials, senderNameNode }: BubbleProps) {
+export function Bubble({ classes, content, time, senderName, senderInitials, showSenderName }: BubbleProps) {
   return (
-    <div className={wrapperClass}>
+    <div className={classes.wrapper}>
       <UserAvatar initials={senderInitials} name={senderName} size="sm" />
-      <div className={contentWrapperClass}>
-        {senderNameNode}
-        <div className={bubbleClass}>{content}</div>
-        <span className={timeClass}>{time}</span>
+      <div className={classes.contentWrapper}>
+        {showSenderName && <span className={SENDER_NAME_CLASS}>{senderName}</span>}
+        <div className={classes.bubble}>{content}</div>
+        <span className={classes.time}>{time}</span>
       </div>
     </div>
   )
