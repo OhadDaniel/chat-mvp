@@ -2,15 +2,13 @@ import type { ReactNode } from 'react'
 import { APP_LAYOUT_CLASS } from './AppLayout.constants'
 
 type Props = {
-  sidebarNode: ReactNode
-  panelNode:   ReactNode
+  children: ReactNode
 }
 
-export function AppLayout({ sidebarNode, panelNode }: Props) {
+export function AppLayout({ children }: Props) {
   return (
     <div className={APP_LAYOUT_CLASS}>
-      {sidebarNode}
-      {panelNode}
+      {children}
     </div>
   )
 }
