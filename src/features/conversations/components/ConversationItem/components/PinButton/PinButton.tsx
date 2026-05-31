@@ -1,14 +1,18 @@
+import type { MouseEvent }                                             from 'react'
+import { useConversationItemContext }                                    from '../../ConversationItem.context'
 import { getPinButtonClass, getPinButtonLabel, getPinButtonAriaLabel } from './pinButton.utils'
 
-type Props = {
-  isPinned:    boolean
-  onTogglePin: () => void
-}
+export function PinButton() {
+  const { isPinned, onTogglePin } = useConversationItemContext()
 
-export function PinButton({ isPinned, onTogglePin }: Props) {
+  const handleClick = (e: MouseEvent) => {
+    e.stopPropagation()
+    onTogglePin()
+  }
+
   return (
     <button
-      onClick={onTogglePin}
+      onClick={handleClick}
       className={getPinButtonClass(isPinned)}
       aria-label={getPinButtonAriaLabel(isPinned)}
     >

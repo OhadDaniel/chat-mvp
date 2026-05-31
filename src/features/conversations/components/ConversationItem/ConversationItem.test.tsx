@@ -1,9 +1,11 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen }            from '@testing-library/react'
-import userEvent                     from '@testing-library/user-event'
-import { ConversationItem }          from './ConversationItem'
+import { describe, it, expect, vi }     from 'vitest'
+import { render, screen }                from '@testing-library/react'
+import userEvent                         from '@testing-library/user-event'
+import { ConversationItem }              from './ConversationItem'
+import { ConversationItemContext }       from './ConversationItem.context'
+import type { ConversationItemContextValue } from './ConversationItem.context'
 
-const defaultProps = {
+const defaultContext: ConversationItemContextValue = {
   initials:    'AL',
   name:        'Alice Levi',
   lastMessage: 'sounds good!',
@@ -15,22 +17,31 @@ const defaultProps = {
   onSelect:    vi.fn(),
 }
 
+function renderWithContext(overrides: Partial<ConversationItemContextValue> = {}) {
+  const value = { ...defaultContext, ...overrides }
+  return render(
+    <ConversationItemContext.Provider value={value}>
+      <ul><ConversationItem /></ul>
+    </ConversationItemContext.Provider>
+  )
+}
+
 describe('ConversationItem', () => {
   it('renders the name and last message', () => {
-    render(<ul><ConversationItem {...defaultProps} /></ul>)
+    renderWithContext()
 
     expect(screen.getByText('Alice Levi')).toBeInTheDocument()
     expect(screen.getByText('sounds good!')).toBeInTheDocument()
   })
 
   it('renders the unread badge when unreadCount > 0', () => {
-    render(<ul><ConversationItem {...defaultProps} unreadCount={3} /></ul>)
+    renderWithContext({ unreadCount: 3 })
 
     expect(screen.getByText('3')).toBeInTheDocument()
   })
 
   it('does not render the unread badge when unreadCount is 0', () => {
-    render(<ul><ConversationItem {...defaultProps} unreadCount={0} /></ul>)
+    renderWithContext({ unreadCount: 0 })
 
     expect(screen.queryByText('0')).not.toBeInTheDocument()
   })
@@ -39,7 +50,7 @@ describe('ConversationItem', () => {
     const onSelect = vi.fn()
     const user     = userEvent.setup()
 
-    render(<ul><ConversationItem {...defaultProps} onSelect={onSelect} /></ul>)
+    renderWithContext({ onSelect })
     await user.click(screen.getByText('Alice Levi'))
 
     expect(onSelect).toHaveBeenCalledOnce()

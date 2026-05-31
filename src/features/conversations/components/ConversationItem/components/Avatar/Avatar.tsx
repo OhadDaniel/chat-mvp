@@ -1,10 +1,7 @@
-import { UserAvatar } from '@/features/user/components/UserAvatar/UserAvatar'
+import { useConversationItemContext } from '../../ConversationItem.context'
+import { UserAvatar }                from '@/features/user/components/UserAvatar/UserAvatar'
 
-type Props = {
-  initials: string
-  name:     string
-}
-
-export function Avatar({ initials, name }: Props) {
+export function Avatar() {
+  const { initials, name } = useConversationItemContext()
   return <UserAvatar initials={initials} name={name} size="md" />
 }
