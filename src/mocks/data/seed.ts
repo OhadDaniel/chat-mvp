@@ -11,8 +11,7 @@ export const USERS: User[] = [
   { id: 'user-4', name: 'Clara Green',  avatarInitials: 'CG' },
 ]
 
-// ─── In-memory store ──────────────────────────────────────────────────────────
-// Mutable so handlers can update it (pin, send message, delete message)
+
 
 export type Store = {
   conversations: Conversation[]

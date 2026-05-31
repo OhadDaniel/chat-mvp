@@ -2,8 +2,7 @@ import type { User } from '@/features/user/types'
 import type { Conversation } from '@/features/conversations/types/index'
 import type { Message } from '@/features/messages/types'
 
-// envelopes: LoginRequest, LoginResponse, GetConversationsResponse...
-// error codes: ApiErrorCode, ApiError
+
 
 
 export type LoginRequest = {
