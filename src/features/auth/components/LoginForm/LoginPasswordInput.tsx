@@ -1,21 +1,20 @@
-import type { ChangeEvent }                             from 'react'
-import { LOGIN_PASSWORD_PLACEHOLDER }                    from '@/features/auth/components/LoginScreen/LoginScreen.constants'
-import { LOGIN_INPUT_CLASS }                             from './LoginForm.constants'
+import type { ChangeEvent }          from 'react'
+import { useLoginContext }           from '@/features/auth/components/LoginScreen/LoginScreen.context'
+import { LOGIN_PASSWORD_PLACEHOLDER } from '@/features/auth/components/LoginScreen/LoginScreen.constants'
+import { LOGIN_INPUT_CLASS }         from './LoginForm.constants'
 
-type Props = {
-  value:    string
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void
-  disabled: boolean
-}
+export function LoginPasswordInput() {
+  const { password, setPassword, isLoading } = useLoginContext()
 
-export function LoginPasswordInput({ value, onChange, disabled }: Props) {
+  const onChange = (e: ChangeEvent<HTMLInputElement>): void => setPassword(e.target.value)
+
   return (
     <input
       type="password"
       placeholder={LOGIN_PASSWORD_PLACEHOLDER}
-      value={value}
+      value={password}
       onChange={onChange}
-      disabled={disabled}
+      disabled={isLoading}
       className={LOGIN_INPUT_CLASS}
     />
   )

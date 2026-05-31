@@ -1,11 +1,10 @@
-import { LOGIN_SUBMIT_LABEL, LOGIN_LOADING_LABEL } from '@/features/auth/components/LoginScreen/LoginScreen.constants'
-import { LOGIN_BUTTON_CLASS }                       from './LoginForm.constants'
+import { useLoginContext }                           from '@/features/auth/components/LoginScreen/LoginScreen.context'
+import { LOGIN_SUBMIT_LABEL, LOGIN_LOADING_LABEL }   from '@/features/auth/components/LoginScreen/LoginScreen.constants'
+import { LOGIN_BUTTON_CLASS }                        from './LoginForm.constants'
 
-type Props = {
-  isLoading: boolean
-}
+export function LoginSubmitButton() {
+  const { isLoading } = useLoginContext()
 
-export function LoginSubmitButton({ isLoading }: Props) {
   return (
     <button
       type="submit"
