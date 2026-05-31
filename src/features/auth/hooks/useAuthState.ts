@@ -12,16 +12,18 @@ type UseAuthStateReturn = {
 
 export function useAuthState(): UseAuthStateReturn {
   const [user,      setUser]      = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY_USER)
-    if (!stored) return
-    try {
-      setUser(JSON.parse(stored) as User)
-    } catch {
-      localStorage.removeItem(STORAGE_KEY_USER)
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored) as User)
+      } catch {
+        localStorage.removeItem(STORAGE_KEY_USER)
+      }
     }
+    setIsLoading(false)
   }, [])
 
   const login = useCallback(async (name: string, password: string) => {

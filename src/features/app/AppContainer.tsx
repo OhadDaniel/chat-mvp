@@ -3,7 +3,9 @@ import { LoginScreenContainer }  from '@/features/auth/components/LoginScreen/Lo
 import { AppLayoutContainer }    from './AppLayoutContainer'
 
 export function AppContainer() {
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
+
+  if (isLoading) return null
 
   return user ? <AppLayoutContainer /> : <LoginScreenContainer />
 }
