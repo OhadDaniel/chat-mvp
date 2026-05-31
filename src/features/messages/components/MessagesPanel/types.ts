@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react'
 
 export type MessagesPanelProps = {
-  contentNode:  ReactNode
-  composerNode: ReactNode
-  title:        string
+  title:    string
+  children: ReactNode
 }
 
 export type MessagesPanelContainerProps = {
