@@ -1,26 +1,26 @@
 import { describe, it, expect, vi }  from 'vitest'
 import { render, screen }             from '@testing-library/react'
 import userEvent                      from '@testing-library/user-event'
-import { LoginForm }                  from './LoginForm'
-import { LoginContext }               from '@/features/auth/components/LoginScreen/LoginScreen.context'
-import type { LoginContextValue }     from '@/features/auth/components/LoginScreen/LoginScreen.types'
+import { LoginForm }                  from '../LoginForm'
+import { LoginProvider }              from '@/features/auth/components/LoginScreen/context/LoginScreen.context'
+import type { LoginContextValue }     from '@/features/auth/components/LoginScreen/types/LoginScreen.types'
 
 const defaultContext: LoginContextValue = {
-  name:         '',
-  password:     '',
-  error:        null,
-  isLoading:    false,
-  setName:      vi.fn(),
-  setPassword:  vi.fn(),
-  handleSubmit: vi.fn(),
+  name:             '',
+  password:         '',
+  error:            null,
+  isLoading:        false,
+  onNameChange:     vi.fn(),
+  onPasswordChange: vi.fn(),
+  handleSubmit:     vi.fn(),
 }
 
 function renderWithContext(overrides: Partial<LoginContextValue> = {}) {
   const value = { ...defaultContext, ...overrides }
   return render(
-    <LoginContext.Provider value={value}>
+    <LoginProvider value={value}>
       <LoginForm />
-    </LoginContext.Provider>
+    </LoginProvider>
   )
 }
 

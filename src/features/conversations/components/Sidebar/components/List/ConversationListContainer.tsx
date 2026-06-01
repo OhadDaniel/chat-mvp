@@ -7,6 +7,7 @@ import { useConversationList }           from './hooks/useConversationList'
 import { ConversationEmptyState }        from '../../../EmptyState/ConversationEmptyState'
 import { ConversationSkeletonContainer } from '../../../Skeleton/ConversationSkeletonContainer'
 import { ConversationList }              from './ConversationList'
+import { ConversationProvider }          from './components/Item/context/Conversation.context'
 import { ConversationItemContainer }     from './components/Item/ConversationItemContainer'
 
 export function ConversationListContainer() {
@@ -23,7 +24,9 @@ export function ConversationListContainer() {
   return (
     <ConversationList>
       {conversations.map(conversation => (
-        <ConversationItemContainer key={conversation.id} conversation={conversation} />
+        <ConversationProvider key={conversation.id} value={conversation}>
+          <ConversationItemContainer />
+        </ConversationProvider>
       ))}
     </ConversationList>
   )

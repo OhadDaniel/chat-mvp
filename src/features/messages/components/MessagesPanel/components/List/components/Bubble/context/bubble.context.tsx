@@ -3,12 +3,12 @@ import type { ReactNode }            from 'react'
 import type { BubbleClasses }        from '../types/Bubble.types'
 
 export type BubbleContextValue = {
-  classes:        BubbleClasses
-  content:        string
-  time:           string
-  senderName:     string
-  senderInitials: string
-  senderNameNode: ReactNode
+  classes:           BubbleClasses
+  content:           string
+  time:              string
+  senderName:        string
+  senderInitials:    string
+  isFromCurrentUser: boolean
 }
 
 const BubbleContext = createContext<BubbleContextValue | null>(null)
