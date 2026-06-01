@@ -1,5 +1,5 @@
-import { PANEL_WRAPPER_CLASS, PANEL_HEADER_CLASS, PANEL_CONTENT_CLASS } from './constants'
-import type { MessagesPanelProps } from './types'
+import { PANEL_WRAPPER_CLASS, PANEL_HEADER_CLASS, PANEL_CONTENT_CLASS } from './constants/MessagesPanel.constants'
+import type { MessagesPanelProps } from './types/MessagesPanel.types'
 
 export function MessagesPanel({ title, children }: MessagesPanelProps) {
   return (

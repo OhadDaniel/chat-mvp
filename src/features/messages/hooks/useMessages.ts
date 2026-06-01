@@ -1,5 +1,5 @@
 import { useReducer }               from 'react'
-import { useAuth }                  from '@/features/auth/hooks/useAuth'
+import { useAuth }                  from '@/features/auth/context/AuthContext'
 import { messagesReducer, initialState } from './reducer'
 import { useFetchMessages }         from './useFetchMessages'
 import { useSendMessage }           from './useSendMessage'
