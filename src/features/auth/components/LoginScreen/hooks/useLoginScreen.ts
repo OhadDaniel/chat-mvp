@@ -1,13 +1,13 @@
-import { useState }            from 'react'
-import type { FormEvent }      from 'react'
-import { useAuth }             from '@/features/auth/hooks/useAuth'
+import { useState }                    from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
+import { useAuth }             from '@/features/auth/context/AuthContext'
 import { ApiRequestError }     from '@/api/apiClient'
 import {
   LOGIN_ERROR_EMPTY,
   LOGIN_ERROR_NOT_FOUND,
   LOGIN_ERROR_API_FAILURE,
-} from '../LoginScreen.constants'
-import type { LoginContextValue } from '../LoginScreen.types'
+} from '../constants/LoginScreen.constants'
+import type { LoginContextValue } from '../types/LoginScreen.types'
 
 export function useLoginScreen(): LoginContextValue {
   const { login }    = useAuth()
@@ -40,5 +40,8 @@ export function useLoginScreen(): LoginContextValue {
     }
   }
 
-  return { name, password, error, isLoading, setName, setPassword, handleSubmit }
+  const onNameChange     = (e: ChangeEvent<HTMLInputElement>): void => setName(e.target.value)
+  const onPasswordChange = (e: ChangeEvent<HTMLInputElement>): void => setPassword(e.target.value)
+
+  return { name, password, error, isLoading, onNameChange, onPasswordChange, handleSubmit }
 }
