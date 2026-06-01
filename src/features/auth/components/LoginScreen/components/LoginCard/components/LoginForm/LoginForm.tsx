@@ -1,9 +1,9 @@
-import { useLoginContext }    from '@/features/auth/components/LoginScreen/LoginScreen.context'
-import { LoginNameInput }    from './LoginNameInput'
+import { useLoginContext }     from '../../../../context/LoginScreen.context'
+import { LoginNameInput }     from './LoginNameInput'
 import { LoginPasswordInput } from './LoginPasswordInput'
-import { LoginErrorMessage } from './LoginErrorMessage'
-import { LoginSubmitButton } from './LoginSubmitButton'
-import { LOGIN_FORM_CLASS }  from './LoginForm.constants'
+import { LoginErrorMessage }  from './LoginErrorMessage'
+import { LoginSubmitButton }  from './LoginSubmitButton'
+import { LOGIN_FORM_CLASS }   from './constants/LoginForm.constants'
 
 export function LoginForm() {
   const { handleSubmit } = useLoginContext()

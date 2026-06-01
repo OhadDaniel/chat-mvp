@@ -5,7 +5,3 @@ export type MessagesPanelProps = {
   children: ReactNode
 }
 
-export type MessagesPanelContainerProps = {
-  conversationId:   string | null
-  conversationName: string | null
-}

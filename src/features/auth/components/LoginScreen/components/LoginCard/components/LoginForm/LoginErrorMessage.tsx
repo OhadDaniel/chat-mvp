@@ -1,5 +1,5 @@
-import { useLoginContext } from '@/features/auth/components/LoginScreen/LoginScreen.context'
-import { LOGIN_ERROR_CLASS } from './LoginForm.constants'
+import { useLoginContext } from '../../../../context/LoginScreen.context'
+import { LOGIN_ERROR_CLASS } from './constants/LoginForm.constants'
 
 export function LoginErrorMessage() {
   const { error } = useLoginContext()
