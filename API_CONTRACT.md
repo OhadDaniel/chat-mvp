@@ -26,7 +26,8 @@ Mock login — choose a user identity, receive a token.
 **Request body**
 ```ts
 {
-  userId: string   // one of the seeded user IDs
+  name: string      // full name of the seeded user e.g. "Ohad Daniel"
+  password: string  // any non-empty string (not validated this week)
 }
 ```
 
@@ -151,23 +152,6 @@ Send a new message. The frontend applies an optimistic update before this resolv
 
 ---
 
-### `DELETE /conversations/:id/messages/:messageId`
-
-Delete a message. Only the message author can delete their own messages — the backend enforces this via the auth token.
-
-**Response `204`** — no body
-
-**Response `403`**
-```ts
-{ error: 'NOT_MESSAGE_AUTHOR' }
-```
-
-**Response `404`**
-```ts
-{ error: 'MESSAGE_NOT_FOUND' }
-```
-
----
 
 ## 4. Shared Types
 
@@ -213,7 +197,11 @@ All error responses follow this shape:
 
 ```ts
 {
-  error: string   // machine-readable error code (screaming snake case)
+  error: {
+    code: string      // machine-readable error code (screaming snake case)
+    message: string   // human-readable description
+    details?: unknown // optional, e.g. validation errors array
+  }
 }
 ```
 
@@ -237,3 +225,7 @@ HTTP status codes used:
 | Date | Change |
 |------|--------|
 | 2026-05-27 | Initial contract defined (Week 2) |
+| 2026-06-03 | Login changed from `userId` to `name` + `password` |
+| 2026-06-03 | Error shape changed from `{ error: string }` to `{ error: { code, message, details? } }` |
+| 2026-06-03 | `DELETE /conversations/:id/messages/:messageId` removed |
+| 2026-06-03 | `POST /conversations` added |

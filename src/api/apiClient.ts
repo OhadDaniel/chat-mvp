@@ -29,7 +29,7 @@ async function request<T>(
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
-    throw new ApiRequestError(response.status, body.error ?? 'UNKNOWN_ERROR')
+    throw new ApiRequestError(response.status, body.error?.code ?? 'UNKNOWN_ERROR')
   }
 
 
@@ -99,8 +99,4 @@ export const messagesApi = {
       body: JSON.stringify(body),
     }),
 
-  delete: (conversationId: string, messageId: string): Promise<void> =>
-    request(`/conversations/${conversationId}/messages/${messageId}`, {
-      method: 'DELETE',
-    }),
 }

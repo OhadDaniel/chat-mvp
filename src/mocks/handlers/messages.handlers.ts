@@ -29,11 +29,11 @@ export const messagesHandlers = [
     return HttpResponse.json({ messages: page, nextCursor })
   }),
 
-  // POST /conversations/:id/messages
+ 
   http.post(`${API_BASE_URL}/conversations/:id/messages`, async ({ params, request }) => {
     await delay(MOCK_DELAY_MS)
 
-    // Simulate a 20% failure rate to test optimistic rollback
+   
     if (Math.random() < 0.2) {
       return HttpResponse.json({ error: 'INTERNAL_SERVER_ERROR' }, { status: 500 })
     }
@@ -65,7 +65,7 @@ export const messagesHandlers = [
     if (!store.messages[id]) store.messages[id] = []
     store.messages[id].push(message)
 
-    // Update the conversation's lastMessage
+  
     const conversation = store.conversations.find(c => c.id === id)
     if (conversation) {
       conversation.lastMessage    = { content, sentAt: message.sentAt, senderId: sender.id }
@@ -75,35 +75,6 @@ export const messagesHandlers = [
     return HttpResponse.json({ message }, { status: 201 })
   }),
 
-  // DELETE /conversations/:id/messages/:messageId
-  http.delete(
-    `${API_BASE_URL}/conversations/:id/messages/:messageId`,
-    async ({ params, request }) => {
-      await delay(MOCK_DELAY_MS)
-
-      const { id, messageId } = params as { id: string; messageId: string }
-      const token             = request.headers.get('Authorization')?.replace('Bearer ', '')
-      const userId            = token?.replace('mock-token-', '')
-
-      const messages = store.messages[id]
-      if (!messages) {
-        return HttpResponse.json({ error: 'CONVERSATION_NOT_FOUND' }, { status: 404 })
-      }
-
-      const msgIndex = messages.findIndex(m => m.id === messageId)
-      if (msgIndex === -1) {
-        return HttpResponse.json({ error: 'MESSAGE_NOT_FOUND' }, { status: 404 })
-      }
-
-      if (messages[msgIndex].sender.id !== userId) {
-        return HttpResponse.json({ error: 'NOT_MESSAGE_AUTHOR' }, { status: 403 })
-      }
-
-      store.messages[id].splice(msgIndex, 1)
-
-      return new HttpResponse(null, { status: 204 })
-    },
-  ),
 ]
 
 function delay(ms: number): Promise<void> {
