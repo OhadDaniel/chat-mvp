@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express'
-import { makeError, type AppError } from '../errors'
+import { makeError, isAppError, type AppError } from '../errors'
 
 const FALLBACK_CODE = 'INTERNAL_SERVER_ERROR'
 const FALLBACK_MESSAGE = 'Something went wrong'
@@ -10,15 +10,12 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
-  const isAppError =
-    typeof err === 'object' && err !== null && 'status' in err
-
-  if (!isAppError) {
+  if (!isAppError(err)) {
     console.error('[RAW ERROR]', err)
   }
 
-  const appErr: AppError = isAppError
-    ? (err as AppError)
+  const appErr: AppError = isAppError(err)
+    ? err
     : makeError(500, FALLBACK_CODE, FALLBACK_MESSAGE)
 
   console.error(`[ERROR] ${appErr.code}: ${appErr.message}`, appErr.details ?? '')
