@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import jwt from 'jsonwebtoken'
 import { makeError } from '../../errors'
 import { validate } from '../../lib/validate'
 import { findUserByName } from './auth.repository'
@@ -11,15 +12,13 @@ const loginSchema = z.object({
 
 export function loginOrchestrator(body: unknown): LoginResponse {
   const { name } = validate(loginSchema, body)
-
   const user = findUserByName(name)
-
   if (!user) {
     throw makeError(404, 'USER_NOT_FOUND', 'User not found')
   }
-
-  return {
-    token: user.id,
-    user,
-  }
+  const token = jwt.sign(
+    { id: user.id, name: user.name },
+    process.env.ACCESS_TOKEN_SECRET!,
+  )
+  return { token, user }
 }

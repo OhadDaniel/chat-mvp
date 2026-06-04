@@ -44,7 +44,6 @@ export function createConversation(participants: User[]): Conversation {
     lastMessage: null,
     lastMessageAt: null,
     pinnedAt: null,
-    unreadCount: 0,
   }
   store.conversations.push(conversation)
   return conversation

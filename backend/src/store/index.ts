@@ -1,6 +1,5 @@
 import type { User, Conversation, Message } from '../types'
 
-// ─── Seeded Users ─────────────────────────────────────────────────────────────
 
 export const USERS: User[] = [
   { id: 'user-1', name: 'Ohad Daniel',  avatarInitials: 'OD' },
@@ -9,7 +8,6 @@ export const USERS: User[] = [
   { id: 'user-4', name: 'Clara Green',  avatarInitials: 'CG' },
 ]
 
-// ─── Store ────────────────────────────────────────────────────────────────────
 
 type Store = {
   conversations: Conversation[]
@@ -28,7 +26,6 @@ export const store: Store = {
       },
       lastMessageAt: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
       pinnedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-      unreadCount: 0,
     },
     {
       id: 'conv-2',
@@ -40,7 +37,6 @@ export const store: Store = {
       },
       lastMessageAt: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
       pinnedAt: null,
-      unreadCount: 3,
     },
     {
       id: 'conv-3',
@@ -52,7 +48,6 @@ export const store: Store = {
       },
       lastMessageAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
       pinnedAt: null,
-      unreadCount: 0,
     },
   ],
 

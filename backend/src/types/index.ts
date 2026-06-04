@@ -14,7 +14,6 @@ export type Conversation = {
   } | null
   lastMessageAt: string | null
   pinnedAt: string | null
-  unreadCount: number
 }
 
 export type Message = {
