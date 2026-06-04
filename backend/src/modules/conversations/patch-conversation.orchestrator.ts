@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { makeError } from '../../errors'
 import { assertParticipant } from '../../lib/authz'
 import { validate } from '../../lib/validate'
-import { findById, updatePinned } from './conversations.repository'
+import { getById, patch } from './conversations.service'
 import type { PatchConversationResponse } from './conversations.types'
 
 const patchConversationSchema = z.object({
@@ -15,14 +15,14 @@ export function patchConversationOrchestrator(
   body: unknown
 ): PatchConversationResponse {
   const { pinned } = validate(patchConversationSchema, body)
-  const existing = findById(id)
 
+  const existing = getById(id)
   if (!existing) {
     throw makeError(404, 'CONVERSATION_NOT_FOUND', 'Conversation not found')
   }
 
   assertParticipant(existing, userId)
 
-  const conversation = updatePinned(id, pinned)!
+  const conversation = patch(id, pinned)!
   return { conversation }
 }
