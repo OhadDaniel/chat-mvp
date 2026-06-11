@@ -9,7 +9,6 @@ export const MESSAGES_PAGE_SIZE = 30
 
 
 export const STORAGE_KEY_TOKEN = 'chat_token'
-export const STORAGE_KEY_USER  = 'chat_user'
 
 
 

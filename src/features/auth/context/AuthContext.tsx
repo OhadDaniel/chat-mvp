@@ -5,7 +5,8 @@ import { useAuthState } from '@/features/auth/hooks/useAuthState'
 export type AuthContextValue = {
   user: User | null
   isLoading: boolean
-  login: (name: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<void>
+  signup: (email: string, password: string, name: string) => Promise<void>
   logout: () => void
 }
 

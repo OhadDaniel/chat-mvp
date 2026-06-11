@@ -1,6 +1,6 @@
 import type { ChangeEvent }          from 'react'
-import { useLoginContext }           from '@/features/auth/components/LoginScreen/LoginScreen.context'
-import { LOGIN_PASSWORD_PLACEHOLDER } from '@/features/auth/components/LoginScreen/LoginScreen.constants'
+import { useLoginContext }           from '../LoginScreen.context'
+import { LOGIN_PASSWORD_PLACEHOLDER } from '../LoginScreen.constants'
 import { LOGIN_INPUT_CLASS }         from './LoginForm.constants'
 
 export function LoginPasswordInput() {

@@ -1,4 +1,4 @@
-import { useLoginContext } from '@/features/auth/components/LoginScreen/LoginScreen.context'
+import { useLoginContext } from '../LoginScreen.context'
 import { LOGIN_ERROR_CLASS } from './LoginForm.constants'
 
 export function LoginErrorMessage() {

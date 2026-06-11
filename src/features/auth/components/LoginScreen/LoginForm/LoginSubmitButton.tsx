@@ -1,5 +1,5 @@
-import { useLoginContext }                           from '@/features/auth/components/LoginScreen/LoginScreen.context'
-import { LOGIN_SUBMIT_LABEL, LOGIN_LOADING_LABEL }   from '@/features/auth/components/LoginScreen/LoginScreen.constants'
+import { useLoginContext }                           from '../LoginScreen.context'
+import { LOGIN_SUBMIT_LABEL, LOGIN_LOADING_LABEL }   from '../LoginScreen.constants'
 import { LOGIN_BUTTON_CLASS }                        from './LoginForm.constants'
 
 export function LoginSubmitButton() {

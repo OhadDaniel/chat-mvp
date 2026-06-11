@@ -1,5 +1,5 @@
 import type { LoginCardProps }                                                           from './LoginCard.types'
-import { LOGIN_SCREEN_TITLE, LOGIN_SCREEN_SUBTITLE }                                     from '@/features/auth/components/LoginScreen/LoginScreen.constants'
+import { LOGIN_SCREEN_TITLE, LOGIN_SCREEN_SUBTITLE }                                     from '../LoginScreen.constants'
 import { LOGIN_CARD_CLASS, LOGIN_CARD_TITLE_CLASS, LOGIN_CARD_SUBTITLE_CLASS, LOGIN_CARD_BODY_CLASS } from './LoginCard.constants'
 
 export function LoginCard({ children }: LoginCardProps) {

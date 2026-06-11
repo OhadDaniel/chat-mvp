@@ -1,7 +1,10 @@
-import { API_BASE_URL, MESSAGES_PAGE_SIZE } from '@/shared/constants'
+import { API_BASE_URL, MESSAGES_PAGE_SIZE, STORAGE_KEY_TOKEN } from '@/shared/constants'
 import type {
   LoginRequest,
   LoginResponse,
+  SignupRequest,
+  SignupResponse,
+  MeResponse,
   GetConversationsResponse,
   PatchConversationRequest,
   PatchConversationResponse,
@@ -16,7 +19,7 @@ async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const token = localStorage.getItem('chat_token')
+  const token = localStorage.getItem(STORAGE_KEY_TOKEN)
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -57,6 +60,14 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+
+  signup: (body: SignupRequest): Promise<SignupResponse> =>
+    request('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  me: (): Promise<MeResponse> => request('/me'),
 }
 
 

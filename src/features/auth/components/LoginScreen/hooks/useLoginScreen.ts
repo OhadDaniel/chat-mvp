@@ -4,14 +4,14 @@ import { useAuth }             from '@/features/auth/hooks/useAuth'
 import { ApiRequestError }     from '@/api/apiClient'
 import {
   LOGIN_ERROR_EMPTY,
-  LOGIN_ERROR_NOT_FOUND,
+  LOGIN_ERROR_INVALID_CREDENTIALS,
   LOGIN_ERROR_API_FAILURE,
 } from '../LoginScreen.constants'
 import type { LoginContextValue } from '../LoginScreen.types'
 
 export function useLoginScreen(): LoginContextValue {
   const { login }    = useAuth()
-  const [name,      setName]      = useState('')
+  const [email,     setEmail]     = useState('')
   const [password,  setPassword]  = useState('')
   const [error,     setError]     = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -19,7 +19,7 @@ export function useLoginScreen(): LoginContextValue {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
 
-    if (!name.trim() || !password.trim()) {
+    if (!email.trim() || !password.trim()) {
       setError(LOGIN_ERROR_EMPTY)
       return
     }
@@ -28,10 +28,10 @@ export function useLoginScreen(): LoginContextValue {
     setIsLoading(true)
 
     try {
-      await login(name.trim(), password)
+      await login(email.trim(), password)
     } catch (err) {
-      if (err instanceof ApiRequestError && err.status === 404) {
-        setError(LOGIN_ERROR_NOT_FOUND)
+      if (err instanceof ApiRequestError && err.status === 401) {
+        setError(LOGIN_ERROR_INVALID_CREDENTIALS)
       } else {
         setError(LOGIN_ERROR_API_FAILURE)
       }
@@ -40,5 +40,5 @@ export function useLoginScreen(): LoginContextValue {
     }
   }
 
-  return { name, password, error, isLoading, setName, setPassword, handleSubmit }
+  return { email, password, error, isLoading, setEmail, setPassword, handleSubmit }
 }

@@ -1,8 +1,9 @@
-import { useLoginContext }    from '@/features/auth/components/LoginScreen/LoginScreen.context'
-import { LoginNameInput }    from './LoginNameInput'
+import { useLoginContext }    from '../LoginScreen.context'
+import { LoginEmailInput }    from './LoginEmailInput'
 import { LoginPasswordInput } from './LoginPasswordInput'
 import { LoginErrorMessage } from './LoginErrorMessage'
 import { LoginSubmitButton } from './LoginSubmitButton'
+import { LoginSwitchLink }   from './LoginSwitchLink'
 import { LOGIN_FORM_CLASS }  from './LoginForm.constants'
 
 export function LoginForm() {
@@ -10,10 +11,11 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className={LOGIN_FORM_CLASS}>
-      <LoginNameInput />
+      <LoginEmailInput />
       <LoginPasswordInput />
       <LoginErrorMessage />
       <LoginSubmitButton />
+      <LoginSwitchLink />
     </form>
   )
 }
