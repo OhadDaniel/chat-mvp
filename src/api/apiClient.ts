@@ -30,6 +30,12 @@ async function request<T>(
     },
   })
 
+  // expired/invalid token mid-session: clear it and restart at the login screen
+  if (response.status === 401 && token && !path.startsWith('/auth/')) {
+    localStorage.removeItem(STORAGE_KEY_TOKEN)
+    window.location.reload()
+  }
+
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
     throw new ApiRequestError(response.status, body.error?.code ?? 'UNKNOWN_ERROR')
