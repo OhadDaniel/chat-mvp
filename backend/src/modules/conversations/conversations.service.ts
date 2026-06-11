@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { AppException } from '../common/errors/app.exception';
-import { isUniqueViolation } from '../database/pg-errors';
-import { daysAgo, SEED_CONVERSATIONS } from '../database/seed-data';
+import { AppException } from '../../common/errors/app.exception';
+import { isUniqueViolation } from '../../database/pg-errors';
+import { daysAgo, SEED_CONVERSATIONS } from '../../database/seed-data';
 import type { User } from '../users/users.types';
 import { UsersService } from '../users/users.service';
 import { ConversationsRepository } from './conversations.repository';

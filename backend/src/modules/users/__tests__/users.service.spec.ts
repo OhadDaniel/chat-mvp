@@ -1,6 +1,6 @@
 import type { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { AppException } from '../../common/errors/app.exception';
+import { AppException } from '../../../common/errors/app.exception';
 import type { UsersRepository } from '../users.repository';
 import { UsersService } from '../users.service';
 import type { User } from '../users.types';

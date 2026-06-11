@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AppException } from '../common/errors/app.exception';
+import { AppException } from '../../common/errors/app.exception';
 import { toPublicUser, type User } from '../users/users.types';
 import { UsersService } from '../users/users.service';
 import type { AuthResponse, JwtPayload } from './auth.types';

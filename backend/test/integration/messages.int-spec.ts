@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
-import type { Conversation } from '../../src/conversations/conversations.types';
-import type { Message } from '../../src/messages/messages.types';
+import type { Conversation } from '../../src/modules/conversations/conversations.types';
+import type { Message } from '../../src/modules/messages/messages.types';
 import { expectNoSecrets, http, loginAs, signupAs } from '../helpers/api';
 import { createTestApp } from '../helpers/test-app';
 

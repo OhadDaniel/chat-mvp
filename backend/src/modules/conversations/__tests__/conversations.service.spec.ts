@@ -1,4 +1,4 @@
-import { AppException } from '../../common/errors/app.exception';
+import { AppException } from '../../../common/errors/app.exception';
 import type { UsersService } from '../../users/users.service';
 import type { User } from '../../users/users.types';
 import type { ConversationsRepository } from '../conversations.repository';

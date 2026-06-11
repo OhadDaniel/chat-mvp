@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
-import { PG_POOL } from '../database/database.constants';
+import { PG_POOL } from '../../database/database.constants';
 import type { PublicUser } from '../users/users.types';
 import {
   COUNT_MESSAGES,
@@ -40,11 +40,7 @@ export class MessagesRepository {
     return row && { id: row.id, sentAt: row.sent_at };
   }
 
-  /**
-   * Chat-style page: the `limit` newest messages older than `before`
-   * (or the newest overall when no cursor). Fetches limit+1 to learn
-   * whether more history exists, returns the page in ascending order.
-   */
+ 
   async findPageBefore(
     conversationId: string,
     before: CursorPoint | undefined,

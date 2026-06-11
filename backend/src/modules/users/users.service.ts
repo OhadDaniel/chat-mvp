@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { AppException } from '../common/errors/app.exception';
-import { SEED_USER_PASSWORD, SEED_USERS } from '../database/seed-data';
+import { AppException } from '../../common/errors/app.exception';
+import { SEED_USER_PASSWORD, SEED_USERS } from '../../database/seed-data';
 import { UsersRepository } from './users.repository';
 import { initialsOf, type CreateUserInput, type User } from './users.types';
 
