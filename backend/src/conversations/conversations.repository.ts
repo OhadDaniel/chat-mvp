@@ -1,65 +1,47 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.constants';
+import {
+  COUNT_CONVERSATIONS,
+  FIND_CONVERSATION_BY_ID,
+  FIND_CONVERSATIONS_BY_USER,
+  INSERT_CONVERSATION,
+  PAIR_EXISTS,
+  SEARCH_CONVERSATIONS_BY_NAME,
+  SET_PINNED,
+} from './conversations.queries';
 import type { Conversation } from './entities/conversation.entity';
 
 /**
- * SQL store for conversations. Note what is NOT here: no lastMessage
- * column anywhere — it is DERIVED from the messages table on every
- * read (LATERAL subquery picks the newest message per conversation).
- * Derived data cannot go stale, so the week-3 "update lastMessage on
- * send" invariant simply no longer exists.
+ * Postgres store for conversations. SQL lives in
+ * conversations.queries.ts; this class only runs it and maps rows.
+ * Note: no lastMessage column anywhere — it is DERIVED from the
+ * messages table on every read, so it can never go stale.
+ * NOT exported from ConversationsModule.
  */
 @Injectable()
 export class ConversationsRepository {
   constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
 
-  /**
-   * Shared SELECT: joins both participants and attaches the latest
-   * message (if any). Every read goes through this one shape.
-   */
-  private readonly baseSelect = `
-    SELECT c.id,
-           c.pinned_at,
-           c.created_at,
-           ua.id AS a_id, ua.email AS a_email, ua.name AS a_name, ua.avatar_initials AS a_initials,
-           ub.id AS b_id, ub.email AS b_email, ub.name AS b_name, ub.avatar_initials AS b_initials,
-           lm.content   AS lm_content,
-           lm.sent_at   AS lm_sent_at,
-           lm.sender_id AS lm_sender_id
-      FROM conversations c
-      JOIN users ua ON ua.id = c.user_a_id
-      JOIN users ub ON ub.id = c.user_b_id
-      LEFT JOIN LATERAL (
-        SELECT m.content, m.sent_at, m.sender_id
-          FROM messages m
-         WHERE m.conversation_id = c.id
-         ORDER BY m.sent_at DESC, m.id DESC
-         LIMIT 1
-      ) lm ON true`;
-
   async findAllByUserId(
     userId: string,
     search?: string,
   ): Promise<Conversation[]> {
-    const params: unknown[] = [userId];
-    let sql = `${this.baseSelect}
-     WHERE (c.user_a_id = $1 OR c.user_b_id = $1)`;
+    const result = search
+      ? await this.pool.query<ConversationRow>(SEARCH_CONVERSATIONS_BY_NAME, [
+          userId,
+          `%${search}%`,
+        ])
+      : await this.pool.query<ConversationRow>(FIND_CONVERSATIONS_BY_USER, [
+          userId,
+        ]);
 
-    if (search) {
-      params.push(`%${search}%`);
-      sql += ` AND (ua.name ILIKE $2 OR ub.name ILIKE $2)`;
-    }
-
-    sql += ` ORDER BY lm.sent_at DESC NULLS LAST, c.created_at DESC`;
-
-    const result = await this.pool.query<ConversationRow>(sql, params);
     return result.rows.map(rowToConversation);
   }
 
   async findById(id: string): Promise<Conversation | undefined> {
     const result = await this.pool.query<ConversationRow>(
-      `${this.baseSelect} WHERE c.id = $1`,
+      FIND_CONVERSATION_BY_ID,
       [id],
     );
     return result.rows[0] && rowToConversation(result.rows[0]);
@@ -67,13 +49,10 @@ export class ConversationsRepository {
 
   /** Pair lookup — callers must pass the canonical order (a < b). */
   async existsByPair(userAId: string, userBId: string): Promise<boolean> {
-    const result = await this.pool.query<{ exists: boolean }>(
-      `SELECT EXISTS(
-         SELECT 1 FROM conversations
-          WHERE user_a_id = $1 AND user_b_id = $2
-       ) AS exists`,
-      [userAId, userBId],
-    );
+    const result = await this.pool.query<{ exists: boolean }>(PAIR_EXISTS, [
+      userAId,
+      userBId,
+    ]);
     return result.rows[0]?.exists ?? false;
   }
 
@@ -83,30 +62,27 @@ export class ConversationsRepository {
     userBId: string,
     pinnedAt: Date | null = null,
   ): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO conversations (id, user_a_id, user_b_id, pinned_at)
-       VALUES ($1, $2, $3, $4)`,
-      [id, userAId, userBId, pinnedAt],
-    );
+    await this.pool.query(INSERT_CONVERSATION, [
+      id,
+      userAId,
+      userBId,
+      pinnedAt,
+    ]);
   }
 
   async setPinned(id: string, pinned: boolean): Promise<void> {
-    await this.pool.query(
-      `UPDATE conversations
-          SET pinned_at = CASE WHEN $2 THEN now() ELSE NULL END
-        WHERE id = $1`,
-      [id, pinned],
-    );
+    await this.pool.query(SET_PINNED, [id, pinned]);
   }
 
   async count(): Promise<number> {
     const result = await this.pool.query<{ count: string }>(
-      'SELECT count(*) AS count FROM conversations',
+      COUNT_CONVERSATIONS,
     );
     return Number(result.rows[0]?.count ?? 0);
   }
 }
 
+/** Raw row shape produced by CONVERSATION_SELECT. */
 type ConversationRow = {
   id: string;
   pinned_at: Date | null;

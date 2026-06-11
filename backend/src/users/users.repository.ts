@@ -2,53 +2,46 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.constants';
 import type { User } from './entities/user.entity';
+import {
+  COUNT_USERS,
+  FIND_USER_BY_EMAIL,
+  FIND_USER_BY_ID,
+  INSERT_USER,
+} from './users.queries';
 
 /**
- * Postgres implementation of the users store. Still deliberately dumb:
- * no hashing, no uniqueness logic, no normalization — that stays in
- * UsersService. Same public methods as the in-memory version it
- * replaced; only the insides changed. NOT exported from UsersModule.
- *
- * All queries are parameterized ($1, $2…) — values never get
- * concatenated into SQL, so injection is structurally impossible.
+ * Postgres store for users. Deliberately dumb: no hashing, no
+ * uniqueness logic, no normalization — that stays in UsersService.
+ * SQL lives in users.queries.ts; this class only runs it and maps rows.
+ * NOT exported from UsersModule.
  */
 @Injectable()
 export class UsersRepository {
   constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
 
   async findById(id: string): Promise<User | undefined> {
-    const result = await this.pool.query<UserRow>(
-      `SELECT id, email, name, avatar_initials, password_hash
-         FROM users
-        WHERE id = $1`,
-      [id],
-    );
+    const result = await this.pool.query<UserRow>(FIND_USER_BY_ID, [id]);
     return result.rows[0] && rowToUser(result.rows[0]);
   }
 
   async findByEmail(email: string): Promise<User | undefined> {
-    const result = await this.pool.query<UserRow>(
-      `SELECT id, email, name, avatar_initials, password_hash
-         FROM users
-        WHERE email = $1`,
-      [email],
-    );
+    const result = await this.pool.query<UserRow>(FIND_USER_BY_EMAIL, [email]);
     return result.rows[0] && rowToUser(result.rows[0]);
   }
 
   async insert(user: User): Promise<User> {
-    await this.pool.query(
-      `INSERT INTO users (id, email, name, avatar_initials, password_hash)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [user.id, user.email, user.name, user.avatarInitials, user.passwordHash],
-    );
+    await this.pool.query(INSERT_USER, [
+      user.id,
+      user.email,
+      user.name,
+      user.avatarInitials,
+      user.passwordHash,
+    ]);
     return user;
   }
 
   async count(): Promise<number> {
-    const result = await this.pool.query<{ count: string }>(
-      'SELECT count(*) AS count FROM users',
-    );
+    const result = await this.pool.query<{ count: string }>(COUNT_USERS);
     return Number(result.rows[0]?.count ?? 0);
   }
 }
