@@ -12,10 +12,6 @@ export const STORAGE_KEY_TOKEN = 'chat_token'
 
 
 
-
-export const MOCK_DELAY_MS = 400
-
-
 export const TOAST_DURATION_MS = 4000
 
 
