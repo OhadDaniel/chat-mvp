@@ -11,6 +11,8 @@ import { UsersModule } from './users/users.module';
     ConfigModule.forRoot({
       isGlobal: true,
       validate: validateEnv,
+      // tests inject their own env and must not inherit the local .env
+      ignoreEnvFile: process.env.NODE_ENV === 'test',
     }),
     UsersModule,
     AuthModule,
