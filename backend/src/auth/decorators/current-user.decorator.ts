@@ -1,5 +1,5 @@
 import { createParamDecorator, type ExecutionContext } from '@nestjs/common';
-import type { User } from '../../users/entities/user.entity';
+import type { User } from '../../users/users.types';
 
 /**
  * `@CurrentUser()` hands the controller the User that JwtStrategy

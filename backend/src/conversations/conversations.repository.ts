@@ -10,7 +10,7 @@ import {
   SEARCH_CONVERSATIONS_BY_NAME,
   SET_PINNED,
 } from './conversations.queries';
-import type { Conversation } from './entities/conversation.entity';
+import type { Conversation, ConversationRow } from './conversations.types';
 
 /**
  * Postgres store for conversations. SQL lives in
@@ -81,24 +81,6 @@ export class ConversationsRepository {
     return Number(result.rows[0]?.count ?? 0);
   }
 }
-
-/** Raw row shape produced by CONVERSATION_SELECT. */
-type ConversationRow = {
-  id: string;
-  pinned_at: Date | null;
-  created_at: Date;
-  a_id: string;
-  a_email: string;
-  a_name: string;
-  a_initials: string;
-  b_id: string;
-  b_email: string;
-  b_name: string;
-  b_initials: string;
-  lm_content: string | null;
-  lm_sent_at: Date | null;
-  lm_sender_id: string | null;
-};
 
 function rowToConversation(row: ConversationRow): Conversation {
   const lastMessage =

@@ -1,13 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.constants';
-import type { User } from './entities/user.entity';
 import {
   COUNT_USERS,
   FIND_USER_BY_EMAIL,
   FIND_USER_BY_ID,
   INSERT_USER,
 } from './users.queries';
+import type { User, UserRow } from './users.types';
 
 /**
  * Postgres store for users. Deliberately dumb: no hashing, no
@@ -45,15 +45,6 @@ export class UsersRepository {
     return Number(result.rows[0]?.count ?? 0);
   }
 }
-
-/** Raw row shape (snake_case, as Postgres returns it). */
-type UserRow = {
-  id: string;
-  email: string;
-  name: string;
-  avatar_initials: string;
-  password_hash: string;
-};
 
 function rowToUser(row: UserRow): User {
   return {

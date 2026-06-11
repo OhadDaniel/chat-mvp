@@ -1,8 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.constants';
-import type { PublicUser } from '../users/entities/user.entity';
-import type { Message } from './entities/message.entity';
+import type { PublicUser } from '../users/users.types';
 import {
   COUNT_MESSAGES,
   FIND_CURSOR_POINT,
@@ -11,17 +10,12 @@ import {
   INSERT_MESSAGE,
   INSERT_SEED_MESSAGE,
 } from './messages.queries';
-
-/** A point in the message timeline — used for keyset pagination. */
-export type CursorPoint = {
-  sentAt: Date;
-  id: string;
-};
-
-export type MessagePage = {
-  messages: Message[];
-  hasMore: boolean;
-};
+import type {
+  CursorPoint,
+  Message,
+  MessagePage,
+  MessageRow,
+} from './messages.types';
 
 /**
  * Postgres store for messages. SQL lives in messages.queries.ts;
@@ -118,19 +112,6 @@ export class MessagesRepository {
     return Number(result.rows[0]?.count ?? 0);
   }
 }
-
-/** Raw row shape produced by MESSAGE_SELECT. */
-type MessageRow = {
-  id: string;
-  conversation_id: string;
-  content: string;
-  sent_at: Date;
-  status: string;
-  s_id: string;
-  s_email: string;
-  s_name: string;
-  s_initials: string;
-};
 
 function rowToMessage(row: MessageRow): Message {
   return {

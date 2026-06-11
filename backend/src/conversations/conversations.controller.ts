@@ -1,8 +1,21 @@
-import {Body,Controller,Get,Param,Patch,Post,Query,UseGuards,} from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import type { User } from '../users/entities/user.entity';
-import type {CreateConversationResponse,GetConversationsResponse,PatchConversationResponse,} from './conversations.types';
+import type { User } from '../users/users.types';
+import type {
+  CreateConversationResponse,
+  GetConversationsResponse,
+  PatchConversationResponse,
+} from './conversations.types';
 import { ConversationsService } from './conversations.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { GetConversationsQueryDto } from './dto/get-conversations.query.dto';

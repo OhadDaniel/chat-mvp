@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConversationsService } from '../conversations/conversations.service';
 import { minutesAgo, SEED_MESSAGES } from '../database/seed-data';
-import { toPublicUser, type User } from '../users/entities/user.entity';
+import { toPublicUser, type User } from '../users/users.types';
 import type {
   CreateMessageResponse,
   GetMessagesResponse,

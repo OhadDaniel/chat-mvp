@@ -3,15 +3,15 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { AppException } from '../common/errors/app.exception';
 import { isUniqueViolation } from '../database/pg-errors';
 import { daysAgo, SEED_CONVERSATIONS } from '../database/seed-data';
-import type { User } from '../users/entities/user.entity';
+import type { User } from '../users/users.types';
 import { UsersService } from '../users/users.service';
+import { ConversationsRepository } from './conversations.repository';
 import type {
+  Conversation,
   CreateConversationResponse,
   GetConversationsResponse,
   PatchConversationResponse,
 } from './conversations.types';
-import { ConversationsRepository } from './conversations.repository';
-import type { Conversation } from './entities/conversation.entity';
 import type { CreateConversationDto } from './dto/create-conversation.dto';
 import type { PatchConversationDto } from './dto/patch-conversation.dto';
 

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AppException } from '../../common/errors/app.exception';
-import type { User } from '../../users/entities/user.entity';
+import type { User } from '../../users/users.types';
 import { UsersService } from '../../users/users.service';
 import type { JwtPayload } from '../auth.types';
 

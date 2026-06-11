@@ -1,4 +1,4 @@
-import type { PublicUser } from '../users/entities/user.entity';
+import type { PublicUser } from '../users/users.types';
 
 /**
  * What we put inside the JWT — and nothing more.
