@@ -19,6 +19,18 @@ export class EnvironmentVariables {
   @Min(0)
   @Max(65535)
   PORT?: number
+
+  /** e.g. '1h', '15m' — how long access tokens live */
+  @IsOptional()
+  @IsString()
+  JWT_EXPIRES_IN?: string
+
+  /** bcrypt work factor — higher = slower = safer */
+  @IsOptional()
+  @IsInt()
+  @Min(4)
+  @Max(15)
+  BCRYPT_SALT_ROUNDS?: number
 }
 
 export function validateEnv(

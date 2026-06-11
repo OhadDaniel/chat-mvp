@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { Injectable, OnModuleInit } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import * as bcrypt from 'bcrypt'
 import { AppException } from '../common/errors/app.exception'
 import { initialsOf, type User } from './entities/user.entity'
@@ -11,8 +12,6 @@ export type CreateUserInput = {
   password: string
 }
 
-const BCRYPT_ROUNDS = 10
-
 /**
  * Owns the users domain: password hashing, email uniqueness,
  * normalization. The ONLY door into user data for other modules —
@@ -20,7 +19,14 @@ const BCRYPT_ROUNDS = 10
  */
 @Injectable()
 export class UsersService implements OnModuleInit {
-  constructor(private readonly usersRepository: UsersRepository) {}
+  private readonly saltRounds: number
+
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    configService: ConfigService,
+  ) {
+    this.saltRounds = configService.get<number>('BCRYPT_SALT_ROUNDS') ?? 10
+  }
 
   async onModuleInit(): Promise<void> {
     await this.seedDemoUsers()
@@ -58,7 +64,7 @@ export class UsersService implements OnModuleInit {
     name: string,
     password: string,
   ): Promise<User> {
-    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
+    const passwordHash = await bcrypt.hash(password, this.saltRounds)
     const trimmedName = name.trim()
 
     return this.usersRepository.insert({
