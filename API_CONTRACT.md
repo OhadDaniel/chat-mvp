@@ -1,7 +1,7 @@
 # API Contract — Chat MVP
 
-> Designed in Week 2 (frontend). Backend implements this contract in Week 3.  
-> All requests require `Authorization: Bearer <token>` except `POST /auth/login`.  
+> Designed in Week 2 (frontend). Implemented by the NestJS backend (Week 4).  
+> All requests require `Authorization: Bearer <token>` except `POST /auth/signup` and `POST /auth/login`.  
 > All timestamps are ISO 8601 strings. All IDs are strings (UUIDs).
 
 ---
@@ -19,15 +19,43 @@
 
 ## 1. Auth
 
-### `POST /auth/login`
+### `POST /auth/signup`
 
-Mock login — choose a user identity, receive a token.
+Create a new account and receive a JWT immediately.
 
 **Request body**
 ```ts
 {
-  name: string      // full name of the seeded user e.g. "Ohad Daniel"
-  password: string  // any non-empty string (not validated this week)
+  email: string     // valid email
+  password: string  // 8–72 characters
+  name: string      // display name, max 80 chars
+}
+```
+
+**Response `201`**
+```ts
+{
+  token: string
+  user: User
+}
+```
+
+**Response `409`**
+```ts
+{ error: { code: 'EMAIL_ALREADY_EXISTS', message: string } }
+```
+
+---
+
+### `POST /auth/login`
+
+Authenticate with email and password.
+
+**Request body**
+```ts
+{
+  email: string
+  password: string  // any non-empty string; wrong credentials return 401
 }
 ```
 
@@ -39,9 +67,29 @@ Mock login — choose a user identity, receive a token.
 }
 ```
 
-**Response `404`**
+**Response `401`**
 ```ts
-{ error: 'USER_NOT_FOUND' }
+{ error: { code: 'INVALID_CREDENTIALS', message: string } }
+```
+
+---
+
+### `GET /me`
+
+Return the currently authenticated user. Used by the frontend to restore the session after a page refresh.
+
+**Headers:** `Authorization: Bearer <token>` (required)
+
+**Response `200`**
+```ts
+{
+  user: User
+}
+```
+
+**Response `401`**
+```ts
+{ error: { code: 'UNAUTHORIZED', message: string } }
 ```
 
 ---
@@ -158,6 +206,7 @@ Send a new message. The frontend applies an optimistic update before this resolv
 ```ts
 type User = {
   id: string
+  email: string
   name: string
   avatarInitials: string   // e.g. "OD" — derived from name, used as avatar fallback
 }
@@ -229,3 +278,4 @@ HTTP status codes used:
 | 2026-06-03 | Error shape changed from `{ error: string }` to `{ error: { code, message, details? } }` |
 | 2026-06-03 | `DELETE /conversations/:id/messages/:messageId` removed |
 | 2026-06-03 | `POST /conversations` added |
+| 2026-06-10 | Week 4 auth: `POST /auth/signup`, `GET /me`; login uses `email` + `password`; `User` includes `email` |

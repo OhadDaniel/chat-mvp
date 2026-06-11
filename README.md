@@ -1,16 +1,15 @@
 # FellowshipChat MVP
 
-A frontend chat application built with React + TypeScript + Tailwind CSS.  
-Runs fully in the browser against a mock API (MSW) — ready to connect to a real backend in Week 3.
+A full-stack chat application: React + TypeScript + Tailwind CSS frontend, NestJS + PostgreSQL backend.
 
 ---
 
 ## Features
 
-- **Auth** — login with name and password, session persisted in localStorage
+- **Auth** — signup and login with email + password; JWT stored in `localStorage`; session restored via `GET /me` on refresh
 - **Conversations** — list all conversations, search by participant name, pin/unpin
 - **Messages** — view messages per conversation, send with optimistic update, auto-scroll
-- **Logout** — clears session and returns to login
+- **Logout** — clears token and returns to login; expired tokens (401) redirect to login automatically
 
 ---
 
@@ -18,7 +17,7 @@ Runs fully in the browser against a mock API (MSW) — ready to connect to a rea
 
 | Feature | Components |
 |---|---|
-| Auth | `LoginScreen` · `LoginForm` · `LoginCard` |
+| Auth | `AuthScreens` · `LoginScreen` · `SignupScreen` · `LogoutButton` |
 | Conversations | `ConversationSidebar` · `ConversationList` · `SearchBar` · `ConversationItem` |
 | Messages | `MessagesPanel` · `MessageList` · `Bubble` · `MessageComposer` |
 | App | `AppLayout` · `Toast` |
@@ -29,13 +28,17 @@ Runs fully in the browser against a mock API (MSW) — ready to connect to a rea
 
 ```
 Browser
-  └── React App
-        ├── Auth          →  apiClient  →  MSW /auth/login
-        ├── Conversations →  apiClient  →  MSW /conversations
-        └── Messages      →  apiClient  →  MSW /conversations/:id/messages
+  └── React App (Vite, port 5173)
+        ├── Auth          →  apiClient  →  /api/auth/signup | login | /me
+        ├── Conversations →  apiClient  →  /api/conversations
+        └── Messages      →  apiClient  →  /api/conversations/:id/messages
                                                     ↕
-                                               seed.ts (mock data)
+                                          NestJS backend (port 3001)
+                                                    ↕
+                                               PostgreSQL
 ```
+
+The Vite dev server proxies `/api` to `http://localhost:3001`.
 
 ---
 
@@ -47,13 +50,35 @@ All endpoints, request/response shapes, and error codes are documented in [`API_
 
 ## Stack
 
-React 19 · TypeScript · Tailwind CSS v4 · Vite · MSW v2 · Vitest
+**Frontend:** React 19 · TypeScript · Tailwind CSS v4 · Vite · Vitest  
+**Backend:** NestJS · PostgreSQL · JWT (Passport) · bcrypt · class-validator
 
 ---
 
 ## Run locally
 
+**Frontend**
+
 ```bash
 npm install
 npm run dev
+```
+
+**Backend** (from `backend/`)
+
+```bash
+npm install
+cp .env.example .env   # set ACCESS_TOKEN_SECRET and DATABASE_URL
+npm run dev
+```
+
+Backend listens on `http://localhost:3001`. Start the backend before using the app.
+
+---
+
+## Tests
+
+```bash
+npm test              # frontend unit tests (Vitest)
+cd backend && npm test && npm run test:e2e
 ```
