@@ -1,19 +1,4 @@
-/**
- * Database schema, applied idempotently at boot (CREATE ... IF NOT EXISTS).
- * Kept as a TS constant (not a .sql asset) so the compiled dist/ is
- * self-contained. Real migrations come when the schema starts evolving.
- *
- * Invariants enforced BY THE DATABASE (not by politeness):
- * - users.email unique                      → duplicate signup impossible
- * - conversation: exactly 2 distinct users  → pair columns + CHECK
- * - one conversation per pair               → UNIQUE (user_a_id, user_b_id)
- *   (user_a_id < user_b_id gives each pair ONE canonical form,
- *    so (alice,ben) and (ben,alice) cannot both exist)
- * - message must belong to a conversation   → NOT NULL FK
- * - message must have a sender              → NOT NULL FK
- *
- * Enforced in service code instead: "sender is a participant" (the 403 rule).
- */
+
 export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS users (
   id              TEXT PRIMARY KEY,
