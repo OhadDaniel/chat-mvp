@@ -21,11 +21,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<AuthResponse> {
-    const user = this.usersService.findByEmail(dto.email)
-
-    // Same 401 for "no such user" and "wrong password" —
-    // a different answer would let attackers probe which
-    // emails are registered (user enumeration).
+    const user = await this.usersService.findByEmail(dto.email)
     if (!user || !(await this.usersService.verifyPassword(user, dto.password))) {
       throw new AppException(401, 'INVALID_CREDENTIALS', 'Invalid credentials')
     }

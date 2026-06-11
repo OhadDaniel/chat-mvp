@@ -3,6 +3,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Matches,
   Max,
   Min,
   MinLength,
@@ -13,6 +14,13 @@ export class EnvironmentVariables {
   @IsString()
   @MinLength(32, { message: 'JWT_SECRET must be at least 32 characters' })
   JWT_SECRET!: string
+
+  /** e.g. postgres://user@localhost:5432/chat_mvp */
+  @IsString()
+  @Matches(/^postgres(ql)?:\/\//, {
+    message: 'DATABASE_URL must be a postgres:// connection string',
+  })
+  DATABASE_URL!: string
 
   @IsOptional()
   @IsInt()

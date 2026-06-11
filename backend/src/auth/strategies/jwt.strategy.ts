@@ -33,8 +33,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * We load the real user so controllers get a full, typed User —
    * and so a deleted user with a still-valid token gets 401.
    */
-  validate(payload: JwtPayload): User {
-    const user = this.usersService.findById(payload.sub)
+  async validate(payload: JwtPayload): Promise<User> {
+    const user = await this.usersService.findById(payload.sub)
 
     if (!user) {
       throw new AppException(401, 'UNAUTHORIZED', 'User no longer exists')

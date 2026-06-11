@@ -35,7 +35,7 @@ export class UsersService implements OnModuleInit {
   async create(input: CreateUserInput): Promise<User> {
     const email = normalizeEmail(input.email)
 
-    if (this.usersRepository.findByEmail(email)) {
+    if (await this.usersRepository.findByEmail(email)) {
       throw new AppException(
         409,
         'EMAIL_ALREADY_EXISTS',
@@ -46,11 +46,11 @@ export class UsersService implements OnModuleInit {
     return this.insertUser(randomUUID(), email, input.name, input.password)
   }
 
-  findByEmail(email: string): User | undefined {
+  findByEmail(email: string): Promise<User | undefined> {
     return this.usersRepository.findByEmail(normalizeEmail(email))
   }
 
-  findById(id: string): User | undefined {
+  findById(id: string): Promise<User | undefined> {
     return this.usersRepository.findById(id)
   }
 
@@ -82,7 +82,7 @@ export class UsersService implements OnModuleInit {
    * In-memory only — gone next week when Mongo lands.
    */
   private async seedDemoUsers(): Promise<void> {
-    if (this.usersRepository.count() > 0) {
+    if ((await this.usersRepository.count()) > 0) {
       return
     }
 

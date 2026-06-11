@@ -1,9 +1,5 @@
 import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common'
-import {
-  toPublicUser,
-  type PublicUser,
-  type User,
-} from '../users/entities/user.entity'
+import {toPublicUser,type PublicUser,type User,} from '../users/entities/user.entity'
 import { AuthService } from './auth.service'
 import type { AuthResponse } from './auth.types'
 import { CurrentUser } from './decorators/current-user.decorator'

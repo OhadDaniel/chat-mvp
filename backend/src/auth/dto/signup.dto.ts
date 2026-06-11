@@ -12,7 +12,7 @@ export class SignupDto {
 
   @IsString()
   @MinLength(8, { message: 'password must be at least 8 characters' })
-  @MaxLength(72, { message: 'password must be at most 72 characters' }) // bcrypt input limit
+  @MaxLength(72, { message: 'password must be at most 72 characters' }) 
   password!: string
 
   @IsString()
