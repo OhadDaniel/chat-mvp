@@ -4,10 +4,10 @@ import {
   Logger,
   OnModuleDestroy,
   OnModuleInit,
-} from '@nestjs/common'
-import { Pool } from 'pg'
-import { PG_POOL } from './database.constants'
-import { SCHEMA_SQL } from './schema'
+} from '@nestjs/common';
+import { Pool } from 'pg';
+import { PG_POOL } from './database.constants';
+import { SCHEMA_SQL } from './schema';
 
 /**
  * Lifecycle keeper for the database:
@@ -17,16 +17,16 @@ import { SCHEMA_SQL } from './schema'
  */
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(DatabaseService.name)
+  private readonly logger = new Logger(DatabaseService.name);
 
   constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
 
   async onModuleInit(): Promise<void> {
-    await this.pool.query(SCHEMA_SQL)
-    this.logger.log('Database schema ensured')
+    await this.pool.query(SCHEMA_SQL);
+    this.logger.log('Database schema ensured');
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.pool.end()
+    await this.pool.end();
   }
 }

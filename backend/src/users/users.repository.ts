@@ -1,7 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common'
-import { Pool } from 'pg'
-import { PG_POOL } from '../database/database.constants'
-import type { User } from './entities/user.entity'
+import { Inject, Injectable } from '@nestjs/common';
+import { Pool } from 'pg';
+import { PG_POOL } from '../database/database.constants';
+import type { User } from './entities/user.entity';
 
 /**
  * Postgres implementation of the users store. Still deliberately dumb:
@@ -22,8 +22,8 @@ export class UsersRepository {
          FROM users
         WHERE id = $1`,
       [id],
-    )
-    return result.rows[0] && rowToUser(result.rows[0])
+    );
+    return result.rows[0] && rowToUser(result.rows[0]);
   }
 
   async findByEmail(email: string): Promise<User | undefined> {
@@ -32,8 +32,8 @@ export class UsersRepository {
          FROM users
         WHERE email = $1`,
       [email],
-    )
-    return result.rows[0] && rowToUser(result.rows[0])
+    );
+    return result.rows[0] && rowToUser(result.rows[0]);
   }
 
   async insert(user: User): Promise<User> {
@@ -41,26 +41,26 @@ export class UsersRepository {
       `INSERT INTO users (id, email, name, avatar_initials, password_hash)
        VALUES ($1, $2, $3, $4, $5)`,
       [user.id, user.email, user.name, user.avatarInitials, user.passwordHash],
-    )
-    return user
+    );
+    return user;
   }
 
   async count(): Promise<number> {
     const result = await this.pool.query<{ count: string }>(
       'SELECT count(*) AS count FROM users',
-    )
-    return Number(result.rows[0]?.count ?? 0)
+    );
+    return Number(result.rows[0]?.count ?? 0);
   }
 }
 
 /** Raw row shape (snake_case, as Postgres returns it). */
 type UserRow = {
-  id: string
-  email: string
-  name: string
-  avatar_initials: string
-  password_hash: string
-}
+  id: string;
+  email: string;
+  name: string;
+  avatar_initials: string;
+  password_hash: string;
+};
 
 function rowToUser(row: UserRow): User {
   return {
@@ -69,5 +69,5 @@ function rowToUser(row: UserRow): User {
     name: row.name,
     avatarInitials: row.avatar_initials,
     passwordHash: row.password_hash,
-  }
+  };
 }

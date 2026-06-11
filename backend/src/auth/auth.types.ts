@@ -1,4 +1,4 @@
-import type { PublicUser } from '../users/entities/user.entity'
+import type { PublicUser } from '../users/entities/user.entity';
 
 /**
  * What we put inside the JWT — and nothing more.
@@ -6,11 +6,11 @@ import type { PublicUser } from '../users/entities/user.entity'
  */
 export type JwtPayload = {
   /** standard "subject" claim — the user id */
-  sub: string
-  email: string
-}
+  sub: string;
+  email: string;
+};
 
 export type AuthResponse = {
-  token: string
-  user: PublicUser
-}
+  token: string;
+  user: PublicUser;
+};

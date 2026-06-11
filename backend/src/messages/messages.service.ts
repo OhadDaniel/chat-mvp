@@ -1,17 +1,18 @@
-import { randomUUID } from 'node:crypto'
-import { Injectable, OnModuleInit } from '@nestjs/common'
-import { ConversationsService } from '../conversations/conversations.service'
-import { toPublicUser, type User } from '../users/entities/user.entity'
+import { randomUUID } from 'node:crypto';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConversationsService } from '../conversations/conversations.service';
+import { minutesAgo, SEED_MESSAGES } from '../database/seed-data';
+import { toPublicUser, type User } from '../users/entities/user.entity';
 import type {
   CreateMessageResponse,
   GetMessagesResponse,
-} from './messages.types'
-import type { CreateMessageDto } from './dto/create-message.dto'
-import type { GetMessagesQueryDto } from './dto/get-messages.query.dto'
-import { MessagesRepository } from './messages.repository'
+} from './messages.types';
+import type { CreateMessageDto } from './dto/create-message.dto';
+import type { GetMessagesQueryDto } from './dto/get-messages.query.dto';
+import { MessagesRepository } from './messages.repository';
 
-const DEFAULT_LIMIT = 30
-const MAX_LIMIT = 50
+const DEFAULT_LIMIT = 30;
+const MAX_LIMIT = 50;
 
 /**
  * Composes the conversations module's public API (the 403 rule) with
@@ -30,7 +31,7 @@ export class MessagesService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    await this.seedDemoMessages()
+    await this.seedDemoMessages();
   }
 
   async getPage(
@@ -39,24 +40,27 @@ export class MessagesService implements OnModuleInit {
     query: GetMessagesQueryDto,
   ): Promise<GetMessagesResponse> {
     // 404 if missing, 403 if not a participant — before reading anything
-    await this.conversationsService.getForParticipant(conversationId, userId)
+    await this.conversationsService.getForParticipant(conversationId, userId);
 
     // week-3 behavior preserved: silent cap at 50, unknown cursor = newest page
-    const limit = Math.min(query.limit ?? DEFAULT_LIMIT, MAX_LIMIT)
+    const limit = Math.min(query.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const before = query.cursor
-      ? await this.messagesRepository.findCursorPoint(conversationId, query.cursor)
-      : undefined
+      ? await this.messagesRepository.findCursorPoint(
+          conversationId,
+          query.cursor,
+        )
+      : undefined;
 
     const { messages, hasMore } = await this.messagesRepository.findPageBefore(
       conversationId,
       before,
       limit,
-    )
+    );
 
     return {
       messages,
-      nextCursor: hasMore && messages.length > 0 ? messages[0]!.id : null,
-    }
+      nextCursor: hasMore && messages.length > 0 ? messages[0].id : null,
+    };
   }
 
   async create(
@@ -65,46 +69,35 @@ export class MessagesService implements OnModuleInit {
     dto: CreateMessageDto,
   ): Promise<CreateMessageResponse> {
     // same gate as reads: participants only (403), conversation must exist (404)
-    await this.conversationsService.getForParticipant(conversationId, sender.id)
+    await this.conversationsService.getForParticipant(
+      conversationId,
+      sender.id,
+    );
 
     const message = await this.messagesRepository.insert(
       randomUUID(),
       conversationId,
       toPublicUser(sender),
       dto.content,
-    )
+    );
 
-    return { message }
+    return { message };
   }
 
-  /** Same demo history as the week-3 seed store, minutes-ago timestamps. */
+  /** Same demo history as the week-3 seed store. Data lives in seed-data.ts. */
   private async seedDemoMessages(): Promise<void> {
     if ((await this.messagesRepository.count()) > 0) {
-      return
+      return;
     }
 
-    const minutesAgo = (minutes: number): Date =>
-      new Date(Date.now() - minutes * 60 * 1000)
-
-    const seeds: ReadonlyArray<
-      [id: string, conversationId: string, senderId: string, content: string, minutes: number]
-    > = [
-      ['msg-1', 'conv-1', 'user-2', 'Hey! are we still on for the review at 3pm?', 10],
-      ['msg-2', 'conv-1', 'user-1', "Yes, definitely! I'll send the doc link beforehand", 8],
-      ['msg-3', 'conv-1', 'user-2', 'sounds good, see you then!', 2],
-      ['msg-4', 'conv-2', 'user-1', 'Just pushed the hotfix branch', 30],
-      ['msg-5', 'conv-2', 'user-3', 'did you push the fix?', 18],
-      ['msg-6', 'conv-3', 'user-4', 'let me check the spec', 60],
-    ]
-
-    for (const [id, conversationId, senderId, content, minutes] of seeds) {
+    for (const seed of SEED_MESSAGES) {
       await this.messagesRepository.insertSeed(
-        id,
-        conversationId,
-        senderId,
-        content,
-        minutesAgo(minutes),
-      )
+        seed.id,
+        seed.conversationId,
+        seed.senderId,
+        seed.content,
+        minutesAgo(seed.minutesAgo),
+      );
     }
   }
 }

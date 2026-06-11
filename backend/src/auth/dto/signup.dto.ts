@@ -4,19 +4,19 @@ import {
   IsString,
   MaxLength,
   MinLength,
-} from 'class-validator'
+} from 'class-validator';
 
 export class SignupDto {
   @IsEmail()
-  email!: string
+  email!: string;
 
   @IsString()
   @MinLength(8, { message: 'password must be at least 8 characters' })
-  @MaxLength(72, { message: 'password must be at most 72 characters' }) 
-  password!: string
+  @MaxLength(72, { message: 'password must be at most 72 characters' })
+  password!: string;
 
   @IsString()
   @IsNotEmpty()
   @MaxLength(80)
-  name!: string
+  name!: string;
 }

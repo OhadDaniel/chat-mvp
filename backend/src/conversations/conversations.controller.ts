@@ -7,19 +7,19 @@ import {
   Post,
   Query,
   UseGuards,
-} from '@nestjs/common'
-import { CurrentUser } from '../auth/decorators/current-user.decorator'
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
-import type { User } from '../users/entities/user.entity'
+} from '@nestjs/common';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { User } from '../users/entities/user.entity';
 import type {
   CreateConversationResponse,
   GetConversationsResponse,
   PatchConversationResponse,
-} from './conversations.types'
-import { ConversationsService } from './conversations.service'
-import { CreateConversationDto } from './dto/create-conversation.dto'
-import { GetConversationsQueryDto } from './dto/get-conversations.query.dto'
-import { PatchConversationDto } from './dto/patch-conversation.dto'
+} from './conversations.types';
+import { ConversationsService } from './conversations.service';
+import { CreateConversationDto } from './dto/create-conversation.dto';
+import { GetConversationsQueryDto } from './dto/get-conversations.query.dto';
+import { PatchConversationDto } from './dto/patch-conversation.dto';
 
 /**
  * Guard at controller level: every route below — current and future —
@@ -35,7 +35,7 @@ export class ConversationsController {
     @CurrentUser() user: User,
     @Query() query: GetConversationsQueryDto,
   ): Promise<GetConversationsResponse> {
-    return this.conversationsService.list(user.id, query.search)
+    return this.conversationsService.list(user.id, query.search);
   }
 
   @Post()
@@ -43,7 +43,7 @@ export class ConversationsController {
     @CurrentUser() user: User,
     @Body() dto: CreateConversationDto,
   ): Promise<CreateConversationResponse> {
-    return this.conversationsService.create(user, dto)
+    return this.conversationsService.create(user, dto);
   }
 
   @Patch(':id')
@@ -52,6 +52,6 @@ export class ConversationsController {
     @Param('id') id: string,
     @Body() dto: PatchConversationDto,
   ): Promise<PatchConversationResponse> {
-    return this.conversationsService.setPinned(id, user.id, dto)
+    return this.conversationsService.setPinned(id, user.id, dto);
   }
 }

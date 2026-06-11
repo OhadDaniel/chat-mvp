@@ -1,15 +1,15 @@
-import type { Conversation } from './entities/conversation.entity'
+import type { Conversation } from './entities/conversation.entity';
 
 /** Response envelopes — identical to the week-3 contract. */
 
 export type GetConversationsResponse = {
-  conversations: Conversation[]
-}
+  conversations: Conversation[];
+};
 
 export type CreateConversationResponse = {
-  conversation: Conversation
-}
+  conversation: Conversation;
+};
 
 export type PatchConversationResponse = {
-  conversation: Conversation
-}
+  conversation: Conversation;
+};

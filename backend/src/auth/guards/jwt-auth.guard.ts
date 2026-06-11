@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common'
-import { AuthGuard } from '@nestjs/passport'
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 /**
  * The checkpoint. `@UseGuards(JwtAuthGuard)` on a route/controller

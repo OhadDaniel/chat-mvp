@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
-import { Pool } from 'pg'
-import { PG_POOL } from './database.constants'
-import { DatabaseService } from './database.service'
+import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Pool } from 'pg';
+import { PG_POOL } from './database.constants';
+import { DatabaseService } from './database.service';
 
 /**
  * Owns the Postgres connection. Feature modules import this module

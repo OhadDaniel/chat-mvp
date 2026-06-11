@@ -1,4 +1,3 @@
-
 export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS users (
   id              TEXT PRIMARY KEY,
@@ -32,4 +31,4 @@ CREATE INDEX IF NOT EXISTS idx_conversations_user_a ON conversations (user_a_id)
 CREATE INDEX IF NOT EXISTS idx_conversations_user_b ON conversations (user_b_id);
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_sent
   ON messages (conversation_id, sent_at, id);
-`
+`;

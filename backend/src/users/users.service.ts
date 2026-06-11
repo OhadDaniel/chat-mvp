@@ -1,16 +1,17 @@
-import { randomUUID } from 'node:crypto'
-import { Injectable, OnModuleInit } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
-import * as bcrypt from 'bcrypt'
-import { AppException } from '../common/errors/app.exception'
-import { initialsOf, type User } from './entities/user.entity'
-import { UsersRepository } from './users.repository'
+import { randomUUID } from 'node:crypto';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
+import { AppException } from '../common/errors/app.exception';
+import { SEED_USER_PASSWORD, SEED_USERS } from '../database/seed-data';
+import { initialsOf, type User } from './entities/user.entity';
+import { UsersRepository } from './users.repository';
 
 export type CreateUserInput = {
-  email: string
-  name: string
-  password: string
-}
+  email: string;
+  name: string;
+  password: string;
+};
 
 /**
  * Owns the users domain: password hashing, email uniqueness,
@@ -19,43 +20,43 @@ export type CreateUserInput = {
  */
 @Injectable()
 export class UsersService implements OnModuleInit {
-  private readonly saltRounds: number
+  private readonly saltRounds: number;
 
   constructor(
     private readonly usersRepository: UsersRepository,
     configService: ConfigService,
   ) {
-    this.saltRounds = configService.get<number>('BCRYPT_SALT_ROUNDS') ?? 10
+    this.saltRounds = configService.get<number>('BCRYPT_SALT_ROUNDS') ?? 10;
   }
 
   async onModuleInit(): Promise<void> {
-    await this.seedDemoUsers()
+    await this.seedDemoUsers();
   }
 
   async create(input: CreateUserInput): Promise<User> {
-    const email = normalizeEmail(input.email)
+    const email = normalizeEmail(input.email);
 
     if (await this.usersRepository.findByEmail(email)) {
       throw new AppException(
         409,
         'EMAIL_ALREADY_EXISTS',
         'A user with this email already exists',
-      )
+      );
     }
 
-    return this.insertUser(randomUUID(), email, input.name, input.password)
+    return this.insertUser(randomUUID(), email, input.name, input.password);
   }
 
   findByEmail(email: string): Promise<User | undefined> {
-    return this.usersRepository.findByEmail(normalizeEmail(email))
+    return this.usersRepository.findByEmail(normalizeEmail(email));
   }
 
   findById(id: string): Promise<User | undefined> {
-    return this.usersRepository.findById(id)
+    return this.usersRepository.findById(id);
   }
 
   async verifyPassword(user: User, password: string): Promise<boolean> {
-    return bcrypt.compare(password, user.passwordHash)
+    return bcrypt.compare(password, user.passwordHash);
   }
 
   private async insertUser(
@@ -64,8 +65,8 @@ export class UsersService implements OnModuleInit {
     name: string,
     password: string,
   ): Promise<User> {
-    const passwordHash = await bcrypt.hash(password, this.saltRounds)
-    const trimmedName = name.trim()
+    const passwordHash = await bcrypt.hash(password, this.saltRounds);
+    const trimmedName = name.trim();
 
     return this.usersRepository.insert({
       id,
@@ -73,32 +74,24 @@ export class UsersService implements OnModuleInit {
       name: trimmedName,
       avatarInitials: initialsOf(trimmedName),
       passwordHash,
-    })
+    });
   }
 
   /**
-   * Stable demo accounts (password: Password123!) so the seeded
-   * conversations keep making sense and cross-user 403s are testable.
-   * In-memory only — gone next week when Mongo lands.
+   * Stable demo accounts so the seeded conversations keep making
+   * sense and cross-user 403s are testable. Data lives in seed-data.ts.
    */
   private async seedDemoUsers(): Promise<void> {
     if ((await this.usersRepository.count()) > 0) {
-      return
+      return;
     }
 
-    const seeds: ReadonlyArray<[id: string, email: string, name: string]> = [
-      ['user-1', 'ohad@chat.dev', 'Ohad Daniel'],
-      ['user-2', 'alice@chat.dev', 'Alice Levi'],
-      ['user-3', 'ben@chat.dev', 'Ben Katz'],
-      ['user-4', 'clara@chat.dev', 'Clara Green'],
-    ]
-
-    for (const [id, email, name] of seeds) {
-      await this.insertUser(id, email, name, 'Password123!')
+    for (const { id, email, name } of SEED_USERS) {
+      await this.insertUser(id, email, name, SEED_USER_PASSWORD);
     }
   }
 }
 
 function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase()
+  return email.trim().toLowerCase();
 }

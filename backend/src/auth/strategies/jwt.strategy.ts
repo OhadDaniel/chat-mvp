@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
-import { PassportStrategy } from '@nestjs/passport'
-import { ExtractJwt, Strategy } from 'passport-jwt'
-import { AppException } from '../../common/errors/app.exception'
-import type { User } from '../../users/entities/user.entity'
-import { UsersService } from '../../users/users.service'
-import type { JwtPayload } from '../auth.types'
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { AppException } from '../../common/errors/app.exception';
+import type { User } from '../../users/entities/user.entity';
+import { UsersService } from '../../users/users.service';
+import type { JwtPayload } from '../auth.types';
 
 /**
  * The one place that knows HOW a token is verified:
@@ -25,7 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ignoreExpiration: false,
       secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
       algorithms: ['HS256'],
-    })
+    });
   }
 
   /**
@@ -34,12 +34,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * and so a deleted user with a still-valid token gets 401.
    */
   async validate(payload: JwtPayload): Promise<User> {
-    const user = await this.usersService.findById(payload.sub)
+    const user = await this.usersService.findById(payload.sub);
 
     if (!user) {
-      throw new AppException(401, 'UNAUTHORIZED', 'User no longer exists')
+      throw new AppException(401, 'UNAUTHORIZED', 'User no longer exists');
     }
 
-    return user
+    return user;
   }
 }

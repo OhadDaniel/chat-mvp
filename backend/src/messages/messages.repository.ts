@@ -1,19 +1,19 @@
-import { Inject, Injectable } from '@nestjs/common'
-import { Pool } from 'pg'
-import { PG_POOL } from '../database/database.constants'
-import type { PublicUser } from '../users/entities/user.entity'
-import type { Message } from './entities/message.entity'
+import { Inject, Injectable } from '@nestjs/common';
+import { Pool } from 'pg';
+import { PG_POOL } from '../database/database.constants';
+import type { PublicUser } from '../users/entities/user.entity';
+import type { Message } from './entities/message.entity';
 
 /** A point in the message timeline — used for keyset pagination. */
 export type CursorPoint = {
-  sentAt: Date
-  id: string
-}
+  sentAt: Date;
+  id: string;
+};
 
 export type MessagePage = {
-  messages: Message[]
-  hasMore: boolean
-}
+  messages: Message[];
+  hasMore: boolean;
+};
 
 /**
  * SQL store for messages. Pagination happens IN the query (keyset:
@@ -29,7 +29,7 @@ export class MessagesRepository {
     SELECT m.id, m.conversation_id, m.content, m.sent_at, m.status,
            u.id AS s_id, u.email AS s_email, u.name AS s_name, u.avatar_initials AS s_initials
       FROM messages m
-      JOIN users u ON u.id = m.sender_id`
+      JOIN users u ON u.id = m.sender_id`;
 
   /** Resolve a cursor (message id) to its position in the timeline. */
   async findCursorPoint(
@@ -40,9 +40,9 @@ export class MessagesRepository {
       `SELECT id, sent_at FROM messages
         WHERE id = $1 AND conversation_id = $2`,
       [messageId, conversationId],
-    )
-    const row = result.rows[0]
-    return row && { id: row.id, sentAt: row.sent_at }
+    );
+    const row = result.rows[0];
+    return row && { id: row.id, sentAt: row.sent_at };
   }
 
   /**
@@ -55,22 +55,22 @@ export class MessagesRepository {
     before: CursorPoint | undefined,
     limit: number,
   ): Promise<MessagePage> {
-    const params: unknown[] = [conversationId]
-    let sql = `${this.baseSelect} WHERE m.conversation_id = $1`
+    const params: unknown[] = [conversationId];
+    let sql = `${this.baseSelect} WHERE m.conversation_id = $1`;
 
     if (before) {
-      params.push(before.sentAt, before.id)
-      sql += ` AND (m.sent_at, m.id) < ($2, $3)`
+      params.push(before.sentAt, before.id);
+      sql += ` AND (m.sent_at, m.id) < ($2, $3)`;
     }
 
-    params.push(limit + 1)
-    sql += ` ORDER BY m.sent_at DESC, m.id DESC LIMIT $${params.length}`
+    params.push(limit + 1);
+    sql += ` ORDER BY m.sent_at DESC, m.id DESC LIMIT $${params.length}`;
 
-    const result = await this.pool.query<MessageRow>(sql, params)
-    const hasMore = result.rows.length > limit
-    const page = result.rows.slice(0, limit).reverse() // back to ascending
+    const result = await this.pool.query<MessageRow>(sql, params);
+    const hasMore = result.rows.length > limit;
+    const page = result.rows.slice(0, limit).reverse(); // back to ascending
 
-    return { messages: page.map(rowToMessage), hasMore }
+    return { messages: page.map(rowToMessage), hasMore };
   }
 
   async insert(
@@ -84,9 +84,9 @@ export class MessagesRepository {
        VALUES ($1, $2, $3, $4)
        RETURNING sent_at, status`,
       [id, conversationId, sender.id, content],
-    )
+    );
 
-    const row = result.rows[0]!
+    const row = result.rows[0];
     return {
       id,
       conversationId,
@@ -94,7 +94,7 @@ export class MessagesRepository {
       content,
       sentAt: row.sent_at.toISOString(),
       status: 'sent',
-    }
+    };
   }
 
   /** Seed-only: explicit id and sent_at so demo history is stable. */
@@ -109,28 +109,28 @@ export class MessagesRepository {
       `INSERT INTO messages (id, conversation_id, sender_id, content, sent_at)
        VALUES ($1, $2, $3, $4, $5)`,
       [id, conversationId, senderId, content, sentAt],
-    )
+    );
   }
 
   async count(): Promise<number> {
     const result = await this.pool.query<{ count: string }>(
       'SELECT count(*) AS count FROM messages',
-    )
-    return Number(result.rows[0]?.count ?? 0)
+    );
+    return Number(result.rows[0]?.count ?? 0);
   }
 }
 
 type MessageRow = {
-  id: string
-  conversation_id: string
-  content: string
-  sent_at: Date
-  status: string
-  s_id: string
-  s_email: string
-  s_name: string
-  s_initials: string
-}
+  id: string;
+  conversation_id: string;
+  content: string;
+  sent_at: Date;
+  status: string;
+  s_id: string;
+  s_email: string;
+  s_name: string;
+  s_initials: string;
+};
 
 function rowToMessage(row: MessageRow): Message {
   return {
@@ -145,5 +145,5 @@ function rowToMessage(row: MessageRow): Message {
     content: row.content,
     sentAt: row.sent_at.toISOString(),
     status: 'sent',
-  }
+  };
 }

@@ -1,4 +1,4 @@
-import { HttpException } from '@nestjs/common'
+import { HttpException } from '@nestjs/common';
 
 /**
  * Domain exception carrying the Week 3 error contract:
@@ -7,12 +7,17 @@ import { HttpException } from '@nestjs/common'
  * `{ error: { code, message, details? } }` envelope.
  */
 export class AppException extends HttpException {
-  readonly code: string
-  readonly details?: unknown
+  readonly code: string;
+  readonly details?: unknown;
 
-  constructor(status: number, code: string, message: string, details?: unknown) {
-    super(message, status)
-    this.code = code
-    this.details = details
+  constructor(
+    status: number,
+    code: string,
+    message: string,
+    details?: unknown,
+  ) {
+    super(message, status);
+    this.code = code;
+    this.details = details;
   }
 }

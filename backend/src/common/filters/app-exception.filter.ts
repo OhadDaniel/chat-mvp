@@ -5,17 +5,17 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-} from '@nestjs/common'
-import type { Response } from 'express'
-import { AppException } from '../errors/app.exception'
+} from '@nestjs/common';
+import type { Response } from 'express';
+import { AppException } from '../errors/app.exception';
 
 type ErrorEnvelope = {
   error: {
-    code: string
-    message: string
-    details?: unknown
-  }
-}
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+};
 
 /**
  * Global filter — the Nest equivalent of the Week 3 `errorHandler`
@@ -24,27 +24,27 @@ type ErrorEnvelope = {
  */
 @Catch()
 export class AppExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AppExceptionFilter.name)
+  private readonly logger = new Logger(AppExceptionFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost): void {
-    const response = host.switchToHttp().getResponse<Response>()
-    const { status, body } = this.toEnvelope(exception)
+    const response = host.switchToHttp().getResponse<Response>();
+    const { status, body } = this.toEnvelope(exception);
 
     if (status >= 500) {
       this.logger.error(
         `${body.error.code}: ${body.error.message}`,
         exception instanceof Error ? exception.stack : String(exception),
-      )
+      );
     } else {
-      this.logger.warn(`${body.error.code}: ${body.error.message}`)
+      this.logger.warn(`${body.error.code}: ${body.error.message}`);
     }
 
-    response.status(status).json(body)
+    response.status(status).json(body);
   }
 
   private toEnvelope(exception: unknown): {
-    status: number
-    body: ErrorEnvelope
+    status: number;
+    body: ErrorEnvelope;
   } {
     if (exception instanceof AppException) {
       return {
@@ -58,15 +58,17 @@ export class AppExceptionFilter implements ExceptionFilter {
             }),
           },
         },
-      }
+      };
     }
 
     if (exception instanceof HttpException) {
-      const status = exception.getStatus()
+      const status = exception.getStatus();
       return {
         status,
-        body: { error: { code: codeFromStatus(status), message: exception.message } },
-      }
+        body: {
+          error: { code: codeFromStatus(status), message: exception.message },
+        },
+      };
     }
 
     return {
@@ -77,11 +79,11 @@ export class AppExceptionFilter implements ExceptionFilter {
           message: 'Something went wrong',
         },
       },
-    }
+    };
   }
 }
 
 function codeFromStatus(status: number): string {
-  const name: string | undefined = HttpStatus[status]
-  return name ?? 'ERROR'
+  const name: string | undefined = HttpStatus[status];
+  return name ?? 'ERROR';
 }

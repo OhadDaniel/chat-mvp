@@ -1,18 +1,19 @@
-import { randomUUID } from 'node:crypto'
-import { Injectable, OnModuleInit } from '@nestjs/common'
-import { AppException } from '../common/errors/app.exception'
-import { isUniqueViolation } from '../database/pg-errors'
-import type { User } from '../users/entities/user.entity'
-import { UsersService } from '../users/users.service'
+import { randomUUID } from 'node:crypto';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { AppException } from '../common/errors/app.exception';
+import { isUniqueViolation } from '../database/pg-errors';
+import { daysAgo, SEED_CONVERSATIONS } from '../database/seed-data';
+import type { User } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
 import type {
   CreateConversationResponse,
   GetConversationsResponse,
   PatchConversationResponse,
-} from './conversations.types'
-import { ConversationsRepository } from './conversations.repository'
-import type { Conversation } from './entities/conversation.entity'
-import type { CreateConversationDto } from './dto/create-conversation.dto'
-import type { PatchConversationDto } from './dto/patch-conversation.dto'
+} from './conversations.types';
+import { ConversationsRepository } from './conversations.repository';
+import type { Conversation } from './entities/conversation.entity';
+import type { CreateConversationDto } from './dto/create-conversation.dto';
+import type { PatchConversationDto } from './dto/patch-conversation.dto';
 
 /**
  * Owns the conversations domain: the pair rules (distinct users,
@@ -27,7 +28,7 @@ export class ConversationsService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    await this.seedDemoConversations()
+    await this.seedDemoConversations();
   }
 
   async list(
@@ -37,8 +38,8 @@ export class ConversationsService implements OnModuleInit {
     const conversations = await this.conversationsRepository.findAllByUserId(
       userId,
       search,
-    )
-    return { conversations }
+    );
+    return { conversations };
   }
 
   async create(
@@ -50,29 +51,29 @@ export class ConversationsService implements OnModuleInit {
         400,
         'INVALID_PARTICIPANT',
         'Cannot start a conversation with yourself',
-      )
+      );
     }
 
-    const participant = await this.usersService.findById(dto.participantId)
+    const participant = await this.usersService.findById(dto.participantId);
     if (!participant) {
-      throw new AppException(404, 'USER_NOT_FOUND', 'Participant not found')
+      throw new AppException(404, 'USER_NOT_FOUND', 'Participant not found');
     }
 
     // Canonical order (a < b): one representation per pair, so the
     // UNIQUE constraint can do its job regardless of who initiates.
-    const [userAId, userBId] = [currentUser.id, participant.id].sort()
+    const [userAId, userBId] = [currentUser.id, participant.id].sort();
 
-    if (await this.conversationsRepository.existsByPair(userAId!, userBId!)) {
+    if (await this.conversationsRepository.existsByPair(userAId, userBId)) {
       throw new AppException(
         409,
         'CONVERSATION_ALREADY_EXISTS',
         'A conversation with this user already exists',
-      )
+      );
     }
 
-    const id = randomUUID()
+    const id = randomUUID();
     try {
-      await this.conversationsRepository.insert(id, userAId!, userBId!)
+      await this.conversationsRepository.insert(id, userAId, userBId);
     } catch (error) {
       // race-proof backstop: two simultaneous creates -> DB constraint
       if (isUniqueViolation(error)) {
@@ -80,13 +81,13 @@ export class ConversationsService implements OnModuleInit {
           409,
           'CONVERSATION_ALREADY_EXISTS',
           'A conversation with this user already exists',
-        )
+        );
       }
-      throw error
+      throw error;
     }
 
-    const conversation = await this.getByIdOrThrow(id)
-    return { conversation }
+    const conversation = await this.getByIdOrThrow(id);
+    return { conversation };
   }
 
   async setPinned(
@@ -94,11 +95,11 @@ export class ConversationsService implements OnModuleInit {
     userId: string,
     dto: PatchConversationDto,
   ): Promise<PatchConversationResponse> {
-    await this.getForParticipant(conversationId, userId)
-    await this.conversationsRepository.setPinned(conversationId, dto.pinned)
+    await this.getForParticipant(conversationId, userId);
+    await this.conversationsRepository.setPinned(conversationId, dto.pinned);
 
-    const conversation = await this.getByIdOrThrow(conversationId)
-    return { conversation }
+    const conversation = await this.getByIdOrThrow(conversationId);
+    return { conversation };
   }
 
   /**
@@ -111,43 +112,47 @@ export class ConversationsService implements OnModuleInit {
     conversationId: string,
     userId: string,
   ): Promise<Conversation> {
-    const conversation = await this.getByIdOrThrow(conversationId)
+    const conversation = await this.getByIdOrThrow(conversationId);
 
     const isParticipant = conversation.participants.some(
       (participant) => participant.id === userId,
-    )
+    );
     if (!isParticipant) {
       throw new AppException(
         403,
         'NOT_A_PARTICIPANT',
         'You are not a participant of this conversation',
-      )
+      );
     }
 
-    return conversation
+    return conversation;
   }
 
   private async getByIdOrThrow(id: string): Promise<Conversation> {
-    const conversation = await this.conversationsRepository.findById(id)
+    const conversation = await this.conversationsRepository.findById(id);
     if (!conversation) {
       throw new AppException(
         404,
         'CONVERSATION_NOT_FOUND',
         'Conversation not found',
-      )
+      );
     }
-    return conversation
+    return conversation;
   }
 
-  /** Demo conversations between the seeded users (same ids as week 3). */
+  /** Demo conversations between the seeded users. Data lives in seed-data.ts. */
   private async seedDemoConversations(): Promise<void> {
     if ((await this.conversationsRepository.count()) > 0) {
-      return
+      return;
     }
 
-    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-    await this.conversationsRepository.insert('conv-1', 'user-1', 'user-2', dayAgo)
-    await this.conversationsRepository.insert('conv-2', 'user-1', 'user-3')
-    await this.conversationsRepository.insert('conv-3', 'user-1', 'user-4')
+    for (const seed of SEED_CONVERSATIONS) {
+      await this.conversationsRepository.insert(
+        seed.id,
+        seed.userAId,
+        seed.userBId,
+        seed.pinnedDaysAgo !== undefined ? daysAgo(seed.pinnedDaysAgo) : null,
+      );
+    }
   }
 }

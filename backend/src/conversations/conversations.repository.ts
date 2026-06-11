@@ -1,7 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common'
-import { Pool } from 'pg'
-import { PG_POOL } from '../database/database.constants'
-import type { Conversation } from './entities/conversation.entity'
+import { Inject, Injectable } from '@nestjs/common';
+import { Pool } from 'pg';
+import { PG_POOL } from '../database/database.constants';
+import type { Conversation } from './entities/conversation.entity';
 
 /**
  * SQL store for conversations. Note what is NOT here: no lastMessage
@@ -36,33 +36,33 @@ export class ConversationsRepository {
          WHERE m.conversation_id = c.id
          ORDER BY m.sent_at DESC, m.id DESC
          LIMIT 1
-      ) lm ON true`
+      ) lm ON true`;
 
   async findAllByUserId(
     userId: string,
     search?: string,
   ): Promise<Conversation[]> {
-    const params: unknown[] = [userId]
+    const params: unknown[] = [userId];
     let sql = `${this.baseSelect}
-     WHERE (c.user_a_id = $1 OR c.user_b_id = $1)`
+     WHERE (c.user_a_id = $1 OR c.user_b_id = $1)`;
 
     if (search) {
-      params.push(`%${search}%`)
-      sql += ` AND (ua.name ILIKE $2 OR ub.name ILIKE $2)`
+      params.push(`%${search}%`);
+      sql += ` AND (ua.name ILIKE $2 OR ub.name ILIKE $2)`;
     }
 
-    sql += ` ORDER BY lm.sent_at DESC NULLS LAST, c.created_at DESC`
+    sql += ` ORDER BY lm.sent_at DESC NULLS LAST, c.created_at DESC`;
 
-    const result = await this.pool.query<ConversationRow>(sql, params)
-    return result.rows.map(rowToConversation)
+    const result = await this.pool.query<ConversationRow>(sql, params);
+    return result.rows.map(rowToConversation);
   }
 
   async findById(id: string): Promise<Conversation | undefined> {
     const result = await this.pool.query<ConversationRow>(
       `${this.baseSelect} WHERE c.id = $1`,
       [id],
-    )
-    return result.rows[0] && rowToConversation(result.rows[0])
+    );
+    return result.rows[0] && rowToConversation(result.rows[0]);
   }
 
   /** Pair lookup — callers must pass the canonical order (a < b). */
@@ -73,8 +73,8 @@ export class ConversationsRepository {
           WHERE user_a_id = $1 AND user_b_id = $2
        ) AS exists`,
       [userAId, userBId],
-    )
-    return result.rows[0]?.exists ?? false
+    );
+    return result.rows[0]?.exists ?? false;
   }
 
   async insert(
@@ -87,7 +87,7 @@ export class ConversationsRepository {
       `INSERT INTO conversations (id, user_a_id, user_b_id, pinned_at)
        VALUES ($1, $2, $3, $4)`,
       [id, userAId, userBId, pinnedAt],
-    )
+    );
   }
 
   async setPinned(id: string, pinned: boolean): Promise<void> {
@@ -96,43 +96,45 @@ export class ConversationsRepository {
           SET pinned_at = CASE WHEN $2 THEN now() ELSE NULL END
         WHERE id = $1`,
       [id, pinned],
-    )
+    );
   }
 
   async count(): Promise<number> {
     const result = await this.pool.query<{ count: string }>(
       'SELECT count(*) AS count FROM conversations',
-    )
-    return Number(result.rows[0]?.count ?? 0)
+    );
+    return Number(result.rows[0]?.count ?? 0);
   }
 }
 
 type ConversationRow = {
-  id: string
-  pinned_at: Date | null
-  created_at: Date
-  a_id: string
-  a_email: string
-  a_name: string
-  a_initials: string
-  b_id: string
-  b_email: string
-  b_name: string
-  b_initials: string
-  lm_content: string | null
-  lm_sent_at: Date | null
-  lm_sender_id: string | null
-}
+  id: string;
+  pinned_at: Date | null;
+  created_at: Date;
+  a_id: string;
+  a_email: string;
+  a_name: string;
+  a_initials: string;
+  b_id: string;
+  b_email: string;
+  b_name: string;
+  b_initials: string;
+  lm_content: string | null;
+  lm_sent_at: Date | null;
+  lm_sender_id: string | null;
+};
 
 function rowToConversation(row: ConversationRow): Conversation {
   const lastMessage =
-    row.lm_content !== null && row.lm_sent_at !== null && row.lm_sender_id !== null
+    row.lm_content !== null &&
+    row.lm_sent_at !== null &&
+    row.lm_sender_id !== null
       ? {
           content: row.lm_content,
           sentAt: row.lm_sent_at.toISOString(),
           senderId: row.lm_sender_id,
         }
-      : null
+      : null;
 
   return {
     id: row.id,
@@ -153,5 +155,5 @@ function rowToConversation(row: ConversationRow): Conversation {
     lastMessage,
     lastMessageAt: lastMessage?.sentAt ?? null,
     pinnedAt: row.pinned_at?.toISOString() ?? null,
-  }
+  };
 }

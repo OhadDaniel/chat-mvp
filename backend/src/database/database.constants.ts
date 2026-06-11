@@ -4,4 +4,4 @@
  * without importing each other (circular imports leave values
  * undefined at decorator-evaluation time).
  */
-export const PG_POOL = 'PG_POOL'
+export const PG_POOL = 'PG_POOL';
