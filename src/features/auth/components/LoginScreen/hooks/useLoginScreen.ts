@@ -1,7 +1,7 @@
 import { useState }            from 'react'
 import type { FormEvent }      from 'react'
 import { useAuth }             from '@/features/auth/hooks/useAuth'
-import { ApiRequestError }     from '@/api/apiClient'
+import { ApiRequestError }     from '@/api/client'
 import {
   LOGIN_ERROR_EMPTY,
   LOGIN_ERROR_INVALID_CREDENTIALS,

@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
-import type { User }                        from '@/features/auth/types/index'
-import { authApi }                          from '@/api/apiClient'
+import { useState, useEffect } from 'react'
+import type { User }                        from '@/features/user/types'
+import { authApi }                          from '@/features/auth/api/auth.api'
 import { STORAGE_KEY_TOKEN }                from '@/shared/constants'
 
 type UseAuthStateReturn = {
@@ -31,7 +31,7 @@ export function useAuthState(): UseAuthStateReturn {
       .finally(() => setIsLoading(false))
   }, [])
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
       const { token, user } = await authApi.login({ email, password })
@@ -40,9 +40,9 @@ export function useAuthState(): UseAuthStateReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }
 
-  const signup = useCallback(async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string) => {
     setIsLoading(true)
     try {
       const { token, user } = await authApi.signup({ email, password, name })
@@ -51,12 +51,12 @@ export function useAuthState(): UseAuthStateReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }
 
-  const logout = useCallback(() => {
+  const logout = () => {
     localStorage.removeItem(STORAGE_KEY_TOKEN)
     setUser(null)
-  }, [])
+  }
 
   return { user, isLoading, login, signup, logout }
 }

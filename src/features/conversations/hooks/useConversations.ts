@@ -1,21 +1,19 @@
-import { useEffect, useCallback }      from 'react'
+import { useEffect }                   from 'react'
 import { useAuth }                     from '@/features/auth/hooks/useAuth'
-import { conversationsApi }            from '@/api/apiClient'
+import { conversationsApi }            from '@/features/conversations/api/conversations.api'
 import { CONVERSATIONS_STATUS }        from '../constants'
 import { sortConversations }           from '../utils/conversations.utils'
 import { useConversationsState }       from './useConversationsState'
-import { useDebounce }                 from '@/shared/hooks/useDebounce'
+import { useDebounced }                from '@/shared/hooks/useDebounced'
 import type { UseConversationsReturn } from '../types'
 
 const SEARCH_DEBOUNCE_MS = 300
 
 export function useConversations(): UseConversationsReturn {
-  const { user }                                               = useAuth()
+  const { user }                                                          = useAuth()
   const { state, setConversations, setStatus, setSearch, applyTogglePin } = useConversationsState()
 
-  const debouncedSearch = useDebounce(state.search, SEARCH_DEBOUNCE_MS)
-
-  const fetchConversations = useCallback(async (search: string) => {
+  const fetchConversations = async (search?: string) => {
     setStatus(CONVERSATIONS_STATUS.LOADING)
     try {
       const { conversations } = await conversationsApi.getAll(search || undefined)
@@ -24,22 +22,32 @@ export function useConversations(): UseConversationsReturn {
     } catch {
       setStatus(CONVERSATIONS_STATUS.ERROR)
     }
-  }, [])
+  }
 
+  const debouncedFetch = useDebounced(fetchConversations, SEARCH_DEBOUNCE_MS)
+
+  // Initial load once the user is known. Search-driven refetches go through
+  // handleSearch below, so this effect only depends on `user`.
   useEffect(() => {
-    if (user) fetchConversations(debouncedSearch)
-  }, [user, debouncedSearch, fetchConversations])
+    if (user) fetchConversations()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
-  const togglePin = useCallback(async (id: string, currentlyPinned: boolean) => {
+  const handleSearch = (search: string) => {
+    setSearch(search)        // keep the controlled input in sync immediately
+    debouncedFetch(search)   // gate the network call directly
+  }
+
+  const togglePin = async (id: string, currentlyPinned: boolean) => {
     const { conversation } = await conversationsApi.patch(id, { pinned: !currentlyPinned })
     applyTogglePin(id, conversation.pinnedAt)
-  }, [])
+  }
 
   return {
     conversations: sortConversations(state.conversations),
     status:        state.status,
     search:        state.search,
-    setSearch,
+    setSearch:     handleSearch,
     togglePin,
   }
 }

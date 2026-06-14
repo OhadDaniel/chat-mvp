@@ -1,7 +1,7 @@
 import { useState }            from 'react'
 import type { FormEvent }      from 'react'
 import { useAuth }             from '@/features/auth/hooks/useAuth'
-import { ApiRequestError }     from '@/api/apiClient'
+import { ApiRequestError }     from '@/api/client'
 import {
   SIGNUP_ERROR_EMPTY,
   SIGNUP_ERROR_EMAIL_TAKEN,

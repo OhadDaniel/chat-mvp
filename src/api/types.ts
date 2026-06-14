@@ -1,62 +1,8 @@
-import type { User } from '@/features/user/types'
-import type { Conversation } from '@/features/conversations/types/index'
-import type { Message } from '@/features/messages/types'
-
-
-
-
-export type LoginRequest = {
-  email:    string
-  password: string
-}
-
-export type LoginResponse = {
-  token: string
-  user: User
-}
-
-export type SignupRequest = {
-  email:    string
-  password: string
-  name:     string
-}
-
-export type SignupResponse = {
-  token: string
-  user: User
-}
-
-export type MeResponse = {
-  user: User
-}
-
-export type GetConversationsResponse = {
-  conversations: Conversation[]
-}
-
-export type PatchConversationRequest = {
-  pinned: boolean
-}
-
-export type PatchConversationResponse = {
-  conversation: Conversation
-}
-
-export type GetMessagesResponse = {
-  messages: Message[]
-  nextCursor: string | null
-}
-
-export type SendMessageRequest = {
-  content: string
-}
-
-export type SendMessageResponse = {
-  message: Message
-}
-
-
-
+/**
+ * Shared transport-level types. Per-feature request/response shapes now
+ * live beside their feature (features/<x>/api/); only the cross-cutting
+ * error contract stays here.
+ */
 export type ApiErrorCode =
   | 'UNAUTHORIZED'
   | 'INVALID_CREDENTIALS'
