@@ -1,46 +1,63 @@
-import type { Request, Response, NextFunction } from 'express'
-import type { GetConversationsQuery } from './conversations.types'
-import { getConversations } from './get-conversations.orchestrator'
-import { createConversationOrchestrator } from './create-conversation.orchestrator'
-import { patchConversationOrchestrator } from './patch-conversation.orchestrator'
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { User } from '../users/users.types';
+import type {
+  CreateConversationResponse,
+  GetConversationsResponse,
+  PatchConversationResponse,
+} from './conversations.types';
+import { CreateConversationDto } from './dto/create-conversation.dto';
+import { GetConversationsQueryDto } from './dto/get-conversations.query.dto';
+import { PatchConversationDto } from './dto/patch-conversation.dto';
+import { ListConversationsOrchestrator } from './orchestrators/list-conversations/list-conversations.orchestrator';
+import { CreateConversationOrchestrator } from './orchestrators/create-conversation/create-conversation.orchestrator';
+import { SetPinnedOrchestrator } from './orchestrators/set-pinned/set-pinned.orchestrator';
 
-export function getConversationsController(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
-  try {
-    const { search } = req.query as GetConversationsQuery
-    const result = getConversations(req.user!.id, search)
-    res.status(200).json(result)
-  } catch (err) {
-    next(err)
+/**
+ * Guard at controller level: every route below — current and future —
+ * requires a valid JWT. Impossible to forget on a new endpoint.
+ */
+@UseGuards(JwtAuthGuard)
+@Controller('conversations')
+export class ConversationsController {
+  constructor(
+    private readonly listConversationsOrchestrator: ListConversationsOrchestrator,
+    private readonly createConversationOrchestrator: CreateConversationOrchestrator,
+    private readonly setPinnedOrchestrator: SetPinnedOrchestrator,
+  ) {}
+
+  @Get()
+  list(
+    @CurrentUser() user: User,
+    @Query() query: GetConversationsQueryDto,
+  ): Promise<GetConversationsResponse> {
+    return this.listConversationsOrchestrator.run(user.id, query.search);
   }
-}
 
-export function createConversationController(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
-  try {
-    const result = createConversationOrchestrator(req.user!.id, req.body)
-    res.status(201).json(result)
-  } catch (err) {
-    next(err)
+  @Post()
+  create(
+    @CurrentUser() user: User,
+    @Body() dto: CreateConversationDto,
+  ): Promise<CreateConversationResponse> {
+    return this.createConversationOrchestrator.run(user, dto);
   }
-}
 
-export function patchConversationController(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
-  try {
-    const id = req.params.id as string
-    const result = patchConversationOrchestrator(id, req.user!.id, req.body)
-    res.status(200).json(result)
-  } catch (err) {
-    next(err)
+  @Patch(':id')
+  patch(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body() dto: PatchConversationDto,
+  ): Promise<PatchConversationResponse> {
+    return this.setPinnedOrchestrator.run(id, user.id, dto);
   }
 }

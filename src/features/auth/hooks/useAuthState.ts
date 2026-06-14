@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
-import type { User }                        from '@/features/auth/types/index'
-import { authApi }                          from '@/api/apiClient'
-import { STORAGE_KEY_TOKEN, STORAGE_KEY_USER } from '@/shared/constants'
+import { useState, useEffect } from 'react'
+import type { User }                        from '@/features/user/types'
+import { authApi }                          from '@/features/auth/api/auth.api'
+import { STORAGE_KEY_TOKEN }                from '@/shared/constants'
 
 type UseAuthStateReturn = {
   user:      User | null
   isLoading: boolean
-  login:     (name: string, password: string) => Promise<void>
+  login:     (email: string, password: string) => Promise<void>
+  signup:    (email: string, password: string, name: string) => Promise<void>
   logout:    () => void
 }
 
@@ -14,35 +15,48 @@ export function useAuthState(): UseAuthStateReturn {
   const [user,      setUser]      = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  // session restore: the token is the only thing we persist —
+  // /me verifies it server-side and returns a fresh user
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY_USER)
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored) as User)
-      } catch {
-        localStorage.removeItem(STORAGE_KEY_USER)
-      }
+    const token = localStorage.getItem(STORAGE_KEY_TOKEN)
+    if (!token) {
+      setIsLoading(false)
+      return
     }
-    setIsLoading(false)
+
+    authApi
+      .me()
+      .then(({ user }) => setUser(user))
+      .catch(() => localStorage.removeItem(STORAGE_KEY_TOKEN))
+      .finally(() => setIsLoading(false))
   }, [])
 
-  const login = useCallback(async (name: string, password: string) => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      const { token, user } = await authApi.login({ name, password })
+      const { token, user } = await authApi.login({ email, password })
       localStorage.setItem(STORAGE_KEY_TOKEN, token)
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user))
       setUser(user)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }
 
-  const logout = useCallback(() => {
+  const signup = async (email: string, password: string, name: string) => {
+    setIsLoading(true)
+    try {
+      const { token, user } = await authApi.signup({ email, password, name })
+      localStorage.setItem(STORAGE_KEY_TOKEN, token)
+      setUser(user)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const logout = () => {
     localStorage.removeItem(STORAGE_KEY_TOKEN)
-    localStorage.removeItem(STORAGE_KEY_USER)
     setUser(null)
-  }, [])
+  }
 
-  return { user, isLoading, login, logout }
+  return { user, isLoading, login, signup, logout }
 }

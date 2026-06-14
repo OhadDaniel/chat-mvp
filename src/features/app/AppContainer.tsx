@@ -1,5 +1,5 @@
 import { useAuth }                from '@/features/auth/hooks/useAuth'
-import { LoginScreenContainer }  from '@/features/auth/components/LoginScreen/LoginScreenContainer'
+import { AuthScreensContainer }  from '@/features/auth/components/AuthScreens/AuthScreensContainer'
 import { AppLayoutContainer }    from './AppLayoutContainer'
 
 export function AppContainer() {
@@ -7,5 +7,5 @@ export function AppContainer() {
 
   if (isLoading) return null
 
-  return user ? <AppLayoutContainer /> : <LoginScreenContainer />
+  return user ? <AppLayoutContainer /> : <AuthScreensContainer />
 }

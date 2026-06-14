@@ -1,4 +1,4 @@
-import { messagesApi }    from '@/api/apiClient'
+import { messagesApi }    from '@/features/messages/api/messages.api'
 import type { Message }   from '../types'
 import type { User }      from '@/features/user/types'
 

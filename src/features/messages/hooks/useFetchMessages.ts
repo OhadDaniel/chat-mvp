@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useToastContext }                   from '@/features/app/Toast/context/ToastContext'
 import { MESSAGES_ACTIONS, MESSAGES_STATUS } from '../constants'
 import { loadConversationMessages }          from '../utils/messages.utils'
@@ -13,9 +13,9 @@ export function useFetchMessages(
   const { showToast } = useToastContext()
   const [retryKey, setRetryKey] = useState(0)
 
-  const retryFetch = useCallback(() => {
+  const retryFetch = () => {
     setRetryKey(key => key + 1)
-  }, [])
+  }
 
   useEffect(() => {
     if (!conversationId) return

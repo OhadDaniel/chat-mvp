@@ -1,33 +1,47 @@
-import type { Request, Response, NextFunction } from 'express'
-import { getMessagesOrchestrator } from './get-messages.orchestrator'
-import { createMessageOrchestrator } from './create-message.orchestrator'
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { User } from '../users/users.types';
+import { CreateMessageDto } from './dto/create-message.dto';
+import { GetMessagesQueryDto } from './dto/get-messages.query.dto';
+import type {
+  CreateMessageResponse,
+  GetMessagesResponse,
+} from './messages.types';
+import { GetMessagesOrchestrator } from './orchestrators/get-messages/get-messages.orchestrator';
+import { CreateMessageOrchestrator } from './orchestrators/create-message/create-message.orchestrator';
 
-export function getMessagesController(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
-  try {
-    const id = req.params.id as string
-    const cursor = req.query.cursor as string | undefined
-    const limit = req.query.limit ? Number(req.query.limit) : undefined
-    const result = getMessagesOrchestrator(id, req.user!.id, cursor, limit)
-    res.status(200).json(result)
-  } catch (err) {
-    next(err)
+@UseGuards(JwtAuthGuard)
+@Controller('conversations/:conversationId/messages')
+export class MessagesController {
+  constructor(
+    private readonly getMessagesOrchestrator: GetMessagesOrchestrator,
+    private readonly createMessageOrchestrator: CreateMessageOrchestrator,
+  ) {}
+
+  @Get()
+  getPage(
+    @CurrentUser() user: User,
+    @Param('conversationId') conversationId: string,
+    @Query() query: GetMessagesQueryDto,
+  ): Promise<GetMessagesResponse> {
+    return this.getMessagesOrchestrator.run(conversationId, user.id, query);
   }
-}
 
-export function createMessageController(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
-  try {
-    const id = req.params.id as string
-    const result = createMessageOrchestrator(id, req.user!.id, req.body)
-    res.status(201).json(result)
-  } catch (err) {
-    next(err)
+  @Post()
+  create(
+    @CurrentUser() user: User,
+    @Param('conversationId') conversationId: string,
+    @Body() dto: CreateMessageDto,
+  ): Promise<CreateMessageResponse> {
+    return this.createMessageOrchestrator.run(conversationId, user, dto);
   }
 }

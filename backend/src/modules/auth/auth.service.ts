@@ -1,10 +1,20 @@
-import { findUserById, findUserByName } from './auth.repository'
-import type { User } from '../../types'
+import { Injectable } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import type { User } from '../users/users.types';
+import type { JwtPayload } from './auth.types';
 
-export function findById(id: string): User | undefined {
-  return findUserById(id)
-}
+/**
+ * Single-domain auth service: token issuance only. Credential checking
+ * and user creation belong to UsersService; composing the two into an
+ * AuthResponse is the login/signup orchestrators' job.
+ */
+@Injectable()
+export class AuthService {
+  constructor(private readonly jwtService: JwtService) {}
 
-export function findByName(name: string): User | undefined {
-  return findUserByName(name)
+  /** Sign a JWT carrying just the user id. */
+  issueToken(user: User): Promise<string> {
+    const payload: JwtPayload = { sub: user.id };
+    return this.jwtService.signAsync(payload);
+  }
 }
