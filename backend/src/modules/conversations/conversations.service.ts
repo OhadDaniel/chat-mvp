@@ -3,8 +3,6 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { AppException } from '../../common/errors/app.exception';
 import { isUniqueViolation } from '../../database/pg-errors';
 import { daysAgo, SEED_CONVERSATIONS } from '../../database/seed-data';
-import type { User } from '../users/users.types';
-import { UsersService } from '../users/users.service';
 import { ConversationsRepository } from './conversations.repository';
 import type {
   Conversation,
@@ -12,14 +10,18 @@ import type {
   GetConversationsResponse,
   PatchConversationResponse,
 } from './conversations.types';
-import type { CreateConversationDto } from './dto/create-conversation.dto';
 import type { PatchConversationDto } from './dto/patch-conversation.dto';
 
+/**
+ * Owns the conversations domain: the pair rules (distinct users,
+ * one conversation per pair), pinning, and the participant
+ * authorization rule (403). Single-entity — checking that the other
+ * participant exists is the create-conversation orchestrator's job.
+ */
 @Injectable()
 export class ConversationsService implements OnModuleInit {
   constructor(
     private readonly conversationsRepository: ConversationsRepository,
-    private readonly usersService: UsersService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -38,10 +40,10 @@ export class ConversationsService implements OnModuleInit {
   }
 
   async create(
-    currentUser: User,
-    dto: CreateConversationDto,
+    currentUserId: string,
+    participantId: string,
   ): Promise<CreateConversationResponse> {
-    if (dto.participantId === currentUser.id) {
+    if (participantId === currentUserId) {
       throw new AppException(
         400,
         'INVALID_PARTICIPANT',
@@ -49,12 +51,9 @@ export class ConversationsService implements OnModuleInit {
       );
     }
 
-    const participant = await this.usersService.findById(dto.participantId);
-    if (!participant) {
-      throw new AppException(404, 'USER_NOT_FOUND', 'Participant not found');
-    }
-
-    const [userAId, userBId] = [currentUser.id, participant.id].sort();
+    // Canonical order (a < b): one representation per pair, so the
+    // UNIQUE constraint can do its job regardless of who initiates.
+    const [userAId, userBId] = [currentUserId, participantId].sort();
 
     if (await this.conversationsRepository.existsByPair(userAId, userBId)) {
       throw new AppException(
@@ -68,6 +67,7 @@ export class ConversationsService implements OnModuleInit {
     try {
       await this.conversationsRepository.insert(id, userAId, userBId);
     } catch (error) {
+      // race-proof backstop: two simultaneous creates -> DB constraint
       if (isUniqueViolation(error)) {
         throw new AppException(
           409,
@@ -88,7 +88,8 @@ export class ConversationsService implements OnModuleInit {
     dto: PatchConversationDto,
   ): Promise<PatchConversationResponse> {
     // Gate on the participant pair only — no need to hydrate the whole
-    // conversation just to authorize.
+    // conversation just to authorize. The single full read happens once,
+    // after the write, to build the response.
     await this.assertParticipant(conversationId, userId);
     await this.conversationsRepository.setPinned(conversationId, dto.pinned);
 
@@ -96,6 +97,10 @@ export class ConversationsService implements OnModuleInit {
     return { conversation };
   }
 
+  /**
+   * Same 404-before-403 rule as getForParticipant, but authorizes off the
+   * lightweight pair lookup instead of the full hydrated read.
+   */
   private async assertParticipant(
     conversationId: string,
     userId: string,
@@ -118,6 +123,12 @@ export class ConversationsService implements OnModuleInit {
     }
   }
 
+  /**
+   * The authorization rule, in one place: 404 if the conversation
+   * doesn't exist, 403 if the caller isn't one of its two users.
+   * MessagesService composes this — every message read/write passes
+   * through here first.
+   */
   async getForParticipant(
     conversationId: string,
     userId: string,
@@ -150,6 +161,7 @@ export class ConversationsService implements OnModuleInit {
     return conversation;
   }
 
+  /** Demo conversations between the seeded users. Data lives in seed-data.ts. */
   private async seedDemoConversations(): Promise<void> {
     if ((await this.conversationsRepository.count()) > 0) {
       return;

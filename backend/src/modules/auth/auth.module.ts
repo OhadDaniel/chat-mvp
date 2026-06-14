@@ -3,13 +3,19 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule, type JwtSignOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { UsersModule } from '../users/users.module';
-import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
+/**
+ * Auth infrastructure module: token issuance (AuthService) plus the
+ * JWT verification pipeline (PassportModule + JwtStrategy) used by the
+ * guard. No controller — endpoints are wired by the auth orchestrators.
+ * UsersModule is imported for JwtStrategy.validate (load the live user
+ * behind a token); that's the guard pipeline, not endpoint orchestration.
+ */
 @Module({
   imports: [
-    UsersModule, // gives us UsersService (and only that)
+    UsersModule,
     PassportModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
@@ -25,8 +31,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       }),
     }),
   ],
-  controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [], // guard + decorator are imported directly; no service leaves this module yet
+  exports: [AuthService], // orchestrators inject the token issuer
 })
 export class AuthModule {}

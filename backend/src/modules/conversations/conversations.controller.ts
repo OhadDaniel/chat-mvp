@@ -16,10 +16,12 @@ import type {
   GetConversationsResponse,
   PatchConversationResponse,
 } from './conversations.types';
-import { ConversationsService } from './conversations.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { GetConversationsQueryDto } from './dto/get-conversations.query.dto';
 import { PatchConversationDto } from './dto/patch-conversation.dto';
+import { ListConversationsOrchestrator } from './orchestrators/list-conversations/list-conversations.orchestrator';
+import { CreateConversationOrchestrator } from './orchestrators/create-conversation/create-conversation.orchestrator';
+import { SetPinnedOrchestrator } from './orchestrators/set-pinned/set-pinned.orchestrator';
 
 /**
  * Guard at controller level: every route below — current and future —
@@ -28,14 +30,18 @@ import { PatchConversationDto } from './dto/patch-conversation.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('conversations')
 export class ConversationsController {
-  constructor(private readonly conversationsService: ConversationsService) {}
+  constructor(
+    private readonly listConversationsOrchestrator: ListConversationsOrchestrator,
+    private readonly createConversationOrchestrator: CreateConversationOrchestrator,
+    private readonly setPinnedOrchestrator: SetPinnedOrchestrator,
+  ) {}
 
   @Get()
   list(
     @CurrentUser() user: User,
     @Query() query: GetConversationsQueryDto,
   ): Promise<GetConversationsResponse> {
-    return this.conversationsService.list(user.id, query.search);
+    return this.listConversationsOrchestrator.run(user.id, query.search);
   }
 
   @Post()
@@ -43,7 +49,7 @@ export class ConversationsController {
     @CurrentUser() user: User,
     @Body() dto: CreateConversationDto,
   ): Promise<CreateConversationResponse> {
-    return this.conversationsService.create(user, dto);
+    return this.createConversationOrchestrator.run(user, dto);
   }
 
   @Patch(':id')
@@ -52,6 +58,6 @@ export class ConversationsController {
     @Param('id') id: string,
     @Body() dto: PatchConversationDto,
   ): Promise<PatchConversationResponse> {
-    return this.conversationsService.setPinned(id, user.id, dto);
+    return this.setPinnedOrchestrator.run(id, user.id, dto);
   }
 }

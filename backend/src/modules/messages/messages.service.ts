@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ConversationsService } from '../conversations/conversations.service';
 import { minutesAgo, SEED_MESSAGES } from '../../database/seed-data';
 import { toUserProfile, type User } from '../users/users.types';
 import type {
@@ -14,12 +13,17 @@ import { MessagesRepository } from './messages.repository';
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 50;
 
+/**
+ * Single-entity messages service: pagination + insert over its own
+ * repository, nothing else. Authorization (the 403 participant rule)
+ * is composed in front of these calls by the message orchestrators.
+ *
+ * Note what's MISSING vs week 3: no setLastMessage call after insert.
+ * lastMessage is derived from this table — the invariant is gone.
+ */
 @Injectable()
 export class MessagesService implements OnModuleInit {
-  constructor(
-    private readonly messagesRepository: MessagesRepository,
-    private readonly conversationsService: ConversationsService,
-  ) {}
+  constructor(private readonly messagesRepository: MessagesRepository) {}
 
   async onModuleInit(): Promise<void> {
     await this.seedDemoMessages();
@@ -27,12 +31,9 @@ export class MessagesService implements OnModuleInit {
 
   async getPage(
     conversationId: string,
-    userId: string,
     query: GetMessagesQueryDto,
   ): Promise<GetMessagesResponse> {
-    // 404 if missing, 403 if not a participant — before reading anything
-    await this.conversationsService.getForParticipant(conversationId, userId);
-
+    // week-3 behavior preserved: silent cap at 50, unknown cursor = newest page
     const limit = Math.min(query.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const before = query.cursor
       ? await this.messagesRepository.findCursorPoint(
@@ -58,12 +59,6 @@ export class MessagesService implements OnModuleInit {
     sender: User,
     dto: CreateMessageDto,
   ): Promise<CreateMessageResponse> {
-    // same gate as reads: participants only (403), conversation must exist (404)
-    await this.conversationsService.getForParticipant(
-      conversationId,
-      sender.id,
-    );
-
     const message = await this.messagesRepository.insert(
       randomUUID(),
       conversationId,
@@ -74,6 +69,7 @@ export class MessagesService implements OnModuleInit {
     return { message };
   }
 
+  /** Same demo history as the week-3 seed store. Data lives in seed-data.ts. */
   private async seedDemoMessages(): Promise<void> {
     if ((await this.messagesRepository.count()) > 0) {
       return;

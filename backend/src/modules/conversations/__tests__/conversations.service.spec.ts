@@ -1,17 +1,7 @@
 import { AppException } from '../../../common/errors/app.exception';
-import type { UsersService } from '../../users/users.service';
-import type { User } from '../../users/users.types';
 import type { ConversationsRepository } from '../conversations.repository';
 import { ConversationsService } from '../conversations.service';
 import type { Conversation } from '../conversations.types';
-
-const ohad: User = {
-  id: 'user-1',
-  email: 'ohad@chat.dev',
-  name: 'Ohad Daniel',
-  avatarInitials: 'OD',
-  passwordHash: 'hash',
-};
 
 function conversationBetween(a: string, b: string): Conversation {
   return {
@@ -43,78 +33,57 @@ function fakeRepository(
   } as unknown as ConversationsRepository;
 }
 
-function fakeUsers(findById: (id: string) => User | undefined): UsersService {
-  return {
-    findById: (id: string) => Promise.resolve(findById(id)),
-  } as unknown as UsersService;
-}
-
-describe('ConversationsService.create', () => {
+describe('ConversationsService.create (pair rules, single-entity)', () => {
   it('rejects a conversation with yourself (400)', async () => {
-    const service = new ConversationsService(
-      fakeRepository(),
-      fakeUsers(() => ohad),
-    );
+    const service = new ConversationsService(fakeRepository());
 
-    await expect(
-      service.create(ohad, { participantId: 'user-1' }),
-    ).rejects.toMatchObject({ code: 'INVALID_PARTICIPANT' });
-  });
-
-  it('rejects an unknown participant (404)', async () => {
-    const service = new ConversationsService(
-      fakeRepository(),
-      fakeUsers(() => undefined),
-    );
-
-    await expect(
-      service.create(ohad, { participantId: 'ghost-99' }),
-    ).rejects.toMatchObject({ code: 'USER_NOT_FOUND' });
+    await expect(service.create('user-1', 'user-1')).rejects.toMatchObject({
+      code: 'INVALID_PARTICIPANT',
+    });
   });
 
   it('always stores the pair in canonical order, whoever initiates', async () => {
     const insert = jest.fn(() => Promise.resolve());
-    const peer: User = { ...ohad, id: 'user-9', email: 'z@chat.dev' };
     const service = new ConversationsService(
       fakeRepository({
         insert,
         findById: () =>
           Promise.resolve(conversationBetween('user-1', 'user-9')),
       }),
-      fakeUsers(() => ({ ...ohad, id: 'user-1' })),
     );
 
-    await service.create(peer, { participantId: 'user-1' });
+    // user-9 starts the conversation with user-1
+    await service.create('user-9', 'user-1');
 
+    // stored as (user-1, user-9) — sorted, NOT (initiator, peer)
     expect(insert).toHaveBeenCalledWith(expect.any(String), 'user-1', 'user-9');
   });
 
   it('rejects an existing pair with 409', async () => {
     const service = new ConversationsService(
       fakeRepository({ existsByPair: () => Promise.resolve(true) }),
-      fakeUsers(() => ({ ...ohad, id: 'user-2' })),
     );
 
-    await expect(
-      service.create(ohad, { participantId: 'user-2' }),
-    ).rejects.toMatchObject({ code: 'CONVERSATION_ALREADY_EXISTS' });
+    await expect(service.create('user-1', 'user-2')).rejects.toMatchObject({
+      code: 'CONVERSATION_ALREADY_EXISTS',
+    });
   });
 
   it('maps a DB unique-violation race to the same 409', async () => {
     const service = new ConversationsService(
       fakeRepository({
-        existsByPair: () => Promise.resolve(false),
+        existsByPair: () => Promise.resolve(false), // pre-check passes...
         insert: () =>
+          // ...but the insert loses the race to a parallel request
           Promise.reject(
             Object.assign(new Error('duplicate key'), { code: '23505' }),
           ),
       }),
-      fakeUsers(() => ({ ...ohad, id: 'user-2' })),
     );
 
-    await expect(
-      service.create(ohad, { participantId: 'user-2' }),
-    ).rejects.toMatchObject({ code: 'CONVERSATION_ALREADY_EXISTS' });
+    await expect(service.create('user-1', 'user-2')).rejects.toMatchObject({
+      code: 'CONVERSATION_ALREADY_EXISTS',
+    });
   });
 });
 
@@ -122,7 +91,6 @@ describe('ConversationsService.getForParticipant (the 403 rule)', () => {
   it('404 when the conversation does not exist — checked BEFORE participation', async () => {
     const service = new ConversationsService(
       fakeRepository({ findById: () => Promise.resolve(undefined) }),
-      fakeUsers(() => undefined),
     );
 
     await expect(
@@ -136,7 +104,6 @@ describe('ConversationsService.getForParticipant (the 403 rule)', () => {
         findById: () =>
           Promise.resolve(conversationBetween('user-1', 'user-2')),
       }),
-      fakeUsers(() => undefined),
     );
 
     const attempt = service.getForParticipant('conv-x', 'eve-99');
@@ -151,7 +118,6 @@ describe('ConversationsService.getForParticipant (the 403 rule)', () => {
         findById: () =>
           Promise.resolve(conversationBetween('user-1', 'user-2')),
       }),
-      fakeUsers(() => undefined),
     );
 
     await expect(
@@ -169,7 +135,6 @@ describe('ConversationsService.setPinned', () => {
           Promise.resolve({ userAId: 'user-1', userBId: 'user-2' }),
         setPinned,
       }),
-      fakeUsers(() => undefined),
     );
 
     await expect(

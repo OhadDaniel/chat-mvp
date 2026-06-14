@@ -16,12 +16,16 @@ import type {
   CreateMessageResponse,
   GetMessagesResponse,
 } from './messages.types';
-import { MessagesService } from './messages.service';
+import { GetMessagesOrchestrator } from './orchestrators/get-messages/get-messages.orchestrator';
+import { CreateMessageOrchestrator } from './orchestrators/create-message/create-message.orchestrator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('conversations/:conversationId/messages')
 export class MessagesController {
-  constructor(private readonly messagesService: MessagesService) {}
+  constructor(
+    private readonly getMessagesOrchestrator: GetMessagesOrchestrator,
+    private readonly createMessageOrchestrator: CreateMessageOrchestrator,
+  ) {}
 
   @Get()
   getPage(
@@ -29,7 +33,7 @@ export class MessagesController {
     @Param('conversationId') conversationId: string,
     @Query() query: GetMessagesQueryDto,
   ): Promise<GetMessagesResponse> {
-    return this.messagesService.getPage(conversationId, user.id, query);
+    return this.getMessagesOrchestrator.run(conversationId, user.id, query);
   }
 
   @Post()
@@ -38,6 +42,6 @@ export class MessagesController {
     @Param('conversationId') conversationId: string,
     @Body() dto: CreateMessageDto,
   ): Promise<CreateMessageResponse> {
-    return this.messagesService.create(conversationId, user, dto);
+    return this.createMessageOrchestrator.run(conversationId, user, dto);
   }
 }
