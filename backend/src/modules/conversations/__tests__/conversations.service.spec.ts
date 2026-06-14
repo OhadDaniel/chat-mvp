@@ -17,8 +17,8 @@ function conversationBetween(a: string, b: string): Conversation {
   return {
     id: 'conv-x',
     participants: [
-      { id: a, email: `${a}@chat.dev`, name: a, avatarInitials: 'X' },
-      { id: b, email: `${b}@chat.dev`, name: b, avatarInitials: 'Y' },
+      { id: a, name: a, avatarInitials: 'X' },
+      { id: b, name: b, avatarInitials: 'Y' },
     ],
     lastMessage: null,
     lastMessageAt: null,
@@ -34,6 +34,7 @@ function fakeRepository(
   return {
     findAllByUserId: jest.fn(() => Promise.resolve([])),
     findById: jest.fn(() => Promise.resolve(undefined)),
+    findParticipantIds: jest.fn(() => Promise.resolve(undefined)),
     existsByPair: jest.fn(() => Promise.resolve(false)),
     insert: jest.fn(() => Promise.resolve()),
     setPinned: jest.fn(() => Promise.resolve()),
@@ -83,10 +84,8 @@ describe('ConversationsService.create', () => {
       fakeUsers(() => ({ ...ohad, id: 'user-1' })),
     );
 
-    // user-9 starts the conversation with user-1
     await service.create(peer, { participantId: 'user-1' });
 
-    // stored as (user-1, user-9) — sorted, NOT (initiator, peer)
     expect(insert).toHaveBeenCalledWith(expect.any(String), 'user-1', 'user-9');
   });
 
@@ -104,9 +103,8 @@ describe('ConversationsService.create', () => {
   it('maps a DB unique-violation race to the same 409', async () => {
     const service = new ConversationsService(
       fakeRepository({
-        existsByPair: () => Promise.resolve(false), // pre-check passes...
+        existsByPair: () => Promise.resolve(false),
         insert: () =>
-          // ...but the insert loses the race to a parallel request
           Promise.reject(
             Object.assign(new Error('duplicate key'), { code: '23505' }),
           ),
@@ -167,8 +165,8 @@ describe('ConversationsService.setPinned', () => {
     const setPinned = jest.fn(() => Promise.resolve());
     const service = new ConversationsService(
       fakeRepository({
-        findById: () =>
-          Promise.resolve(conversationBetween('user-1', 'user-2')),
+        findParticipantIds: () =>
+          Promise.resolve({ userAId: 'user-1', userBId: 'user-2' }),
         setPinned,
       }),
       fakeUsers(() => undefined),

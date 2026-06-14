@@ -48,7 +48,6 @@ describe('AuthService.login', () => {
       .login({ email: 'ohad@chat.dev', password: 'wrong' })
       .catch((e: AppException) => e);
 
-    // an attacker comparing the two responses must learn nothing
     expect(failure1).toBeInstanceOf(AppException);
     expect(failure2).toBeInstanceOf(AppException);
     expect({
@@ -63,7 +62,7 @@ describe('AuthService.login', () => {
     expect((failure1 as AppException).getStatus()).toBe(401);
   });
 
-  it('signs a token with ONLY { sub, email } and returns the public user', async () => {
+  it('signs a token with ONLY { sub } and returns the public user', async () => {
     const signAsync = jest.fn((payload: object) =>
       Promise.resolve(`token:${JSON.stringify(payload)}`),
     );
@@ -80,11 +79,8 @@ describe('AuthService.login', () => {
       password: 'right',
     });
 
-    // minimal payload — JWTs are readable by anyone
-    expect(signAsync).toHaveBeenCalledWith({
-      sub: 'user-1',
-      email: 'ohad@chat.dev',
-    });
+    // minimal payload — JWTs are readable by anyone, so we put only the id
+    expect(signAsync).toHaveBeenCalledWith({ sub: 'user-1' });
     // the hash never leaves the API
     expect(result.user).not.toHaveProperty('passwordHash');
     expect(result.user.id).toBe('user-1');

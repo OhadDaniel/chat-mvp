@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from '../../database/database.constants';
-import type { PublicUser } from '../users/users.types';
+import type { UserProfile } from '../users/users.types';
 import {
   COUNT_MESSAGES,
   FIND_CURSOR_POINT,
@@ -67,7 +67,7 @@ export class MessagesRepository {
   async insert(
     id: string,
     conversationId: string,
-    sender: PublicUser,
+    sender: UserProfile,
     content: string,
   ): Promise<Message> {
     const result = await this.pool.query<{ sent_at: Date; status: string }>(
@@ -115,7 +115,6 @@ function rowToMessage(row: MessageRow): Message {
     conversationId: row.conversation_id,
     sender: {
       id: row.s_id,
-      email: row.s_email,
       name: row.s_name,
       avatarInitials: row.s_initials,
     },

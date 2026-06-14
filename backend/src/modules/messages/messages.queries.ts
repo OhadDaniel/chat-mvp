@@ -6,7 +6,7 @@
 
 const MESSAGE_SELECT = `
   SELECT m.id, m.conversation_id, m.content, m.sent_at, m.status,
-         u.id AS s_id, u.email AS s_email, u.name AS s_name, u.avatar_initials AS s_initials
+         u.id AS s_id, u.name AS s_name, u.avatar_initials AS s_initials
     FROM messages m
     JOIN users u ON u.id = m.sender_id`;
 

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConversationsService } from '../conversations/conversations.service';
 import { minutesAgo, SEED_MESSAGES } from '../../database/seed-data';
-import { toPublicUser, type User } from '../users/users.types';
+import { toUserProfile, type User } from '../users/users.types';
 import type {
   CreateMessageResponse,
   GetMessagesResponse,
@@ -14,15 +14,6 @@ import { MessagesRepository } from './messages.repository';
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 50;
 
-/**
- * Composes the conversations module's public API (the 403 rule) with
- * its own repository — the role the week-3 orchestrators played, now
- * with the boundary enforced by DI: ConversationsRepository isn't
- * exported, so this service couldn't touch it even by mistake.
- *
- * Note what's MISSING vs week 3: no setLastMessage call after insert.
- * lastMessage is derived from this table — the invariant is gone.
- */
 @Injectable()
 export class MessagesService implements OnModuleInit {
   constructor(
@@ -42,7 +33,6 @@ export class MessagesService implements OnModuleInit {
     // 404 if missing, 403 if not a participant — before reading anything
     await this.conversationsService.getForParticipant(conversationId, userId);
 
-    // week-3 behavior preserved: silent cap at 50, unknown cursor = newest page
     const limit = Math.min(query.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const before = query.cursor
       ? await this.messagesRepository.findCursorPoint(
@@ -77,14 +67,13 @@ export class MessagesService implements OnModuleInit {
     const message = await this.messagesRepository.insert(
       randomUUID(),
       conversationId,
-      toPublicUser(sender),
+      toUserProfile(sender),
       dto.content,
     );
 
     return { message };
   }
 
-  /** Same demo history as the week-3 seed store. Data lives in seed-data.ts. */
   private async seedDemoMessages(): Promise<void> {
     if ((await this.messagesRepository.count()) > 0) {
       return;

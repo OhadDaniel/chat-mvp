@@ -11,8 +11,8 @@ const CONVERSATION_SELECT = `
   SELECT c.id,
          c.pinned_at,
          c.created_at,
-         ua.id AS a_id, ua.email AS a_email, ua.name AS a_name, ua.avatar_initials AS a_initials,
-         ub.id AS b_id, ub.email AS b_email, ub.name AS b_name, ub.avatar_initials AS b_initials,
+         ua.id AS a_id, ua.name AS a_name, ua.avatar_initials AS a_initials,
+         ub.id AS b_id, ub.name AS b_name, ub.avatar_initials AS b_initials,
          lm.content   AS lm_content,
          lm.sent_at   AS lm_sent_at,
          lm.sender_id AS lm_sender_id
@@ -41,6 +41,12 @@ export const SEARCH_CONVERSATIONS_BY_NAME = `${CONVERSATION_SELECT}
 
 export const FIND_CONVERSATION_BY_ID = `${CONVERSATION_SELECT}
    WHERE c.id = $1`;
+
+/** Authorization-only: just the participant pair, no joins/hydration. */
+export const FIND_PARTICIPANT_IDS = `
+  SELECT user_a_id, user_b_id
+    FROM conversations
+   WHERE id = $1`;
 
 export const PAIR_EXISTS = `
   SELECT EXISTS(

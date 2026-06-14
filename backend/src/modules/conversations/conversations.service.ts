@@ -15,11 +15,6 @@ import type {
 import type { CreateConversationDto } from './dto/create-conversation.dto';
 import type { PatchConversationDto } from './dto/patch-conversation.dto';
 
-/**
- * Owns the conversations domain: the pair rules (distinct users,
- * one conversation per pair), pinning, and the participant
- * authorization rule (403). Exported as the module's only public API.
- */
 @Injectable()
 export class ConversationsService implements OnModuleInit {
   constructor(
@@ -59,8 +54,6 @@ export class ConversationsService implements OnModuleInit {
       throw new AppException(404, 'USER_NOT_FOUND', 'Participant not found');
     }
 
-    // Canonical order (a < b): one representation per pair, so the
-    // UNIQUE constraint can do its job regardless of who initiates.
     const [userAId, userBId] = [currentUser.id, participant.id].sort();
 
     if (await this.conversationsRepository.existsByPair(userAId, userBId)) {
@@ -75,7 +68,6 @@ export class ConversationsService implements OnModuleInit {
     try {
       await this.conversationsRepository.insert(id, userAId, userBId);
     } catch (error) {
-      // race-proof backstop: two simultaneous creates -> DB constraint
       if (isUniqueViolation(error)) {
         throw new AppException(
           409,
@@ -95,19 +87,37 @@ export class ConversationsService implements OnModuleInit {
     userId: string,
     dto: PatchConversationDto,
   ): Promise<PatchConversationResponse> {
-    await this.getForParticipant(conversationId, userId);
+    // Gate on the participant pair only — no need to hydrate the whole
+    // conversation just to authorize.
+    await this.assertParticipant(conversationId, userId);
     await this.conversationsRepository.setPinned(conversationId, dto.pinned);
 
     const conversation = await this.getByIdOrThrow(conversationId);
     return { conversation };
   }
 
-  /**
-   * The authorization rule, in one place: 404 if the conversation
-   * doesn't exist, 403 if the caller isn't one of its two users.
-   * MessagesService composes this — every message read/write passes
-   * through here first.
-   */
+  private async assertParticipant(
+    conversationId: string,
+    userId: string,
+  ): Promise<void> {
+    const pair =
+      await this.conversationsRepository.findParticipantIds(conversationId);
+    if (!pair) {
+      throw new AppException(
+        404,
+        'CONVERSATION_NOT_FOUND',
+        'Conversation not found',
+      );
+    }
+    if (pair.userAId !== userId && pair.userBId !== userId) {
+      throw new AppException(
+        403,
+        'NOT_A_PARTICIPANT',
+        'You are not a participant of this conversation',
+      );
+    }
+  }
+
   async getForParticipant(
     conversationId: string,
     userId: string,
@@ -140,7 +150,6 @@ export class ConversationsService implements OnModuleInit {
     return conversation;
   }
 
-  /** Demo conversations between the seeded users. Data lives in seed-data.ts. */
   private async seedDemoConversations(): Promise<void> {
     if ((await this.conversationsRepository.count()) > 0) {
       return;

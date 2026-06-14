@@ -14,8 +14,15 @@ export type User = {
   passwordHash: string;
 };
 
-/** The user shape that is safe to return to clients. */
+/** The user's OWN safe shape — returned to that user (auth/me). Includes email. */
 export type PublicUser = Omit<User, 'passwordHash'>;
+
+/**
+ * What other people are allowed to see — a participant or message sender.
+ * No email: the UI only shows name + initials, and a counterpart's email
+ * must never leave the API.
+ */
+export type UserProfile = Omit<PublicUser, 'email'>;
 
 /* ── Service inputs ─────────────────────────────────────── */
 
@@ -41,6 +48,12 @@ export type UserRow = {
 export function toPublicUser(user: User): PublicUser {
   const { id, email, name, avatarInitials } = user;
   return { id, email, name, avatarInitials };
+}
+
+/** Drop email too — the shape safe to hand to other participants. */
+export function toUserProfile(user: User): UserProfile {
+  const { id, name, avatarInitials } = user;
+  return { id, name, avatarInitials };
 }
 
 /** "Ohad Daniel" -> "OD", "alice" -> "A" */

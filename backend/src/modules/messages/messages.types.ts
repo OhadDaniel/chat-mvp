@@ -1,4 +1,4 @@
-import type { PublicUser } from '../users/users.types';
+import type { UserProfile } from '../users/users.types';
 
 /** All types for the messages module, in one place. */
 
@@ -7,7 +7,7 @@ import type { PublicUser } from '../users/users.types';
 export type Message = {
   id: string;
   conversationId: string;
-  sender: PublicUser;
+  sender: UserProfile;
   content: string;
   sentAt: string;
   status: 'sent';
@@ -47,7 +47,6 @@ export type MessageRow = {
   sent_at: Date;
   status: string;
   s_id: string;
-  s_email: string;
   s_name: string;
   s_initials: string;
 };

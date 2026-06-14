@@ -1,4 +1,4 @@
-import type { PublicUser } from '../users/users.types';
+import type { UserProfile } from '../users/users.types';
 
 /** All types for the conversations module, in one place. */
 
@@ -12,7 +12,7 @@ export type LastMessage = {
 
 export type Conversation = {
   id: string;
-  participants: PublicUser[];
+  participants: UserProfile[];
   lastMessage: LastMessage | null;
   lastMessageAt: string | null;
   pinnedAt: string | null;
@@ -40,11 +40,9 @@ export type ConversationRow = {
   pinned_at: Date | null;
   created_at: Date;
   a_id: string;
-  a_email: string;
   a_name: string;
   a_initials: string;
   b_id: string;
-  b_email: string;
   b_name: string;
   b_initials: string;
   lm_content: string | null;

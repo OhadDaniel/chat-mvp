@@ -5,6 +5,7 @@ import {
   COUNT_CONVERSATIONS,
   FIND_CONVERSATION_BY_ID,
   FIND_CONVERSATIONS_BY_USER,
+  FIND_PARTICIPANT_IDS,
   INSERT_CONVERSATION,
   PAIR_EXISTS,
   SEARCH_CONVERSATIONS_BY_NAME,
@@ -30,7 +31,7 @@ export class ConversationsRepository {
     const result = search
       ? await this.pool.query<ConversationRow>(SEARCH_CONVERSATIONS_BY_NAME, [
           userId,
-          `%${search}%`,
+          `%${escapeLikePattern(search)}%`,
         ])
       : await this.pool.query<ConversationRow>(FIND_CONVERSATIONS_BY_USER, [
           userId,
@@ -45,6 +46,18 @@ export class ConversationsRepository {
       [id],
     );
     return result.rows[0] && rowToConversation(result.rows[0]);
+  }
+
+  /** Authorization-only read: the participant pair for a conversation, or undefined. */
+  async findParticipantIds(
+    id: string,
+  ): Promise<{ userAId: string; userBId: string } | undefined> {
+    const result = await this.pool.query<{
+      user_a_id: string;
+      user_b_id: string;
+    }>(FIND_PARTICIPANT_IDS, [id]);
+    const row = result.rows[0];
+    return row && { userAId: row.user_a_id, userBId: row.user_b_id };
   }
 
   /** Pair lookup — callers must pass the canonical order (a < b). */
@@ -82,6 +95,16 @@ export class ConversationsRepository {
   }
 }
 
+/**
+ * Treat user input as a literal in ILIKE: escape the pattern
+ * metacharacters % and _ (and the escape char \ itself) so a typed
+ * "_" matches an underscore, not "any character". Postgres LIKE/ILIKE
+ * uses backslash as the default escape, so no ESCAPE clause is needed.
+ */
+function escapeLikePattern(input: string): string {
+  return input.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 function rowToConversation(row: ConversationRow): Conversation {
   const lastMessage =
     row.lm_content !== null &&
@@ -99,13 +122,11 @@ function rowToConversation(row: ConversationRow): Conversation {
     participants: [
       {
         id: row.a_id,
-        email: row.a_email,
         name: row.a_name,
         avatarInitials: row.a_initials,
       },
       {
         id: row.b_id,
-        email: row.b_email,
         name: row.b_name,
         avatarInitials: row.b_initials,
       },

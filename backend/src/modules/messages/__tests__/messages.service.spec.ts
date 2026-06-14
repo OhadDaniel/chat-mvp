@@ -17,7 +17,7 @@ function message(id: string): Message {
   return {
     id,
     conversationId: 'conv-1',
-    sender: { id: 'user-1', email: 'o@c.d', name: 'O', avatarInitials: 'O' },
+    sender: { id: 'user-1', name: 'O', avatarInitials: 'O' },
     content: `content of ${id}`,
     sentAt: new Date().toISOString(),
     status: 'sent',
@@ -86,7 +86,7 @@ describe('MessagesService.getPage', () => {
     );
     const service = new MessagesService(
       fakeRepository({
-        findCursorPoint: () => Promise.resolve(undefined), // cursor not found
+        findCursorPoint: () => Promise.resolve(undefined),
         findPageBefore,
       }),
       allowAccess,
@@ -98,7 +98,7 @@ describe('MessagesService.getPage', () => {
   });
 
   it('nextCursor = oldest message of the page, only when more history exists', async () => {
-    const page = [message('msg-2'), message('msg-3')]; // ascending
+    const page = [message('msg-2'), message('msg-3')];
     const withMore = new MessagesService(
       fakeRepository({
         findPageBefore: () =>
@@ -135,7 +135,7 @@ describe('MessagesService.create', () => {
     expect(insert).not.toHaveBeenCalled();
   });
 
-  it('passes the sender as a PUBLIC user — the hash never reaches the repository', async () => {
+  it('passes the sender as a PUBLIC profile — no hash reaches the repository', async () => {
     const insert = jest.fn(() => Promise.resolve(message('msg-new')));
     const service = new MessagesService(
       fakeRepository({ insert }),
