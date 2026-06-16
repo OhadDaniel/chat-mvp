@@ -1,6 +1,6 @@
 import type { ChangeEvent } from 'react'
 
-export type AuthInputProps = {
+export type TextInputProps = {
   type: 'text' | 'email' | 'password'
   placeholder: string
   value: string
@@ -9,8 +9,7 @@ export type AuthInputProps = {
   className: string
 }
 
-/** Presentational text/email/password field. Owns no state — the screen wires it. */
-export function AuthInput({ type, placeholder, value, onChange, disabled, className }: AuthInputProps) {
+export function TextInput({ type, placeholder, value, onChange, disabled, className }: TextInputProps) {
   return (
     <input
       type={type}

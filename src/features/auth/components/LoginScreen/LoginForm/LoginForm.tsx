@@ -1,8 +1,8 @@
 import { useLoginContext }        from '../LoginScreen.context'
 import { useAuthScreensContext }  from '@/features/auth/components/AuthScreens/AuthScreens.context'
-import { AuthInput }              from '@/features/auth/components/shared/AuthInput'
-import { AuthErrorMessage }       from '@/features/auth/components/shared/AuthErrorMessage'
-import { AuthSubmitButton }       from '@/features/auth/components/shared/AuthSubmitButton'
+import { TextInput }              from '@/shared/components/TextInput'
+import { FormError }              from '@/shared/components/FormError'
+import { SubmitButton }           from '@/shared/components/SubmitButton'
 import { AuthSwitchLink }         from '@/features/auth/components/shared/AuthSwitchLink'
 import {
   LOGIN_EMAIL_PLACEHOLDER,
@@ -27,7 +27,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className={LOGIN_FORM_CLASS}>
-      <AuthInput
+      <TextInput
         type="email"
         placeholder={LOGIN_EMAIL_PLACEHOLDER}
         value={email}
@@ -35,7 +35,7 @@ export function LoginForm() {
         disabled={isLoading}
         className={LOGIN_INPUT_CLASS}
       />
-      <AuthInput
+      <TextInput
         type="password"
         placeholder={LOGIN_PASSWORD_PLACEHOLDER}
         value={password}
@@ -43,8 +43,8 @@ export function LoginForm() {
         disabled={isLoading}
         className={LOGIN_INPUT_CLASS}
       />
-      <AuthErrorMessage error={error} className={LOGIN_ERROR_CLASS} />
-      <AuthSubmitButton
+      <FormError error={error} className={LOGIN_ERROR_CLASS} />
+      <SubmitButton
         label={LOGIN_SUBMIT_LABEL}
         loadingLabel={LOGIN_LOADING_LABEL}
         isLoading={isLoading}
