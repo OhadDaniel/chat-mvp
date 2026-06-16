@@ -4,11 +4,12 @@ import { authApi }                          from '@/features/auth/api/auth.api'
 import { STORAGE_KEY_TOKEN }                from '@/shared/constants'
 
 type UseAuthStateReturn = {
-  user:      User | null
-  isLoading: boolean
-  login:     (email: string, password: string) => Promise<void>
-  signup:    (email: string, password: string, name: string) => Promise<void>
-  logout:    () => void
+  user:       User | null
+  isLoading:  boolean
+  login:      (email: string, password: string) => Promise<void>
+  signup:     (email: string, password: string, name: string) => Promise<void>
+  logout:     () => void
+  updateUser: (user: User) => void
 }
 
 export function useAuthState(): UseAuthStateReturn {
@@ -58,5 +59,7 @@ export function useAuthState(): UseAuthStateReturn {
     setUser(null)
   }
 
-  return { user, isLoading, login, signup, logout }
+  const updateUser = (user: User) => setUser(user)
+
+  return { user, isLoading, login, signup, logout, updateUser }
 }
