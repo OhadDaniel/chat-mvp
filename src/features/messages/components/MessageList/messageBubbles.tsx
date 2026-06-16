@@ -11,6 +11,7 @@ export function buildMessageBubbles(messages: Message[], user: User): ReactNode[
       sentAt={message.sentAt}
       senderName={message.sender.name}
       senderInitials={message.sender.avatarInitials}
+      senderAvatarUrl={message.sender.avatarUrl}
       isFromCurrentUser={message.sender.id === user.id}
     />
   ))

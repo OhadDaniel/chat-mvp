@@ -22,6 +22,7 @@ export function ConversationItemContainer({ conversation, currentUser, selectedC
   const contextValue = {
     initials:    other.avatarInitials,
     name:        other.name,
+    avatarUrl:   other.avatarUrl,
     lastMessage: conversation.lastMessage?.content ?? '',
     time:        formatTime(conversation.lastMessageAt),
     unreadCount: conversation.unreadCount,

@@ -3,6 +3,7 @@ import { createContext, useContext } from 'react'
 export type ConversationItemContextValue = {
   initials:    string
   name:        string
+  avatarUrl:   string | null
   lastMessage: string
   time:        string
   unreadCount: number
