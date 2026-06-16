@@ -1,0 +1,38 @@
+import { Injectable } from '@nestjs/common';
+import { AppException } from '../../common/errors/app.exception';
+import { StorageService } from '../storage/storage.service';
+import { isOwnedAvatarKey } from '../storage/storage.helpers';
+import { UsersService } from '../users/users.service';
+import { mapToPublicUser, type PublicUser } from '../users/users.types';
+
+export type SetAvatarResponse = { user: PublicUser };
+
+@Injectable()
+export class SetAvatarOrchestrator {
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly storage: StorageService,
+  ) {}
+
+  async run(userId: string, key: string): Promise<SetAvatarResponse> {
+    if (!isOwnedAvatarKey(userId, key)) {
+      throw new AppException(
+        400,
+        'INVALID_AVATAR_KEY',
+        'Avatar key does not belong to this user',
+      );
+    }
+
+    // The JWT guard guarantees the user exists.
+    const current = await this.usersService.findById(userId);
+    const oldKey = current?.avatarKey ?? null;
+
+    const updated = await this.usersService.setAvatarKey(userId, key);
+
+    if (oldKey && oldKey !== key) {
+      await this.storage.deleteObject(oldKey);
+    }
+
+    return { user: mapToPublicUser(updated, this.storage.publicUrl(key)) };
+  }
+}
