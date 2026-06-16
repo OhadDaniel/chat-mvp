@@ -1,72 +1,88 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Pool } from 'pg';
-import { PG_POOL } from '../../database/database.constants';
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { ClientSession, Model, PipelineStage } from 'mongoose';
 import {
-  COUNT_CONVERSATIONS,
-  FIND_CONVERSATION_BY_ID,
-  FIND_CONVERSATIONS_BY_USER,
-  FIND_PARTICIPANT_IDS,
-  INSERT_CONVERSATION,
-  PAIR_EXISTS,
-  SEARCH_CONVERSATIONS_BY_NAME,
-  SET_PINNED,
-} from './conversations.queries';
-import type { Conversation, ConversationRow } from './conversations.types';
+  buildPairKey,
+  canonicalPair,
+  hydrateParticipantsStage,
+  participantNameSearchStage,
+} from './conversations.helpers';
+import {
+  ConversationMongo,
+  type ConversationDocument,
+} from './conversations.schema';
+import type { Conversation, LastMessageSnapshot } from './conversations.types';
+import { displayName, initialsOf } from '../users/users.helpers';
+import { StorageService } from '../storage/storage.service';
 
-/**
- * Postgres store for conversations. SQL lives in
- * conversations.queries.ts; this class only runs it and maps rows.
- * Note: no lastMessage column anywhere — it is DERIVED from the
- * messages table on every read, so it can never go stale.
- * NOT exported from ConversationsModule.
- */
+type ParticipantDoc = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  avatarKey: string | null;
+};
+
+type ConversationAggRow = {
+  _id: string;
+  participantIds: string[];
+  lastMessage: LastMessageSnapshot | null;
+  lastMessageAt: Date | null;
+  pinnedAt: Date | null;
+  participants: ParticipantDoc[];
+};
+
 @Injectable()
 export class ConversationsRepository {
-  constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
+  constructor(
+    @InjectModel(ConversationMongo.name)
+    private readonly conversationModel: Model<ConversationDocument>,
+    private readonly storage: StorageService,
+  ) {}
 
   async findAllByUserId(
     userId: string,
     search?: string,
   ): Promise<Conversation[]> {
-    const result = search
-      ? await this.pool.query<ConversationRow>(SEARCH_CONVERSATIONS_BY_NAME, [
-          userId,
-          `%${escapeLikePattern(search)}%`,
-        ])
-      : await this.pool.query<ConversationRow>(FIND_CONVERSATIONS_BY_USER, [
-          userId,
-        ]);
+    const pipeline: PipelineStage[] = [
+      { $match: { participantIds: userId } },
+      { $sort: { lastMessageAt: -1, createdAt: -1 } },
+      hydrateParticipantsStage(),
+    ];
 
-    return result.rows.map(rowToConversation);
+    if (search) {
+      pipeline.push(participantNameSearchStage(search));
+    }
+
+    const rows = await this.conversationModel
+      .aggregate<ConversationAggRow>(pipeline)
+      .exec();
+    return rows.map((row) => this.mapDocToConversation(row));
   }
 
   async findById(id: string): Promise<Conversation | undefined> {
-    const result = await this.pool.query<ConversationRow>(
-      FIND_CONVERSATION_BY_ID,
-      [id],
-    );
-    return result.rows[0] && rowToConversation(result.rows[0]);
+    const rows = await this.conversationModel
+      .aggregate<ConversationAggRow>([
+        { $match: { _id: id } },
+        hydrateParticipantsStage(),
+      ])
+      .exec();
+    return rows[0] ? this.mapDocToConversation(rows[0]) : undefined;
   }
 
-  /** Authorization-only read: the participant pair for a conversation, or undefined. */
-  async findParticipantIds(
-    id: string,
-  ): Promise<{ userAId: string; userBId: string } | undefined> {
-    const result = await this.pool.query<{
-      user_a_id: string;
-      user_b_id: string;
-    }>(FIND_PARTICIPANT_IDS, [id]);
-    const row = result.rows[0];
-    return row && { userAId: row.user_a_id, userBId: row.user_b_id };
+  async findParticipantIds(id: string): Promise<string[] | undefined> {
+    const doc = await this.conversationModel
+      .findById(id)
+      .select('participantIds')
+      .lean<{ participantIds: string[] } | null>()
+      .exec();
+    return doc ? doc.participantIds : undefined;
   }
 
-  /** Pair lookup — callers must pass the canonical order (a < b). */
   async existsByPair(userAId: string, userBId: string): Promise<boolean> {
-    const result = await this.pool.query<{ exists: boolean }>(PAIR_EXISTS, [
-      userAId,
-      userBId,
-    ]);
-    return result.rows[0]?.exists ?? false;
+    const existing = await this.conversationModel
+      .exists({ pairKey: buildPairKey(userAId, userBId) })
+      .exec();
+    return existing !== null;
   }
 
   async insert(
@@ -74,65 +90,74 @@ export class ConversationsRepository {
     userAId: string,
     userBId: string,
     pinnedAt: Date | null = null,
+    lastMessage: LastMessageSnapshot | null = null,
   ): Promise<void> {
-    await this.pool.query(INSERT_CONVERSATION, [
-      id,
-      userAId,
-      userBId,
+    await this.conversationModel.create({
+      _id: id,
+      participantIds: canonicalPair(userAId, userBId),
+      pairKey: buildPairKey(userAId, userBId),
       pinnedAt,
-    ]);
+      lastMessage,
+      lastMessageAt: lastMessage ? lastMessage.sentAt : null,
+    });
   }
 
   async setPinned(id: string, pinned: boolean): Promise<void> {
-    await this.pool.query(SET_PINNED, [id, pinned]);
+    await this.conversationModel
+      .updateOne(
+        { _id: id },
+        { $set: { pinnedAt: pinned ? new Date() : null } },
+      )
+      .exec();
+  }
+
+  async updateLastMessage(
+    conversationId: string,
+    snapshot: LastMessageSnapshot,
+    session?: ClientSession,
+  ): Promise<void> {
+    await this.conversationModel
+      .updateOne(
+        { _id: conversationId },
+        { $set: { lastMessage: snapshot, lastMessageAt: snapshot.sentAt } },
+        { session },
+      )
+      .exec();
   }
 
   async count(): Promise<number> {
-    const result = await this.pool.query<{ count: string }>(
-      COUNT_CONVERSATIONS,
-    );
-    return Number(result.rows[0]?.count ?? 0);
+    return this.conversationModel.countDocuments().exec();
   }
-}
 
-/**
- * Treat user input as a literal in ILIKE: escape the pattern
- * metacharacters % and _ (and the escape char \ itself) so a typed
- * "_" matches an underscore, not "any character". Postgres LIKE/ILIKE
- * uses backslash as the default escape, so no ESCAPE clause is needed.
- */
-function escapeLikePattern(input: string): string {
-  return input.replace(/[\\%_]/g, (char) => `\\${char}`);
-}
+  private mapDocToConversation(row: ConversationAggRow): Conversation {
+    const participants = row.participantIds.map((id) => {
+      const doc = row.participants.find(
+        (participant) => participant._id === id,
+      );
+      const firstName = doc?.firstName ?? '';
+      const lastName = doc?.lastName ?? '';
+      return {
+        id,
+        name: displayName(firstName, lastName),
+        avatarInitials: initialsOf(firstName, lastName),
+        avatarUrl: this.storage.publicUrl(doc?.avatarKey ?? null),
+      };
+    });
 
-function rowToConversation(row: ConversationRow): Conversation {
-  const lastMessage =
-    row.lm_content !== null &&
-    row.lm_sent_at !== null &&
-    row.lm_sender_id !== null
+    const lastMessage = row.lastMessage
       ? {
-          content: row.lm_content,
-          sentAt: row.lm_sent_at.toISOString(),
-          senderId: row.lm_sender_id,
+          content: row.lastMessage.content,
+          sentAt: row.lastMessage.sentAt.toISOString(),
+          senderId: row.lastMessage.senderId,
         }
       : null;
 
-  return {
-    id: row.id,
-    participants: [
-      {
-        id: row.a_id,
-        name: row.a_name,
-        avatarInitials: row.a_initials,
-      },
-      {
-        id: row.b_id,
-        name: row.b_name,
-        avatarInitials: row.b_initials,
-      },
-    ],
-    lastMessage,
-    lastMessageAt: lastMessage?.sentAt ?? null,
-    pinnedAt: row.pinned_at?.toISOString() ?? null,
-  };
+    return {
+      id: row._id,
+      participants,
+      lastMessage,
+      lastMessageAt: row.lastMessageAt ? row.lastMessageAt.toISOString() : null,
+      pinnedAt: row.pinnedAt ? row.pinnedAt.toISOString() : null,
+    };
+  }
 }

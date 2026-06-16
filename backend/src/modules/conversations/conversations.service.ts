@@ -1,13 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import type { ClientSession } from 'mongoose';
 import { AppException } from '../../common/errors/app.exception';
-import { isUniqueViolation } from '../../database/pg-errors';
-import { daysAgo, SEED_CONVERSATIONS } from '../../database/seed-data';
+import { isDuplicateKeyError } from '../mongo/mongo-errors';
+import { daysAgo, SEED_CONVERSATIONS } from '../mongo/seed-data';
+import { buildSeedLastMessage } from './conversations.helpers';
 import { ConversationsRepository } from './conversations.repository';
 import type {
   Conversation,
   CreateConversationResponse,
   GetConversationsResponse,
+  LastMessageSnapshot,
   PatchConversationResponse,
 } from './conversations.types';
 import type { PatchConversationDto } from './dto/patch-conversation.dto';
@@ -68,7 +71,7 @@ export class ConversationsService implements OnModuleInit {
       await this.conversationsRepository.insert(id, userAId, userBId);
     } catch (error) {
       // race-proof backstop: two simultaneous creates -> DB constraint
-      if (isUniqueViolation(error)) {
+      if (isDuplicateKeyError(error)) {
         throw new AppException(
           409,
           'CONVERSATION_ALREADY_EXISTS',
@@ -98,6 +101,24 @@ export class ConversationsService implements OnModuleInit {
   }
 
   /**
+   * Refresh the denormalized last-message snapshot. Called inside the
+   * send-message transaction (session) so the message write and this
+   * update commit together. Thin pass-through — the repository owns the
+   * write; this service never inspects the session.
+   */
+  updateLastMessage(
+    conversationId: string,
+    snapshot: LastMessageSnapshot,
+    session?: ClientSession,
+  ): Promise<void> {
+    return this.conversationsRepository.updateLastMessage(
+      conversationId,
+      snapshot,
+      session,
+    );
+  }
+
+  /**
    * Same 404-before-403 rule as getForParticipant, but authorizes off the
    * lightweight pair lookup instead of the full hydrated read.
    */
@@ -105,16 +126,16 @@ export class ConversationsService implements OnModuleInit {
     conversationId: string,
     userId: string,
   ): Promise<void> {
-    const pair =
+    const participantIds =
       await this.conversationsRepository.findParticipantIds(conversationId);
-    if (!pair) {
+    if (!participantIds) {
       throw new AppException(
         404,
         'CONVERSATION_NOT_FOUND',
         'Conversation not found',
       );
     }
-    if (pair.userAId !== userId && pair.userBId !== userId) {
+    if (!participantIds.includes(userId)) {
       throw new AppException(
         403,
         'NOT_A_PARTICIPANT',
@@ -173,6 +194,7 @@ export class ConversationsService implements OnModuleInit {
         seed.userAId,
         seed.userBId,
         seed.pinnedDaysAgo !== undefined ? daysAgo(seed.pinnedDaysAgo) : null,
+        buildSeedLastMessage(seed.id),
       );
     }
   }

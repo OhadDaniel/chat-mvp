@@ -32,20 +32,10 @@ export type PatchConversationResponse = {
   conversation: Conversation;
 };
 
-/* ── Storage rows (snake_case, produced by CONVERSATION_SELECT) ──
-   Only the repository should import these. */
+/* ── Storage snapshot (written onto a conversation) ─────── */
 
-export type ConversationRow = {
-  id: string;
-  pinned_at: Date | null;
-  created_at: Date;
-  a_id: string;
-  a_name: string;
-  a_initials: string;
-  b_id: string;
-  b_name: string;
-  b_initials: string;
-  lm_content: string | null;
-  lm_sent_at: Date | null;
-  lm_sender_id: string | null;
+export type LastMessageSnapshot = {
+  content: string;
+  sentAt: Date;
+  senderId: string;
 };

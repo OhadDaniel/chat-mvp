@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { minutesAgo, SEED_MESSAGES } from '../../database/seed-data';
-import { toUserProfile, type User } from '../users/users.types';
+import type { ClientSession } from 'mongoose';
+import { minutesAgo, SEED_MESSAGES } from '../mongo/seed-data';
+import { StorageService } from '../storage/storage.service';
+import { mapToUserProfile, type User } from '../users/users.types';
 import type {
   CreateMessageResponse,
   GetMessagesResponse,
@@ -13,17 +15,13 @@ import { MessagesRepository } from './messages.repository';
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 50;
 
-/**
- * Single-entity messages service: pagination + insert over its own
- * repository, nothing else. Authorization (the 403 participant rule)
- * is composed in front of these calls by the message orchestrators.
- *
- * Note what's MISSING vs week 3: no setLastMessage call after insert.
- * lastMessage is derived from this table — the invariant is gone.
- */
+
 @Injectable()
 export class MessagesService implements OnModuleInit {
-  constructor(private readonly messagesRepository: MessagesRepository) {}
+  constructor(
+    private readonly messagesRepository: MessagesRepository,
+    private readonly storage: StorageService,
+  ) {}
 
   async onModuleInit(): Promise<void> {
     await this.seedDemoMessages();
@@ -33,7 +31,6 @@ export class MessagesService implements OnModuleInit {
     conversationId: string,
     query: GetMessagesQueryDto,
   ): Promise<GetMessagesResponse> {
-    // week-3 behavior preserved: silent cap at 50, unknown cursor = newest page
     const limit = Math.min(query.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const before = query.cursor
       ? await this.messagesRepository.findCursorPoint(
@@ -58,18 +55,20 @@ export class MessagesService implements OnModuleInit {
     conversationId: string,
     sender: User,
     dto: CreateMessageDto,
+    session?: ClientSession,
   ): Promise<CreateMessageResponse> {
     const message = await this.messagesRepository.insert(
       randomUUID(),
       conversationId,
-      toUserProfile(sender),
+      mapToUserProfile(sender, this.storage.publicUrl(sender.avatarKey)),
       dto.content,
+      session,
     );
 
     return { message };
   }
 
-  /** Same demo history as the week-3 seed store. Data lives in seed-data.ts. */
+  
   private async seedDemoMessages(): Promise<void> {
     if ((await this.messagesRepository.count()) > 0) {
       return;

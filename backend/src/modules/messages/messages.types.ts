@@ -36,17 +36,3 @@ export type MessagePage = {
   messages: Message[];
   hasMore: boolean;
 };
-
-/* ── Storage rows (snake_case, produced by MESSAGE_SELECT) ──
-   Only the repository should import these. */
-
-export type MessageRow = {
-  id: string;
-  conversation_id: string;
-  content: string;
-  sent_at: Date;
-  status: string;
-  s_id: string;
-  s_name: string;
-  s_initials: string;
-};

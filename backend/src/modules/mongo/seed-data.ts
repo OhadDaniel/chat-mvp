@@ -9,14 +9,14 @@ export const SEED_USER_PASSWORD = 'Password123!';
 type SeedUser = {
   id: string;
   email: string;
-  name: string;
+  firstName: string;
+  lastName: string;
 };
 
 type SeedConversation = {
   id: string;
   userAId: string;
   userBId: string;
-  /** when set, the conversation is seeded as pinned this many days ago */
   pinnedDaysAgo?: number;
 };
 
@@ -29,10 +29,10 @@ type SeedMessage = {
 };
 
 export const SEED_USERS: readonly SeedUser[] = [
-  { id: 'user-1', email: 'ohad@chat.dev', name: 'Ohad Daniel' },
-  { id: 'user-2', email: 'alice@chat.dev', name: 'Alice Levi' },
-  { id: 'user-3', email: 'ben@chat.dev', name: 'Ben Katz' },
-  { id: 'user-4', email: 'clara@chat.dev', name: 'Clara Green' },
+  { id: 'user-1', email: 'ohad@chat.dev', firstName: 'Ohad', lastName: 'Daniel' },
+  { id: 'user-2', email: 'alice@chat.dev', firstName: 'Alice', lastName: 'Levi' },
+  { id: 'user-3', email: 'ben@chat.dev', firstName: 'Ben', lastName: 'Katz' },
+  { id: 'user-4', email: 'clara@chat.dev', firstName: 'Clara', lastName: 'Green' },
 ];
 
 export const SEED_CONVERSATIONS: readonly SeedConversation[] = [
