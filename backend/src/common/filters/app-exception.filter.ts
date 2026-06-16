@@ -17,11 +17,7 @@ type ErrorEnvelope = {
   };
 };
 
-/**
- * Global filter — the Nest equivalent of the Week 3 `errorHandler`
- * middleware. Every exception leaves the API in the same envelope:
- * `{ error: { code, message, details? } }`.
- */
+
 @Catch()
 export class AppExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(AppExceptionFilter.name);

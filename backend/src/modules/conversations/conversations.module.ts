@@ -1,17 +1,21 @@
 import { Module } from '@nestjs/common';
-import { DatabaseModule } from '../../database/database.module';
+import { MongooseModule } from '@nestjs/mongoose';
+import { MongoModule } from '../mongo/mongo.module';
+import { StorageModule } from '../storage/storage.module';
+import { ConversationMongo, ConversationSchema } from './conversations.schema';
 import { ConversationsRepository } from './conversations.repository';
 import { ConversationsService } from './conversations.service';
 
-/**
- * Single-entity service module: the conversations domain only. No
- * controller (endpoints are wired by orchestrators) and no other
- * entity's service — UsersService coupling moved up to the
- * create-conversation orchestrator.
- */
+
 @Module({
-  imports: [DatabaseModule],
+  imports: [
+    MongoModule,
+    StorageModule,
+    MongooseModule.forFeature([
+      { name: ConversationMongo.name, schema: ConversationSchema },
+    ]),
+  ],
   providers: [ConversationsService, ConversationsRepository],
-  exports: [ConversationsService], // orchestrators (incl. messages') compose it
+  exports: [ConversationsService], 
 })
 export class ConversationsModule {}
