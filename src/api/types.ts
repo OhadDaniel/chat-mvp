@@ -13,6 +13,7 @@ export type ApiErrorCode =
   | 'CONVERSATION_ALREADY_EXISTS'
   | 'INVALID_PARTICIPANT'
   | 'NOT_A_PARTICIPANT'
+  | 'INVALID_AVATAR_KEY'
   | 'INTERNAL_SERVER_ERROR'
 
 export type ApiError = {

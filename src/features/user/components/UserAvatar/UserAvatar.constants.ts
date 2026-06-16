@@ -9,10 +9,10 @@ export const AVATAR_COLORS = [
 ]
 
 export const SIZE_CLASSES: Record<AvatarSize, string> = {
-  sm: 'w-7 h-7 text-xs',
-  md: 'w-9 h-9 text-sm',
-  lg: 'w-11 h-11 text-base',
-  xl: 'w-14 h-14 text-lg',
+  sm: 'w-9 h-9 text-sm',
+  md: 'w-11 h-11 text-base',
+  lg: 'w-16 h-16 text-xl',
+  xl: 'w-20 h-20 text-2xl',
 }
 
 const AVATAR_BASE_CLASS = 'rounded-full flex items-center justify-center font-bold shrink-0 ring-1 ring-white/10'
@@ -20,4 +20,10 @@ const AVATAR_BASE_CLASS = 'rounded-full flex items-center justify-center font-bo
 export function buildAvatarClassName(initials: string, size: AvatarSize): string {
   const color = AVATAR_COLORS[initials.charCodeAt(0) % AVATAR_COLORS.length]
   return [AVATAR_BASE_CLASS, color, SIZE_CLASSES[size]].join(' ')
+}
+
+const AVATAR_IMAGE_BASE_CLASS = 'rounded-full object-cover shrink-0 ring-1 ring-white/10'
+
+export function buildAvatarImageClassName(size: AvatarSize): string {
+  return [AVATAR_IMAGE_BASE_CLASS, SIZE_CLASSES[size]].join(' ')
 }
