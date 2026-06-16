@@ -20,6 +20,11 @@ function fakeRepository(): UsersRepository {
       users.push(user);
       return Promise.resolve(user);
     },
+    update: (id: string, fields: Partial<User>) => {
+      const user = users.find((u) => u.id === id) as User;
+      Object.assign(user, fields);
+      return Promise.resolve(user);
+    },
     count: () => Promise.resolve(users.length),
   } as unknown as UsersRepository;
 }
@@ -78,15 +83,15 @@ describe('UsersService', () => {
     await expect(attempt).rejects.toBeInstanceOf(AppException);
   });
 
-  it('derives avatar initials from the trimmed name', async () => {
+  it('splits the trimmed name into firstName / lastName', async () => {
     const user = await service.create({
       email: 'dana@chat.dev',
       name: '  dana cohen  ',
       password: 'S3cret!pass',
     });
 
-    expect(user.name).toBe('dana cohen');
-    expect(user.avatarInitials).toBe('DC');
+    expect(user.firstName).toBe('dana');
+    expect(user.lastName).toBe('cohen');
   });
 
   it('verifyPassword accepts the right password and rejects a wrong one', async () => {
@@ -102,5 +107,74 @@ describe('UsersService', () => {
     await expect(service.verifyPassword(user, 'S3cret!pasS')).resolves.toBe(
       false,
     );
+  });
+
+  describe('updateProfile', () => {
+    it('only writes the provided fields and normalizes a new email', async () => {
+      const user = await service.create({
+        email: 'dana@chat.dev',
+        name: 'Dana Cohen',
+        password: 'S3cret!pass',
+      });
+
+      const updated = await service.updateProfile(user.id, {
+        firstName: 'Daniela',
+        email: '  DANA2@Chat.DEV ',
+      });
+
+      expect(updated.firstName).toBe('Daniela');
+      expect(updated.lastName).toBe('Cohen'); // untouched
+      expect(updated.email).toBe('dana2@chat.dev'); // normalized
+    });
+
+    it('keeps the same email (no false 409) when the owner re-submits their own', async () => {
+      const user = await service.create({
+        email: 'dana@chat.dev',
+        name: 'Dana',
+        password: 'S3cret!pass',
+      });
+
+      await expect(
+        service.updateProfile(user.id, { email: 'DANA@chat.dev' }),
+      ).resolves.toMatchObject({ email: 'dana@chat.dev' });
+    });
+
+    it('rejects with 409 when the email already belongs to another user', async () => {
+      await service.create({
+        email: 'taken@chat.dev',
+        name: 'Taken',
+        password: 'S3cret!pass',
+      });
+      const me = await service.create({
+        email: 'me@chat.dev',
+        name: 'Me',
+        password: 'S3cret!pass',
+      });
+
+      const attempt = service.updateProfile(me.id, {
+        email: 'TAKEN@chat.dev',
+      });
+
+      await expect(attempt).rejects.toMatchObject({
+        code: 'EMAIL_ALREADY_EXISTS',
+      });
+      await expect(attempt).rejects.toBeInstanceOf(AppException);
+    });
+  });
+
+  describe('setAvatarKey', () => {
+    it('sets and clears the stored avatar key', async () => {
+      const user = await service.create({
+        email: 'dana@chat.dev',
+        name: 'Dana',
+        password: 'S3cret!pass',
+      });
+
+      const set = await service.setAvatarKey(user.id, 'avatars/x/a.png');
+      expect(set.avatarKey).toBe('avatars/x/a.png');
+
+      const cleared = await service.setAvatarKey(user.id, null);
+      expect(cleared.avatarKey).toBeNull();
+    });
   });
 });

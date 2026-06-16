@@ -7,8 +7,8 @@ function conversationBetween(a: string, b: string): Conversation {
   return {
     id: 'conv-x',
     participants: [
-      { id: a, name: a, avatarInitials: 'X' },
-      { id: b, name: b, avatarInitials: 'Y' },
+      { id: a, name: a, avatarInitials: 'X', avatarUrl: null },
+      { id: b, name: b, avatarInitials: 'Y', avatarUrl: null },
     ],
     lastMessage: null,
     lastMessageAt: null,
@@ -76,7 +76,7 @@ describe('ConversationsService.create (pair rules, single-entity)', () => {
         insert: () =>
           // ...but the insert loses the race to a parallel request
           Promise.reject(
-            Object.assign(new Error('duplicate key'), { code: '23505' }),
+            Object.assign(new Error('duplicate key'), { code: 11000 }),
           ),
       }),
     );
@@ -131,8 +131,7 @@ describe('ConversationsService.setPinned', () => {
     const setPinned = jest.fn(() => Promise.resolve());
     const service = new ConversationsService(
       fakeRepository({
-        findParticipantIds: () =>
-          Promise.resolve({ userAId: 'user-1', userBId: 'user-2' }),
+        findParticipantIds: () => Promise.resolve(['user-1', 'user-2']),
         setPinned,
       }),
     );

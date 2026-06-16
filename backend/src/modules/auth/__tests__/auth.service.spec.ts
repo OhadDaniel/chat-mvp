@@ -5,9 +5,10 @@ import { AuthService } from '../auth.service';
 const ohad: User = {
   id: 'user-1',
   email: 'ohad@chat.dev',
-  name: 'Ohad Daniel',
-  avatarInitials: 'OD',
+  firstName: 'Ohad',
+  lastName: 'Daniel',
   passwordHash: '$2b$04$fakehash',
+  avatarKey: null,
 };
 
 describe('AuthService.issueToken', () => {

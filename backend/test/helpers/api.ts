@@ -2,7 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 
-/** Seeded demo users (see src/database/seed-data.ts). */
+/** Seeded demo users (see src/modules/mongo/seed-data.ts). */
 export const SEED_PASSWORD = 'Password123!';
 
 export function http(app: INestApplication): ReturnType<typeof request> {

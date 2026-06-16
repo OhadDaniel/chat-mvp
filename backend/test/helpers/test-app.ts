@@ -1,55 +1,32 @@
 import { randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { Client, Pool } from 'pg';
-import { AppModule } from '../../src/app.module';
-import { configureApp } from '../../src/app.setup';
-import { PG_POOL } from '../../src/database/database.constants';
+import { AppModule } from '../../src/modules/app/app.module';
+import { configureApp } from '../../src/modules/app/app.setup';
 
 /**
  * Boots the REAL application — AppModule, guards, pipes, filter,
- * Postgres, seeds — against a fresh database created inside the
- * embedded Postgres that global-setup started.
+ * Mongoose, seeds — against a fresh database inside the in-memory
+ * Mongo replica set that global-setup started.
  *
- * Each suite gets its own database (full isolation); the suite's pool
- * is injected by overriding the PG_POOL provider — the same seam the
- * production factory uses.
+ * Each suite gets its own database (full isolation) by injecting a
+ * unique db name into MONGO_URI before AppModule reads it.
  */
 export async function createTestApp(): Promise<INestApplication> {
-  const port = Number(process.env.TEST_PG_PORT ?? '5439');
-  const user = process.env.TEST_PG_USER ?? 'chat_test';
-  const password = process.env.TEST_PG_PASSWORD ?? 'chat_test';
-  const dbName = `test_${randomUUID().replaceAll('-', '')}`;
-
-  const admin = new Client({
-    host: '127.0.0.1',
-    port,
-    user,
-    password,
-    database: 'postgres',
-  });
-  await admin.connect();
-  await admin.query(`CREATE DATABASE ${dbName}`);
-  await admin.end();
-
-  const pool = new Pool({
-    host: '127.0.0.1',
-    port,
-    user,
-    password,
-    database: dbName,
-  });
+  const base = process.env.MONGO_URI as string; // mongodb://host:port/<db?>?replicaSet=rs
+  const dbName = `test_${randomUUID().replace(/-/g, '')}`;
+  // drop any db name a previous suite (sharing this worker) left behind, then
+  // insert a fresh unique one before the query string — full per-suite isolation
+  const uri = base.replace(/\/[^/?]*(\?|$)/, `/${dbName}$1`);
+  process.env.MONGO_URI = uri;
 
   const moduleRef = await Test.createTestingModule({
     imports: [AppModule],
-  })
-    .overrideProvider(PG_POOL)
-    .useValue(pool)
-    .compile();
+  }).compile();
 
   const app = moduleRef.createNestApplication({ logger: false });
   configureApp(app); // the EXACT production pipeline
-  await app.init(); // applies schema + seeds (empty DB)
+  await app.init();
 
   return app;
 }
