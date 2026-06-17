@@ -13,7 +13,7 @@ const ohad: User = {
   firstName: 'Ohad',
   lastName: 'Daniel',
   passwordHash: 'hash',
-  avatarKey: null,
+  avatar: null,
 };
 
 const fakeSession = {} as ClientSession;

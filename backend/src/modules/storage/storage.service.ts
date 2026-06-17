@@ -51,10 +51,8 @@ export class StorageService {
     );
   }
 
-  publicUrl(key: string | null): string | null {
-    if (key === null) {
-      return null;
-    }
+  /** The public CloudFront URL for a stored object — resolved once at upload. */
+  srcUrlFor(key: string): string {
     return `${this.publicBaseUrl}/${key}`;
   }
 }

@@ -162,19 +162,23 @@ describe('UsersService', () => {
     });
   });
 
-  describe('setAvatarKey', () => {
-    it('sets and clears the stored avatar key', async () => {
+  describe('setAvatar', () => {
+    it('sets and clears the stored avatar', async () => {
       const user = await service.create({
         email: 'dana@chat.dev',
         name: 'Dana',
         password: 'S3cret!pass',
       });
 
-      const set = await service.setAvatarKey(user.id, 'avatars/x/a.png');
-      expect(set.avatarKey).toBe('avatars/x/a.png');
+      const avatar = {
+        storageKey: 'avatars/x/a.png',
+        srcUrl: 'https://cdn/avatars/x/a.png',
+      };
+      const set = await service.setAvatar(user.id, avatar);
+      expect(set.avatar).toEqual(avatar);
 
-      const cleared = await service.setAvatarKey(user.id, null);
-      expect(cleared.avatarKey).toBeNull();
+      const cleared = await service.setAvatar(user.id, null);
+      expect(cleared.avatar).toBeNull();
     });
   });
 });

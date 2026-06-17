@@ -4,7 +4,7 @@ import type { MessagesService } from '../messages/messages.service';
 import { GetMessagesOrchestrator } from './get-messages.orchestrator';
 
 const allowAccess = {
-  getForParticipant: jest.fn(() => Promise.resolve({})),
+  getForParticipant: jest.fn(() => Promise.resolve({ participants: [] })),
 } as unknown as ConversationsService;
 
 const denyAccess = {
@@ -27,7 +27,7 @@ describe('GetMessagesOrchestrator', () => {
     expect(getPage).not.toHaveBeenCalled();
   });
 
-  it('pages once the participant is authorized', async () => {
+  it('pages once authorized, passing the conversation participants for sender resolution', async () => {
     const getPage = jest.fn(() =>
       Promise.resolve({ messages: [], nextCursor: null }),
     );
@@ -37,6 +37,6 @@ describe('GetMessagesOrchestrator', () => {
 
     await orchestrator.run('conv-1', 'user-1', { limit: 10 });
 
-    expect(getPage).toHaveBeenCalledWith('conv-1', { limit: 10 });
+    expect(getPage).toHaveBeenCalledWith('conv-1', { limit: 10 }, []);
   });
 });

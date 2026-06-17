@@ -2,6 +2,17 @@
 
 import { displayName, initialsOf } from './users.helpers';
 
+/* ── Value objects ──────────────────────────────────────── */
+
+/**
+ * A stored avatar: the S3 key (kept to delete the object later) and the public
+ * CloudFront URL. Both are resolved once, at upload time — reads return srcUrl.
+ */
+export type Avatar = {
+  storageKey: string;
+  srcUrl: string;
+};
+
 /* ── Domain ─────────────────────────────────────────────── */
 
 /**
@@ -14,7 +25,7 @@ export type User = {
   firstName: string;
   lastName: string;
   passwordHash: string;
-  avatarKey: string | null;
+  avatar: Avatar | null;
 };
 
 /**
@@ -58,17 +69,9 @@ export type UpdateProfileInput = {
   email?: string;
 };
 
-/* ── Helpers bound to these types ───────────────────────── */
+/* ── Mappers ────────────────────────────────────────────── */
 
-/**
- * `avatarUrl` is DERIVED from the user's avatarKey by the caller (the only
- * place that knows StorageService). These mappers stay pure: they just place
- * the already-resolved url onto the contract shape.
- */
-export function mapToPublicUser(
-  user: User,
-  avatarUrl: string | null,
-): PublicUser {
+export function mapToPublicUser(user: User): PublicUser {
   const { id, email, firstName, lastName } = user;
   return {
     id,
@@ -77,20 +80,17 @@ export function mapToPublicUser(
     lastName,
     name: displayName(firstName, lastName),
     avatarInitials: initialsOf(firstName, lastName),
-    avatarUrl,
+    avatarUrl: user.avatar?.srcUrl ?? null,
   };
 }
 
 /** Drop email too — the shape safe to hand to other participants. */
-export function mapToUserProfile(
-  user: User,
-  avatarUrl: string | null,
-): UserProfile {
+export function mapToUserProfile(user: User): UserProfile {
   const { id, firstName, lastName } = user;
   return {
     id,
     name: displayName(firstName, lastName),
     avatarInitials: initialsOf(firstName, lastName),
-    avatarUrl,
+    avatarUrl: user.avatar?.srcUrl ?? null,
   };
 }

@@ -1,7 +1,8 @@
 import { AppException } from '../../common/errors/app.exception';
 import type { StorageService } from '../storage/storage.service';
 import type { UsersService } from '../users/users.service';
-import type { User } from '../users/users.types';
+import type { ConversationsService } from '../conversations/conversations.service';
+import type { Avatar, User } from '../users/users.types';
 import { SetAvatarOrchestrator } from './set-avatar.orchestrator';
 
 const ohad: User = {
@@ -10,17 +11,27 @@ const ohad: User = {
   firstName: 'Ohad',
   lastName: 'Daniel',
   passwordHash: 'hash',
-  avatarKey: null,
+  avatar: null,
 };
+
+const noopConversations = {
+  applyParticipantUpdate: jest.fn(() => Promise.resolve()),
+} as unknown as ConversationsService;
+
+function avatar(storageKey: string, srcUrl: string): Avatar {
+  return { storageKey, srcUrl };
+}
 
 describe('SetAvatarOrchestrator', () => {
   it('rejects a key that is not under the user prefix (400) and writes nothing', async () => {
-    const setAvatarKey = jest.fn();
+    const setAvatar = jest.fn();
     const findById = jest.fn();
     const deleteObject = jest.fn();
+    const applyParticipantUpdate = jest.fn();
     const orchestrator = new SetAvatarOrchestrator(
-      { findById, setAvatarKey } as unknown as UsersService,
+      { findById, setAvatar } as unknown as UsersService,
       { deleteObject } as unknown as StorageService,
+      { applyParticipantUpdate } as unknown as ConversationsService,
     );
 
     await expect(
@@ -30,49 +41,58 @@ describe('SetAvatarOrchestrator', () => {
       orchestrator.run('user-1', 'avatars/user-2/stolen.png'),
     ).rejects.toBeInstanceOf(AppException);
 
-    expect(setAvatarKey).not.toHaveBeenCalled();
+    expect(setAvatar).not.toHaveBeenCalled();
     expect(findById).not.toHaveBeenCalled();
     expect(deleteObject).not.toHaveBeenCalled();
+    expect(applyParticipantUpdate).not.toHaveBeenCalled();
   });
 
-  it('sets the new key and deletes the previous object', async () => {
+  it('resolves the URL once, stores the avatar, deletes the old object, and propagates', async () => {
     const oldKey = 'avatars/user-1/old.png';
     const newKey = 'avatars/user-1/new.png';
+    const newSrcUrl = 'https://cdn/avatars/user-1/new.png';
     const findById = jest.fn(() =>
-      Promise.resolve({ ...ohad, avatarKey: oldKey }),
+      Promise.resolve({ ...ohad, avatar: avatar(oldKey, 'https://cdn/old') }),
     );
-    const setAvatarKey = jest.fn(() =>
-      Promise.resolve({ ...ohad, avatarKey: newKey }),
+    const setAvatar = jest.fn(() =>
+      Promise.resolve({ ...ohad, avatar: avatar(newKey, newSrcUrl) }),
     );
     const deleteObject = jest.fn(() => Promise.resolve());
-    const publicUrl = jest.fn(() => 'https://cdn/avatars/user-1/new.png');
+    const srcUrlFor = jest.fn(() => newSrcUrl);
+    const applyParticipantUpdate = jest.fn(() => Promise.resolve());
     const orchestrator = new SetAvatarOrchestrator(
-      { findById, setAvatarKey } as unknown as UsersService,
-      { deleteObject, publicUrl } as unknown as StorageService,
+      { findById, setAvatar } as unknown as UsersService,
+      { deleteObject, srcUrlFor } as unknown as StorageService,
+      { applyParticipantUpdate } as unknown as ConversationsService,
     );
 
     const result = await orchestrator.run('user-1', newKey);
 
-    expect(setAvatarKey).toHaveBeenCalledWith('user-1', newKey);
+    expect(setAvatar).toHaveBeenCalledWith('user-1', {
+      storageKey: newKey,
+      srcUrl: newSrcUrl,
+    });
     expect(deleteObject).toHaveBeenCalledWith(oldKey);
-    expect(result.user.avatarUrl).toBe('https://cdn/avatars/user-1/new.png');
+    expect(applyParticipantUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'user-1', avatarUrl: newSrcUrl }),
+    );
+    expect(result.user.avatarUrl).toBe(newSrcUrl);
   });
 
   it('does not delete anything when there was no previous avatar', async () => {
     const newKey = 'avatars/user-1/first.png';
-    const findById = jest.fn(() =>
-      Promise.resolve({ ...ohad, avatarKey: null }),
-    );
-    const setAvatarKey = jest.fn(() =>
-      Promise.resolve({ ...ohad, avatarKey: newKey }),
+    const findById = jest.fn(() => Promise.resolve({ ...ohad, avatar: null }));
+    const setAvatar = jest.fn(() =>
+      Promise.resolve({ ...ohad, avatar: avatar(newKey, 'https://cdn/new') }),
     );
     const deleteObject = jest.fn(() => Promise.resolve());
     const orchestrator = new SetAvatarOrchestrator(
-      { findById, setAvatarKey } as unknown as UsersService,
+      { findById, setAvatar } as unknown as UsersService,
       {
         deleteObject,
-        publicUrl: jest.fn(() => null),
+        srcUrlFor: jest.fn(() => 'https://cdn/new'),
       } as unknown as StorageService,
+      noopConversations,
     );
 
     await orchestrator.run('user-1', newKey);

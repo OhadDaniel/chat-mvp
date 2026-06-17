@@ -31,16 +31,14 @@ export class UsersRepository {
       firstName: user.firstName,
       lastName: user.lastName,
       passwordHash: user.passwordHash,
-      avatarKey: user.avatarKey,
+      avatar: user.avatar,
     });
     return user;
   }
 
   async update(
     id: string,
-    fields: Partial<
-      Pick<User, 'firstName' | 'lastName' | 'email' | 'avatarKey'>
-    >,
+    fields: Partial<Pick<User, 'firstName' | 'lastName' | 'email' | 'avatar'>>,
   ): Promise<User> {
     const doc = await this.userModel
       .findByIdAndUpdate(id, { $set: fields }, { returnDocument: 'after' })
@@ -61,6 +59,6 @@ function mapDocToUser(doc: UserMongo): User {
     firstName: doc.firstName,
     lastName: doc.lastName,
     passwordHash: doc.passwordHash,
-    avatarKey: doc.avatarKey,
+    avatar: doc.avatar ?? null,
   };
 }

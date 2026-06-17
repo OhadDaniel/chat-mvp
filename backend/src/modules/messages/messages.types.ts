@@ -32,7 +32,17 @@ export type CursorPoint = {
   id: string;
 };
 
-export type MessagePage = {
-  messages: Message[];
+/* ── Stored shape (no sender — resolved by the service) ─── */
+
+export type StoredMessage = {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  sentAt: string;
+};
+
+export type StoredMessagePage = {
+  messages: StoredMessage[];
   hasMore: boolean;
 };

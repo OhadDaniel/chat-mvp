@@ -8,7 +8,7 @@ const ohad: User = {
   firstName: 'Ohad',
   lastName: 'Daniel',
   passwordHash: '$2b$04$fakehash',
-  avatarKey: null,
+  avatar: null,
 };
 
 describe('AuthService.issueToken', () => {

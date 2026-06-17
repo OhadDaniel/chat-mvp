@@ -1,6 +1,6 @@
 import { AppException } from '../../common/errors/app.exception';
-import type { StorageService } from '../storage/storage.service';
 import type { UsersService } from '../users/users.service';
+import type { ConversationsService } from '../conversations/conversations.service';
 import type { User } from '../users/users.types';
 import { UpdateProfileOrchestrator } from './update-profile.orchestrator';
 
@@ -10,31 +10,39 @@ const ohad: User = {
   firstName: 'Ohad',
   lastName: 'Daniel',
   passwordHash: 'hash',
-  avatarKey: null,
+  avatar: null,
 };
 
-const fakeStorage = {
-  publicUrl: jest.fn((key: string | null) => key),
-} as unknown as StorageService;
+const noopConversations = {
+  applyParticipantUpdate: jest.fn(() => Promise.resolve()),
+} as unknown as ConversationsService;
 
 describe('UpdateProfileOrchestrator', () => {
-  it('updates the profile and returns a public user (no hash) with a derived avatarUrl', async () => {
+  it('updates the profile, propagates the snapshot, returns a public user (no hash)', async () => {
     const updated: User = {
       ...ohad,
       firstName: 'Oh',
-      avatarKey: 'avatars/user-1/a.png',
+      avatar: {
+        storageKey: 'avatars/user-1/a.png',
+        srcUrl: 'https://cdn/avatars/user-1/a.png',
+      },
     };
     const updateProfile = jest.fn(() => Promise.resolve(updated));
-    const publicUrl = jest.fn(() => 'https://cdn/avatars/user-1/a.png');
+    const applyParticipantUpdate = jest.fn(() => Promise.resolve());
     const orchestrator = new UpdateProfileOrchestrator(
       { updateProfile } as unknown as UsersService,
-      { publicUrl } as unknown as StorageService,
+      { applyParticipantUpdate } as unknown as ConversationsService,
     );
 
     const result = await orchestrator.run('user-1', { firstName: 'Oh' });
 
     expect(updateProfile).toHaveBeenCalledWith('user-1', { firstName: 'Oh' });
-    expect(publicUrl).toHaveBeenCalledWith('avatars/user-1/a.png');
+    expect(applyParticipantUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'user-1',
+        avatarUrl: 'https://cdn/avatars/user-1/a.png',
+      }),
+    );
     expect(result.user.avatarUrl).toBe('https://cdn/avatars/user-1/a.png');
     expect(result.user).not.toHaveProperty('passwordHash');
   });
@@ -45,7 +53,7 @@ describe('UpdateProfileOrchestrator', () => {
     );
     const orchestrator = new UpdateProfileOrchestrator(
       { updateProfile } as unknown as UsersService,
-      fakeStorage,
+      noopConversations,
     );
 
     await expect(

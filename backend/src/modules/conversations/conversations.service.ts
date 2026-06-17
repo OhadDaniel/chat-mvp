@@ -3,17 +3,25 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import type { ClientSession } from 'mongoose';
 import { AppException } from '../../common/errors/app.exception';
 import { isDuplicateKeyError } from '../mongo/mongo-errors';
-import { daysAgo, SEED_CONVERSATIONS } from '../mongo/seed-data';
-import { buildSeedLastMessage } from './conversations.helpers';
+import { daysAgo, SEED_CONVERSATIONS, SEED_USERS } from '../mongo/seed-data';
+import {
+  buildPairKey,
+  buildSeedLastMessage,
+  orderParticipants,
+  toParticipantSnapshot,
+} from './conversations.helpers';
 import { ConversationsRepository } from './conversations.repository';
 import type {
   Conversation,
   CreateConversationResponse,
   GetConversationsResponse,
   LastMessageSnapshot,
+  ParticipantSnapshot,
   PatchConversationResponse,
 } from './conversations.types';
 import type { PatchConversationDto } from './dto/patch-conversation.dto';
+import { displayName, initialsOf } from '../users/users.helpers';
+import type { UserProfile } from '../users/users.types';
 
 /**
  * Owns the conversations domain: the pair rules (distinct users,
@@ -43,10 +51,10 @@ export class ConversationsService implements OnModuleInit {
   }
 
   async create(
-    currentUserId: string,
-    participantId: string,
+    currentUser: UserProfile,
+    participant: UserProfile,
   ): Promise<CreateConversationResponse> {
-    if (participantId === currentUserId) {
+    if (participant.id === currentUser.id) {
       throw new AppException(
         400,
         'INVALID_PARTICIPANT',
@@ -54,11 +62,8 @@ export class ConversationsService implements OnModuleInit {
       );
     }
 
-    // Canonical order (a < b): one representation per pair, so the
-    // UNIQUE constraint can do its job regardless of who initiates.
-    const [userAId, userBId] = [currentUserId, participantId].sort();
-
-    if (await this.conversationsRepository.existsByPair(userAId, userBId)) {
+    const pairKey = buildPairKey(currentUser.id, participant.id);
+    if (await this.conversationsRepository.existsByPair(pairKey)) {
       throw new AppException(
         409,
         'CONVERSATION_ALREADY_EXISTS',
@@ -67,8 +72,12 @@ export class ConversationsService implements OnModuleInit {
     }
 
     const id = randomUUID();
+    const participants = orderParticipants(
+      toParticipantSnapshot(currentUser),
+      toParticipantSnapshot(participant),
+    );
     try {
-      await this.conversationsRepository.insert(id, userAId, userBId);
+      await this.conversationsRepository.insert(id, participants, pairKey);
     } catch (error) {
       // race-proof backstop: two simultaneous creates -> DB constraint
       if (isDuplicateKeyError(error)) {
@@ -90,9 +99,6 @@ export class ConversationsService implements OnModuleInit {
     userId: string,
     dto: PatchConversationDto,
   ): Promise<PatchConversationResponse> {
-    // Gate on the participant pair only — no need to hydrate the whole
-    // conversation just to authorize. The single full read happens once,
-    // after the write, to build the response.
     await this.assertParticipant(conversationId, userId);
     await this.conversationsRepository.setPinned(conversationId, dto.pinned);
 
@@ -101,10 +107,17 @@ export class ConversationsService implements OnModuleInit {
   }
 
   /**
+   * Keep this user's denormalized snapshot current across their conversations.
+   * Called after a profile/avatar change so the conversation list never goes stale.
+   */
+  applyParticipantUpdate(profile: UserProfile): Promise<void> {
+    return this.conversationsRepository.updateParticipant(profile);
+  }
+
+  /**
    * Refresh the denormalized last-message snapshot. Called inside the
    * send-message transaction (session) so the message write and this
-   * update commit together. Thin pass-through — the repository owns the
-   * write; this service never inspects the session.
+   * update commit together.
    */
   updateLastMessage(
     conversationId: string,
@@ -119,9 +132,30 @@ export class ConversationsService implements OnModuleInit {
   }
 
   /**
-   * Same 404-before-403 rule as getForParticipant, but authorizes off the
-   * lightweight pair lookup instead of the full hydrated read.
+   * The authorization rule, in one place: 404 if the conversation
+   * doesn't exist, 403 if the caller isn't one of its two users.
    */
+  async getForParticipant(
+    conversationId: string,
+    userId: string,
+  ): Promise<Conversation> {
+    const conversation = await this.getByIdOrThrow(conversationId);
+
+    const isParticipant = conversation.participants.some(
+      (participant) => participant.id === userId,
+    );
+    if (!isParticipant) {
+      throw new AppException(
+        403,
+        'NOT_A_PARTICIPANT',
+        'You are not a participant of this conversation',
+      );
+    }
+
+    return conversation;
+  }
+
+  /** Lightweight authorization for writes that don't need the full read. */
   private async assertParticipant(
     conversationId: string,
     userId: string,
@@ -144,32 +178,6 @@ export class ConversationsService implements OnModuleInit {
     }
   }
 
-  /**
-   * The authorization rule, in one place: 404 if the conversation
-   * doesn't exist, 403 if the caller isn't one of its two users.
-   * MessagesService composes this — every message read/write passes
-   * through here first.
-   */
-  async getForParticipant(
-    conversationId: string,
-    userId: string,
-  ): Promise<Conversation> {
-    const conversation = await this.getByIdOrThrow(conversationId);
-
-    const isParticipant = conversation.participants.some(
-      (participant) => participant.id === userId,
-    );
-    if (!isParticipant) {
-      throw new AppException(
-        403,
-        'NOT_A_PARTICIPANT',
-        'You are not a participant of this conversation',
-      );
-    }
-
-    return conversation;
-  }
-
   private async getByIdOrThrow(id: string): Promise<Conversation> {
     const conversation = await this.conversationsRepository.findById(id);
     if (!conversation) {
@@ -189,13 +197,29 @@ export class ConversationsService implements OnModuleInit {
     }
 
     for (const seed of SEED_CONVERSATIONS) {
+      const participants = orderParticipants(
+        seedParticipant(seed.userAId),
+        seedParticipant(seed.userBId),
+      );
       await this.conversationsRepository.insert(
         seed.id,
-        seed.userAId,
-        seed.userBId,
+        participants,
+        buildPairKey(seed.userAId, seed.userBId),
         seed.pinnedDaysAgo !== undefined ? daysAgo(seed.pinnedDaysAgo) : null,
         buildSeedLastMessage(seed.id),
       );
     }
   }
+}
+
+function seedParticipant(userId: string): ParticipantSnapshot {
+  const user = SEED_USERS.find((seed) => seed.id === userId);
+  const firstName = user?.firstName ?? '';
+  const lastName = user?.lastName ?? '';
+  return {
+    userId,
+    name: displayName(firstName, lastName),
+    avatarInitials: initialsOf(firstName, lastName),
+    avatarUrl: null,
+  };
 }

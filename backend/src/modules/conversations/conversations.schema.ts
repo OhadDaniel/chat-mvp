@@ -15,13 +15,30 @@ export class LastMessageMongo {
 
 export const LastMessageSchema = SchemaFactory.createForClass(LastMessageMongo);
 
+@Schema({ _id: false, versionKey: false })
+export class ParticipantMongo {
+  @Prop({ type: String, required: true })
+  userId!: string;
+
+  @Prop({ type: String, required: true })
+  name!: string;
+
+  @Prop({ type: String, required: true })
+  avatarInitials!: string;
+
+  @Prop({ type: String, default: null })
+  avatarUrl!: string | null;
+}
+
+export const ParticipantSchema = SchemaFactory.createForClass(ParticipantMongo);
+
 @Schema({ collection: 'conversations', versionKey: false })
 export class ConversationMongo {
   @Prop({ type: String })
   _id!: string;
 
-  @Prop({ type: [String], required: true })
-  participantIds!: string[];
+  @Prop({ type: [ParticipantSchema], required: true })
+  participants!: ParticipantMongo[];
 
   @Prop({ type: String, required: true })
   pairKey!: string;
@@ -44,4 +61,8 @@ export type ConversationDocument = HydratedDocument<ConversationMongo>;
 export const ConversationSchema = SchemaFactory.createForClass(ConversationMongo);
 
 ConversationSchema.index({ pairKey: 1 }, { unique: true });
-ConversationSchema.index({ participantIds: 1, lastMessageAt: -1, createdAt: -1 });
+ConversationSchema.index({
+  'participants.userId': 1,
+  lastMessageAt: -1,
+  createdAt: -1,
+});

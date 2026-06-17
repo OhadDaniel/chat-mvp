@@ -9,7 +9,7 @@ const ohad: User = {
   firstName: 'Ohad',
   lastName: 'Daniel',
   passwordHash: 'hash',
-  avatarKey: null,
+  avatar: null,
 };
 
 function fakeUsers(findById: (id: string) => User | undefined): UsersService {
@@ -33,7 +33,7 @@ describe('CreateConversationOrchestrator', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('delegates to ConversationsService.create with the two ids once the participant exists', async () => {
+  it('delegates to ConversationsService.create with both participant profiles', async () => {
     const create = jest.fn(() =>
       Promise.resolve({ conversation: { id: 'conv-x' } }),
     );
@@ -44,6 +44,9 @@ describe('CreateConversationOrchestrator', () => {
 
     await orchestrator.run(ohad, { participantId: 'user-2' });
 
-    expect(create).toHaveBeenCalledWith('user-1', 'user-2');
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'user-1' }),
+      expect.objectContaining({ id: 'user-2' }),
+    );
   });
 });

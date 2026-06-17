@@ -2,30 +2,25 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model } from 'mongoose';
 import type { UserProfile } from '../users/users.types';
-import { displayName, initialsOf } from '../users/users.helpers';
-import { StorageService } from '../storage/storage.service';
-import { hydrateSenderStage, pageFilterStage } from './messages.helpers';
+import { buildPageFilter } from './messages.helpers';
 import {
   MESSAGE_STATUS_SENT,
   MessageMongo,
   type MessageDocument,
 } from './messages.schema';
-import type { CursorPoint, Message, MessagePage } from './messages.types';
+import type {
+  CursorPoint,
+  Message,
+  StoredMessage,
+  StoredMessagePage,
+} from './messages.types';
 
-type SenderDoc = {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  avatarKey: string | null;
-};
-
-type MessageAggRow = {
+type MessageLean = {
   _id: string;
   conversationId: string;
   senderId: string;
   content: string;
   sentAt: Date;
-  sender: SenderDoc[];
 };
 
 @Injectable()
@@ -33,7 +28,6 @@ export class MessagesRepository {
   constructor(
     @InjectModel(MessageMongo.name)
     private readonly messageModel: Model<MessageDocument>,
-    private readonly storage: StorageService,
   ) {}
 
   async findCursorPoint(
@@ -52,19 +46,17 @@ export class MessagesRepository {
     conversationId: string,
     before: CursorPoint | undefined,
     limit: number,
-  ): Promise<MessagePage> {
+  ): Promise<StoredMessagePage> {
     const rows = await this.messageModel
-      .aggregate<MessageAggRow>([
-        pageFilterStage(conversationId, before),
-        { $sort: { sentAt: -1, _id: -1 } },
-        { $limit: limit + 1 },
-        hydrateSenderStage(),
-      ])
+      .find(buildPageFilter(conversationId, before))
+      .sort({ sentAt: -1, _id: -1 })
+      .limit(limit + 1)
+      .lean<MessageLean[]>()
       .exec();
 
     const hasMore = rows.length > limit;
     const page = rows.slice(0, limit).reverse();
-    return { messages: page.map((row) => this.mapDocToMessage(row)), hasMore };
+    return { messages: page.map(mapDocToStoredMessage), hasMore };
   }
 
   async insert(
@@ -108,23 +100,14 @@ export class MessagesRepository {
   async count(): Promise<number> {
     return this.messageModel.countDocuments().exec();
   }
+}
 
-  private mapDocToMessage(row: MessageAggRow): Message {
-    const senderDoc = row.sender[0];
-    const firstName = senderDoc?.firstName ?? '';
-    const lastName = senderDoc?.lastName ?? '';
-    return {
-      id: row._id,
-      conversationId: row.conversationId,
-      sender: {
-        id: row.senderId,
-        name: displayName(firstName, lastName),
-        avatarInitials: initialsOf(firstName, lastName),
-        avatarUrl: this.storage.publicUrl(senderDoc?.avatarKey ?? null),
-      },
-      content: row.content,
-      sentAt: row.sentAt.toISOString(),
-      status: MESSAGE_STATUS_SENT,
-    };
-  }
+function mapDocToStoredMessage(doc: MessageLean): StoredMessage {
+  return {
+    id: doc._id,
+    conversationId: doc.conversationId,
+    senderId: doc.senderId,
+    content: doc.content,
+    sentAt: doc.sentAt.toISOString(),
+  };
 }

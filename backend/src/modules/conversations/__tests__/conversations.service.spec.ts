@@ -2,6 +2,11 @@ import { AppException } from '../../../common/errors/app.exception';
 import type { ConversationsRepository } from '../conversations.repository';
 import { ConversationsService } from '../conversations.service';
 import type { Conversation } from '../conversations.types';
+import type { UserProfile } from '../../users/users.types';
+
+function profileFor(id: string): UserProfile {
+  return { id, name: id, avatarInitials: 'X', avatarUrl: null };
+}
 
 function conversationBetween(a: string, b: string): Conversation {
   return {
@@ -28,6 +33,7 @@ function fakeRepository(
     existsByPair: jest.fn(() => Promise.resolve(false)),
     insert: jest.fn(() => Promise.resolve()),
     setPinned: jest.fn(() => Promise.resolve()),
+    updateParticipant: jest.fn(() => Promise.resolve()),
     count: jest.fn(() => Promise.resolve(0)),
     ...overrides,
   } as unknown as ConversationsRepository;
@@ -37,12 +43,12 @@ describe('ConversationsService.create (pair rules, single-entity)', () => {
   it('rejects a conversation with yourself (400)', async () => {
     const service = new ConversationsService(fakeRepository());
 
-    await expect(service.create('user-1', 'user-1')).rejects.toMatchObject({
-      code: 'INVALID_PARTICIPANT',
-    });
+    await expect(
+      service.create(profileFor('user-1'), profileFor('user-1')),
+    ).rejects.toMatchObject({ code: 'INVALID_PARTICIPANT' });
   });
 
-  it('always stores the pair in canonical order, whoever initiates', async () => {
+  it('stores the participants in canonical order with a canonical pairKey', async () => {
     const insert = jest.fn(() => Promise.resolve());
     const service = new ConversationsService(
       fakeRepository({
@@ -53,10 +59,17 @@ describe('ConversationsService.create (pair rules, single-entity)', () => {
     );
 
     // user-9 starts the conversation with user-1
-    await service.create('user-9', 'user-1');
+    await service.create(profileFor('user-9'), profileFor('user-1'));
 
     // stored as (user-1, user-9) — sorted, NOT (initiator, peer)
-    expect(insert).toHaveBeenCalledWith(expect.any(String), 'user-1', 'user-9');
+    expect(insert).toHaveBeenCalledWith(
+      expect.any(String),
+      [
+        expect.objectContaining({ userId: 'user-1' }),
+        expect.objectContaining({ userId: 'user-9' }),
+      ],
+      'user-1:user-9',
+    );
   });
 
   it('rejects an existing pair with 409', async () => {
@@ -64,9 +77,9 @@ describe('ConversationsService.create (pair rules, single-entity)', () => {
       fakeRepository({ existsByPair: () => Promise.resolve(true) }),
     );
 
-    await expect(service.create('user-1', 'user-2')).rejects.toMatchObject({
-      code: 'CONVERSATION_ALREADY_EXISTS',
-    });
+    await expect(
+      service.create(profileFor('user-1'), profileFor('user-2')),
+    ).rejects.toMatchObject({ code: 'CONVERSATION_ALREADY_EXISTS' });
   });
 
   it('maps a DB unique-violation race to the same 409', async () => {
@@ -81,9 +94,9 @@ describe('ConversationsService.create (pair rules, single-entity)', () => {
       }),
     );
 
-    await expect(service.create('user-1', 'user-2')).rejects.toMatchObject({
-      code: 'CONVERSATION_ALREADY_EXISTS',
-    });
+    await expect(
+      service.create(profileFor('user-1'), profileFor('user-2')),
+    ).rejects.toMatchObject({ code: 'CONVERSATION_ALREADY_EXISTS' });
   });
 });
 

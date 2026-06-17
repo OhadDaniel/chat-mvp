@@ -7,6 +7,7 @@ import { SEED_USER_PASSWORD, SEED_USERS } from '../mongo/seed-data';
 import { UsersRepository } from './users.repository';
 import { splitName } from './users.helpers';
 import {
+  type Avatar,
   type CreateUserInput,
   type UpdateProfileInput,
   type User,
@@ -93,8 +94,8 @@ export class UsersService implements OnModuleInit {
     return this.usersRepository.update(userId, fields);
   }
 
-  setAvatarKey(userId: string, key: string | null): Promise<User> {
-    return this.usersRepository.update(userId, { avatarKey: key });
+  setAvatar(userId: string, avatar: Avatar | null): Promise<User> {
+    return this.usersRepository.update(userId, { avatar });
   }
 
 
@@ -113,7 +114,7 @@ export class UsersService implements OnModuleInit {
       firstName,
       lastName,
       passwordHash,
-      avatarKey: null,
+      avatar: null,
     });
   }
 

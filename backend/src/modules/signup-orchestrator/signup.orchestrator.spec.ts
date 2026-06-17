@@ -1,4 +1,3 @@
-import type { StorageService } from '../storage/storage.service';
 import type { UsersService } from '../users/users.service';
 import type { User } from '../users/users.types';
 import type { AuthService } from '../auth/auth.service';
@@ -10,12 +9,8 @@ const ohad: User = {
   firstName: 'Ohad',
   lastName: 'Daniel',
   passwordHash: '$2b$04$fakehash',
-  avatarKey: null,
+  avatar: null,
 };
-
-const fakeStorage = {
-  publicUrl: jest.fn((key: string | null) => key),
-} as unknown as StorageService;
 
 describe('SignupOrchestrator', () => {
   it('creates via UsersService (which owns 409) and logs the user in', async () => {
@@ -24,7 +19,6 @@ describe('SignupOrchestrator', () => {
     const orchestrator = new SignupOrchestrator(
       { create } as unknown as UsersService,
       { issueToken } as unknown as AuthService,
-      fakeStorage,
     );
 
     const dto = {

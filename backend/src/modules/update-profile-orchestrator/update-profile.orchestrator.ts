@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { StorageService } from '../storage/storage.service';
 import { UsersService } from '../users/users.service';
-import { mapToPublicUser, type PublicUser } from '../users/users.types';
+import { ConversationsService } from '../conversations/conversations.service';
+import {
+  mapToPublicUser,
+  mapToUserProfile,
+  type PublicUser,
+} from '../users/users.types';
 import type { UpdateProfileDto } from '../users/dto/update-profile.dto';
 
 export type UpdateProfileResponse = { user: PublicUser };
@@ -10,7 +14,7 @@ export type UpdateProfileResponse = { user: PublicUser };
 export class UpdateProfileOrchestrator {
   constructor(
     private readonly usersService: UsersService,
-    private readonly storage: StorageService,
+    private readonly conversationsService: ConversationsService,
   ) {}
 
   async run(
@@ -18,8 +22,9 @@ export class UpdateProfileOrchestrator {
     dto: UpdateProfileDto,
   ): Promise<UpdateProfileResponse> {
     const updated = await this.usersService.updateProfile(userId, dto);
-    return {
-      user: mapToPublicUser(updated, this.storage.publicUrl(updated.avatarKey)),
-    };
+    await this.conversationsService.applyParticipantUpdate(
+      mapToUserProfile(updated),
+    );
+    return { user: mapToPublicUser(updated) };
   }
 }

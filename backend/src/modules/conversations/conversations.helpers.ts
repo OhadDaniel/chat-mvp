@@ -1,7 +1,9 @@
-import { PipelineStage } from 'mongoose';
 import { minutesAgo, SEED_MESSAGES } from '../mongo/seed-data';
-import { USERS_COLLECTION } from '../users/users.schema';
-import type { LastMessageSnapshot } from './conversations.types';
+import type { UserProfile } from '../users/users.types';
+import type {
+  LastMessageSnapshot,
+  ParticipantSnapshot,
+} from './conversations.types';
 
 const PAIR_KEY_SEPARATOR = ':';
 
@@ -13,63 +15,29 @@ export function buildPairKey(userAId: string, userBId: string): string {
   return canonicalPair(userAId, userBId).join(PAIR_KEY_SEPARATOR);
 }
 
-export function hydrateParticipantsStage(): PipelineStage.Lookup {
+export function toParticipantSnapshot(profile: UserProfile): ParticipantSnapshot {
   return {
-    $lookup: {
-      from: USERS_COLLECTION,
-      localField: 'participantIds',
-      foreignField: '_id',
-      as: 'participants',
-      pipeline: [
-        { $project: { _id: 1, firstName: 1, lastName: 1, avatarKey: 1 } },
-      ],
-    },
+    userId: profile.id,
+    name: profile.name,
+    avatarInitials: profile.avatarInitials,
+    avatarUrl: profile.avatarUrl,
   };
 }
 
-function buildSearchRegex(search: string): RegExp {
+/** Store the pair in a stable order so reads are deterministic. */
+export function orderParticipants(
+  a: ParticipantSnapshot,
+  b: ParticipantSnapshot,
+): ParticipantSnapshot[] {
+  return [a, b].sort((x, y) => (x.userId < y.userId ? -1 : 1));
+}
+
+export function buildNameSearchRegex(search: string): RegExp {
   return new RegExp(escapeRegex(search), 'i');
 }
 
 function escapeRegex(input: string): string {
   return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/**
- * Match conversations where a participant's full name ("First Last")
- * matches the search term. Name isn't stored — it's the concatenation of
- * the hydrated firstName/lastName — so the comparison happens in the DB.
- */
-export function participantNameSearchStage(search: string): PipelineStage.Match {
-  const regex = buildSearchRegex(search);
-  return {
-    $match: {
-      $expr: {
-        $anyElementTrue: {
-          $map: {
-            input: '$participants',
-            as: 'participant',
-            in: {
-              $regexMatch: {
-                input: {
-                  $trim: {
-                    input: {
-                      $concat: [
-                        { $ifNull: ['$$participant.firstName', ''] },
-                        ' ',
-                        { $ifNull: ['$$participant.lastName', ''] },
-                      ],
-                    },
-                  },
-                },
-                regex,
-              },
-            },
-          },
-        },
-      },
-    },
-  };
 }
 
 export function buildSeedLastMessage(
