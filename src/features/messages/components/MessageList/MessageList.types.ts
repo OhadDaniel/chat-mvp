@@ -1,6 +1,8 @@
-import type { ReactNode, RefObject } from 'react'
+import type { RefObject } from 'react'
+import type { Message } from '@/features/messages/types'
 
 export type MessageListProps = {
-  items:       ReactNode[]
-  sentinelRef: RefObject<HTMLDivElement | null>
+  messages:      Message[]
+  currentUserId: string
+  sentinelRef:   RefObject<HTMLDivElement | null>
 }
