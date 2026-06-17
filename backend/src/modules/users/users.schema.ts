@@ -1,10 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
 
 export const USERS_COLLECTION = 'users';
 
 @Schema({ _id: false, versionKey: false })
-export class AvatarMongo {
+export class AvatarDocument {
   @Prop({ type: String, required: true })
   storageKey!: string;
 
@@ -12,10 +11,10 @@ export class AvatarMongo {
   srcUrl!: string;
 }
 
-export const AvatarSchema = SchemaFactory.createForClass(AvatarMongo);
+export const AvatarSchema = SchemaFactory.createForClass(AvatarDocument);
 
 @Schema({ collection: USERS_COLLECTION, versionKey: false })
-export class UserMongo {
+export class UserDocument {
   @Prop({ type: String })
   _id!: string;
 
@@ -29,7 +28,7 @@ export class UserMongo {
   lastName!: string;
 
   @Prop({ type: AvatarSchema, default: null })
-  avatar!: AvatarMongo | null;
+  avatar!: AvatarDocument | null;
 
   @Prop({ type: String, required: true })
   passwordHash!: string;
@@ -38,8 +37,6 @@ export class UserMongo {
   createdAt!: Date;
 }
 
-export type UserDocument = HydratedDocument<UserMongo>;
-
-export const UserSchema = SchemaFactory.createForClass(UserMongo);
+export const UserSchema = SchemaFactory.createForClass(UserDocument);
 
 UserSchema.index({ email: 1 }, { unique: true });

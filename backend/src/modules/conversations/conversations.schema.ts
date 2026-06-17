@@ -1,8 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
 
 @Schema({ _id: false, versionKey: false })
-export class LastMessageMongo {
+export class LastMessageDocument {
   @Prop({ type: String, required: true })
   content!: string;
 
@@ -13,10 +12,10 @@ export class LastMessageMongo {
   senderId!: string;
 }
 
-export const LastMessageSchema = SchemaFactory.createForClass(LastMessageMongo);
+export const LastMessageSchema = SchemaFactory.createForClass(LastMessageDocument);
 
 @Schema({ _id: false, versionKey: false })
-export class ParticipantMongo {
+export class ParticipantDocument {
   @Prop({ type: String, required: true })
   userId!: string;
 
@@ -30,21 +29,21 @@ export class ParticipantMongo {
   avatarUrl!: string | null;
 }
 
-export const ParticipantSchema = SchemaFactory.createForClass(ParticipantMongo);
+export const ParticipantSchema = SchemaFactory.createForClass(ParticipantDocument);
 
 @Schema({ collection: 'conversations', versionKey: false })
-export class ConversationMongo {
+export class ConversationDocument {
   @Prop({ type: String })
   _id!: string;
 
   @Prop({ type: [ParticipantSchema], required: true })
-  participants!: ParticipantMongo[];
+  participants!: ParticipantDocument[];
 
   @Prop({ type: String, required: true })
   pairKey!: string;
 
   @Prop({ type: LastMessageSchema, default: null })
-  lastMessage!: LastMessageMongo | null;
+  lastMessage!: LastMessageDocument | null;
 
   @Prop({ type: Date, default: null })
   lastMessageAt!: Date | null;
@@ -56,9 +55,7 @@ export class ConversationMongo {
   createdAt!: Date;
 }
 
-export type ConversationDocument = HydratedDocument<ConversationMongo>;
-
-export const ConversationSchema = SchemaFactory.createForClass(ConversationMongo);
+export const ConversationSchema = SchemaFactory.createForClass(ConversationDocument);
 
 ConversationSchema.index({ pairKey: 1 }, { unique: true });
 ConversationSchema.index({

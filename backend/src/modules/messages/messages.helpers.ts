@@ -1,11 +1,11 @@
 import type { QueryFilter } from 'mongoose';
-import type { MessageMongo } from './messages.schema';
+import type { MessageDocument } from './messages.schema';
 import type { CursorPoint } from './messages.types';
 
 export function buildPageFilter(
   conversationId: string,
   before: CursorPoint | undefined,
-): QueryFilter<MessageMongo> {
+): QueryFilter<MessageDocument> {
   if (!before) {
     return { conversationId };
   }

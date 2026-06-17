@@ -3,11 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model } from 'mongoose';
 import type { UserProfile } from '../users/users.types';
 import { buildPageFilter } from './messages.helpers';
-import {
-  MESSAGE_STATUS_SENT,
-  MessageMongo,
-  type MessageDocument,
-} from './messages.schema';
+import { MESSAGE_STATUS_SENT, MessageDocument } from './messages.schema';
 import type {
   CursorPoint,
   Message,
@@ -26,7 +22,7 @@ type MessageLean = {
 @Injectable()
 export class MessagesRepository {
   constructor(
-    @InjectModel(MessageMongo.name)
+    @InjectModel(MessageDocument.name)
     private readonly messageModel: Model<MessageDocument>,
   ) {}
 

@@ -2,10 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, QueryFilter } from 'mongoose';
 import { buildNameSearchRegex } from './conversations.helpers';
-import {
-  ConversationMongo,
-  type ConversationDocument,
-} from './conversations.schema';
+import { ConversationDocument } from './conversations.schema';
 import type {
   Conversation,
   LastMessageSnapshot,
@@ -24,7 +21,7 @@ type ConversationLean = {
 @Injectable()
 export class ConversationsRepository {
   constructor(
-    @InjectModel(ConversationMongo.name)
+    @InjectModel(ConversationDocument.name)
     private readonly conversationModel: Model<ConversationDocument>,
   ) {}
 
@@ -32,7 +29,7 @@ export class ConversationsRepository {
     userId: string,
     search?: string,
   ): Promise<Conversation[]> {
-    const filter: QueryFilter<ConversationMongo> = search
+    const filter: QueryFilter<ConversationDocument> = search
       ? {
           'participants.userId': userId,
           'participants.name': buildNameSearchRegex(search),

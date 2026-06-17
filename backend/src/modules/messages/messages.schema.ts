@@ -1,10 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
 
 export const MESSAGE_STATUS_SENT = 'sent';
 
 @Schema({ collection: 'messages', versionKey: false })
-export class MessageMongo {
+export class MessageDocument {
   @Prop({ type: String })
   _id!: string;
 
@@ -24,8 +23,6 @@ export class MessageMongo {
   status!: string;
 }
 
-export type MessageDocument = HydratedDocument<MessageMongo>;
-
-export const MessageSchema = SchemaFactory.createForClass(MessageMongo);
+export const MessageSchema = SchemaFactory.createForClass(MessageDocument);
 
 MessageSchema.index({ conversationId: 1, sentAt: -1, _id: -1 });
