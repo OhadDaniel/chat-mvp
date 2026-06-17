@@ -1,10 +1,14 @@
-import { useProfileContext } from '../../ProfileScreen.context'
-import { UserAvatar }         from '@/features/user/components/UserAvatar/UserAvatar'
-import { ProfileSection }     from '../shared/ProfileSection/ProfileSection'
-import { UploadButton }       from './components/UploadButton/UploadButton'
-import { RemoveButton }       from './components/RemoveButton/RemoveButton'
-import { AvatarFileInput }    from './components/AvatarFileInput/AvatarFileInput'
-import { PROFILE_AVATAR_SECTION_TITLE, PROFILE_AVATAR_ACTIONS_CLASS } from '../../ProfileScreen.constants'
+import { useAvatarContext } from './AvatarSection.context'
+import { UserAvatar }       from '@/features/user/components/UserAvatar/UserAvatar'
+import { ProfileSection }   from '../shared/ProfileSection/ProfileSection'
+import { UploadButton }     from './components/UploadButton/UploadButton'
+import { RemoveButton }     from './components/RemoveButton/RemoveButton'
+import {
+  PROFILE_AVATAR_SECTION_TITLE,
+  PROFILE_AVATAR_ACTIONS_CLASS,
+  PROFILE_AVATAR_ACCEPT,
+  PROFILE_AVATAR_INPUT_CLASS,
+} from '../../ProfileScreen.constants'
 
 export function AvatarSection() {
   const {
@@ -12,20 +16,26 @@ export function AvatarSection() {
     avatarInitials,
     avatarName,
     hasAvatar,
-    avatarBusy,
+    busy,
     fileInputRef,
     openFilePicker,
-    onAvatarChange,
-    onRemoveAvatar,
-  } = useProfileContext()
+    onFileChange,
+    onRemove,
+  } = useAvatarContext()
 
   return (
     <ProfileSection title={PROFILE_AVATAR_SECTION_TITLE}>
       <div className={PROFILE_AVATAR_ACTIONS_CLASS}>
         <UserAvatar initials={avatarInitials} name={avatarName} avatarUrl={avatarUrl} size="lg" />
-        <UploadButton onClick={openFilePicker} disabled={avatarBusy} />
-        {hasAvatar && <RemoveButton onClick={onRemoveAvatar} disabled={avatarBusy} />}
-        <AvatarFileInput inputRef={fileInputRef} onChange={onAvatarChange} />
+        <UploadButton onClick={openFilePicker} disabled={busy} />
+        {hasAvatar && <RemoveButton onClick={onRemove} disabled={busy} />}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={PROFILE_AVATAR_ACCEPT}
+          onChange={onFileChange}
+          className={PROFILE_AVATAR_INPUT_CLASS}
+        />
       </div>
     </ProfileSection>
   )

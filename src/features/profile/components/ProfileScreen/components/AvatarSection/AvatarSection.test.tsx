@@ -2,57 +2,44 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen }            from '@testing-library/react'
 import userEvent                     from '@testing-library/user-event'
 import { AvatarSection }             from './AvatarSection'
-import { ProfileContext }            from '../../ProfileScreen.context'
-import type { ProfileContextValue }  from '../../ProfileScreen.types'
+import { AvatarContext }             from './AvatarSection.context'
+import type { AvatarContextValue }   from './AvatarSection.types'
 
-const defaultProfileContext: ProfileContextValue = {
-  firstName:      'Ada',
-  lastName:       'Lovelace',
-  nameError:      null,
-  nameSaving:     false,
-  setFirstName:   vi.fn(),
-  setLastName:    vi.fn(),
-  onSubmitName:   vi.fn(),
-  email:          'ada@chat.dev',
-  emailError:     null,
-  emailSaving:    false,
-  setEmail:       vi.fn(),
-  onSubmitEmail:  vi.fn(),
+const defaultValue: AvatarContextValue = {
   avatarUrl:      null,
   avatarInitials: 'AL',
   avatarName:     'Ada Lovelace',
   hasAvatar:      false,
-  avatarBusy:     false,
+  busy:           false,
   fileInputRef:   { current: null },
   openFilePicker: vi.fn(),
-  onAvatarChange: vi.fn(),
-  onRemoveAvatar: vi.fn(),
+  onFileChange:   vi.fn(),
+  onRemove:       vi.fn(),
 }
 
-function renderWithContext(overrides: Partial<ProfileContextValue> = {}) {
-  const value = { ...defaultProfileContext, ...overrides }
+function renderWith(overrides: Partial<AvatarContextValue> = {}) {
   return render(
-    <ProfileContext.Provider value={value}>
+    <AvatarContext.Provider value={{ ...defaultValue, ...overrides }}>
       <AvatarSection />
-    </ProfileContext.Provider>,
+    </AvatarContext.Provider>,
   )
 }
 
 describe('AvatarSection', () => {
   it('renders the upload button', () => {
-    renderWithContext()
+    renderWith()
 
     expect(screen.getByRole('button', { name: /upload photo/i })).toBeInTheDocument()
   })
 
   it('does not render the remove button when there is no avatar', () => {
-    renderWithContext({ hasAvatar: false })
+    renderWith({ hasAvatar: false })
 
     expect(screen.queryByRole('button', { name: /remove/i })).not.toBeInTheDocument()
   })
 
   it('renders the remove button when there is an avatar', () => {
-    renderWithContext({ hasAvatar: true })
+    renderWith({ hasAvatar: true })
 
     expect(screen.getByRole('button', { name: /remove/i })).toBeInTheDocument()
   })
@@ -61,24 +48,24 @@ describe('AvatarSection', () => {
     const openFilePicker = vi.fn()
     const user           = userEvent.setup()
 
-    renderWithContext({ openFilePicker })
+    renderWith({ openFilePicker })
     await user.click(screen.getByRole('button', { name: /upload photo/i }))
 
     expect(openFilePicker).toHaveBeenCalledOnce()
   })
 
-  it('calls onRemoveAvatar when the remove button is clicked', async () => {
-    const onRemoveAvatar = vi.fn()
-    const user           = userEvent.setup()
+  it('calls onRemove when the remove button is clicked', async () => {
+    const onRemove = vi.fn()
+    const user     = userEvent.setup()
 
-    renderWithContext({ hasAvatar: true, onRemoveAvatar })
+    renderWith({ hasAvatar: true, onRemove })
     await user.click(screen.getByRole('button', { name: /remove/i }))
 
-    expect(onRemoveAvatar).toHaveBeenCalledOnce()
+    expect(onRemove).toHaveBeenCalledOnce()
   })
 
-  it('disables the action buttons while avatarBusy', () => {
-    renderWithContext({ hasAvatar: true, avatarBusy: true })
+  it('disables the action buttons while busy', () => {
+    renderWith({ hasAvatar: true, busy: true })
 
     expect(screen.getByRole('button', { name: /upload photo/i })).toBeDisabled()
     expect(screen.getByRole('button', { name: /remove/i })).toBeDisabled()

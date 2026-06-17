@@ -1,7 +1,7 @@
 import { useAppNavContext } from '@/features/app/context/AppNavContext'
-import { AvatarSection }    from './components/AvatarSection/AvatarSection'
-import { NameForm }         from './components/NameForm/NameForm'
-import { EmailForm }        from './components/EmailForm/EmailForm'
+import { AvatarSectionContainer } from './components/AvatarSection/AvatarSectionContainer'
+import { NameFormContainer }      from './components/NameForm/NameFormContainer'
+import { EmailFormContainer }     from './components/EmailForm/EmailFormContainer'
 import {
   PROFILE_SCREEN_CLASS,
   PROFILE_CARD_CLASS,
@@ -21,9 +21,9 @@ export function ProfileScreen() {
           {PROFILE_BACK_LABEL}
         </button>
         <h1 className={PROFILE_TITLE_CLASS}>{PROFILE_TITLE}</h1>
-        <AvatarSection />
-        <NameForm />
-        <EmailForm />
+        <AvatarSectionContainer />
+        <NameFormContainer />
+        <EmailFormContainer />
       </div>
     </div>
   )

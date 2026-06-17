@@ -1,12 +1,12 @@
 import { useAuth }                from '@/features/auth/hooks/useAuth'
 import { AuthScreensContainer }  from '@/features/auth/components/AuthScreens/AuthScreensContainer'
 import { AppNavProvider, useAppNavContext } from '@/features/app/context/AppNavContext'
-import { ProfileScreenContainer } from '@/features/profile/components/ProfileScreen/ProfileScreenContainer'
+import { ProfileScreen }         from '@/features/profile/components/ProfileScreen/ProfileScreen'
 import { AppLayoutContainer }    from './AppLayoutContainer'
 
 function AuthedApp() {
   const { view } = useAppNavContext()
-  return view === 'profile' ? <ProfileScreenContainer /> : <AppLayoutContainer />
+  return view === 'profile' ? <ProfileScreen /> : <AppLayoutContainer />
 }
 
 export function AppContainer() {

@@ -25,6 +25,8 @@ export const PROFILE_EMAIL_SUBMIT_LABEL  = 'Save email'
 export const PROFILE_EMAIL_LOADING_LABEL = 'Saving…'
 
 export const PROFILE_AVATAR_ACTIONS_CLASS = 'flex items-center gap-2'
+export const PROFILE_AVATAR_ACCEPT        = 'image/png,image/jpeg,image/webp'
+export const PROFILE_AVATAR_INPUT_CLASS   = 'hidden'
 
 export const PROFILE_NAME_SAVED_TOAST     = 'Name updated'
 export const PROFILE_EMAIL_SAVED_TOAST    = 'Email updated'
