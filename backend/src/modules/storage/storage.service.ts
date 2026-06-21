@@ -1,4 +1,8 @@
-import { DeleteObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -57,6 +61,25 @@ export class StorageService {
   }
 
   /**
+   * Does an object actually live at this key? A metadata-only HeadObject:
+   * S3 answers 404 (NotFound) when the upload never landed, which lets us
+   * reject a claimed avatar before persisting a URL that points at nothing.
+   */
+  async objectExists(key: string): Promise<boolean> {
+    try {
+      await this.client.send(
+        new HeadObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
+      return true;
+    } catch (error) {
+      if (isNotFound(error)) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  /**
    * The public CloudFront URL for a stored object, resolved once at upload.
    * The `?v` cache-buster lets a new upload show immediately even though the
    * object key is fixed (the avatar always overwrites the same key).
@@ -64,4 +87,16 @@ export class StorageService {
   srcUrlFor(key: string): string {
     return `${this.publicBaseUrl}/${key}?v=${Date.now()}`;
   }
+}
+
+/** HeadObject signals a missing object as a 404 / NotFound error. */
+function isNotFound(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+  const { name, $metadata } = error as {
+    name?: string;
+    $metadata?: { httpStatusCode?: number };
+  };
+  return name === 'NotFound' || $metadata?.httpStatusCode === 404;
 }

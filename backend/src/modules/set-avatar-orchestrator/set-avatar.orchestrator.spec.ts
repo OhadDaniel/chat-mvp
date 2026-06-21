@@ -22,9 +22,10 @@ describe('SetAvatarOrchestrator', () => {
     const setAvatar = jest.fn();
     const findById = jest.fn();
     const deleteObject = jest.fn();
+    const objectExists = jest.fn();
     const orchestrator = new SetAvatarOrchestrator(
       { findById, setAvatar } as unknown as UsersService,
-      { deleteObject } as unknown as StorageService,
+      { deleteObject, objectExists } as unknown as StorageService,
     );
 
     await expect(
@@ -34,6 +35,27 @@ describe('SetAvatarOrchestrator', () => {
       orchestrator.run('user-1', 'avatars/user-2/stolen.png'),
     ).rejects.toBeInstanceOf(AppException);
 
+    expect(setAvatar).not.toHaveBeenCalled();
+    expect(findById).not.toHaveBeenCalled();
+    expect(deleteObject).not.toHaveBeenCalled();
+    expect(objectExists).not.toHaveBeenCalled(); // ownership is checked first
+  });
+
+  it('rejects a key with no uploaded object (400) and writes nothing', async () => {
+    const setAvatar = jest.fn();
+    const findById = jest.fn();
+    const deleteObject = jest.fn();
+    const objectExists = jest.fn(() => Promise.resolve(false));
+    const orchestrator = new SetAvatarOrchestrator(
+      { findById, setAvatar } as unknown as UsersService,
+      { deleteObject, objectExists } as unknown as StorageService,
+    );
+
+    await expect(
+      orchestrator.run('user-1', 'avatars/user-1/avatar'),
+    ).rejects.toMatchObject({ code: 'AVATAR_NOT_UPLOADED' });
+
+    expect(objectExists).toHaveBeenCalledWith('avatars/user-1/avatar');
     expect(setAvatar).not.toHaveBeenCalled();
     expect(findById).not.toHaveBeenCalled();
     expect(deleteObject).not.toHaveBeenCalled();
@@ -51,9 +73,10 @@ describe('SetAvatarOrchestrator', () => {
     );
     const deleteObject = jest.fn(() => Promise.resolve());
     const srcUrlFor = jest.fn(() => newSrcUrl);
+    const objectExists = jest.fn(() => Promise.resolve(true));
     const orchestrator = new SetAvatarOrchestrator(
       { findById, setAvatar } as unknown as UsersService,
-      { deleteObject, srcUrlFor } as unknown as StorageService,
+      { deleteObject, srcUrlFor, objectExists } as unknown as StorageService,
     );
 
     const result = await orchestrator.run('user-1', newKey);
@@ -78,6 +101,7 @@ describe('SetAvatarOrchestrator', () => {
       {
         deleteObject,
         srcUrlFor: jest.fn(() => 'https://cdn/new'),
+        objectExists: jest.fn(() => Promise.resolve(true)),
       } as unknown as StorageService,
     );
 

@@ -27,6 +27,15 @@ export class SetAvatarOrchestrator {
       );
     }
 
+    // Trust, but verify: only claim a key that actually points at an object.
+    if (!(await this.storage.objectExists(key))) {
+      throw new AppException(
+        400,
+        'AVATAR_NOT_UPLOADED',
+        'No uploaded image was found for this key',
+      );
+    }
+
     // The JWT guard guarantees the user exists.
     const current = await this.usersService.findById(userId);
     const oldKey = current?.avatar?.storageKey ?? null;

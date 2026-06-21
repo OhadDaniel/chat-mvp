@@ -1,5 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import type { PublicUser } from '../../src/modules/users/users.types';
+import { StorageService } from '../../src/modules/storage/storage.service';
 import { expectNoSecrets, http, loginAs, signupAs } from '../helpers/api';
 import { createTestApp } from '../helpers/test-app';
 
@@ -11,6 +12,9 @@ describe('Profile (integration)', () => {
 
   beforeAll(async () => {
     app = await createTestApp();
+    // Tests never touch S3: treat any claimed upload as present so the
+    // avatar-claim path doesn't reach a real HeadObject call.
+    jest.spyOn(app.get(StorageService), 'objectExists').mockResolvedValue(true);
     // a brand-new user so edits here never collide with other suites' seeds
     token = await signupAs(app, 'profile@chat.dev', 'Pat Profile');
   });
