@@ -1,22 +1,29 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { AppException } from '../../common/errors/app.exception';
-import { isUniqueViolation } from '../../database/pg-errors';
-import { daysAgo, SEED_CONVERSATIONS } from '../../database/seed-data';
+import type { ClientSession } from 'mongoose';
+import { isDuplicateKeyError } from '../mongo/mongo-errors';
+import { daysAgo, SEED_CONVERSATIONS } from '../mongo/seed-data';
+import {
+  buildPairKey,
+  buildSeedLastMessage,
+  canonicalPair,
+} from './conversations.helpers';
 import { ConversationsRepository } from './conversations.repository';
+import { ConversationAlreadyExistsError } from './errors/conversation-already-exists.error';
+import { ConversationNotFoundError } from './errors/conversation-not-found.error';
+import { InvalidParticipantError } from './errors/invalid-participant.error';
+import { NotAParticipantError } from './errors/not-a-participant.error';
 import type {
-  Conversation,
-  CreateConversationResponse,
-  GetConversationsResponse,
-  PatchConversationResponse,
+  LastMessageSnapshot,
+  StoredConversation,
 } from './conversations.types';
-import type { PatchConversationDto } from './dto/patch-conversation.dto';
+import type { PatchConversationDto } from './dto/patch-conversation.request.dto';
 
 /**
- * Owns the conversations domain: the pair rules (distinct users,
- * one conversation per pair), pinning, and the participant
- * authorization rule (403). Single-entity — checking that the other
- * participant exists is the create-conversation orchestrator's job.
+ * Owns the conversations domain: the pair rules (distinct users, one
+ * conversation per pair), pinning, and the participant authorization rule.
+ * It deals in participant *ids only* — joining in the current user profiles
+ * is the orchestrators' job.
  */
 @Injectable()
 export class ConversationsService implements OnModuleInit {
@@ -28,135 +35,104 @@ export class ConversationsService implements OnModuleInit {
     await this.seedDemoConversations();
   }
 
-  async list(
-    userId: string,
-    search?: string,
-  ): Promise<GetConversationsResponse> {
-    const conversations = await this.conversationsRepository.findAllByUserId(
-      userId,
-      search,
-    );
-    return { conversations };
+  list(userId: string): Promise<StoredConversation[]> {
+    return this.conversationsRepository.findAllByUserId(userId);
   }
 
   async create(
     currentUserId: string,
     participantId: string,
-  ): Promise<CreateConversationResponse> {
+  ): Promise<StoredConversation> {
     if (participantId === currentUserId) {
-      throw new AppException(
-        400,
-        'INVALID_PARTICIPANT',
-        'Cannot start a conversation with yourself',
-      );
+      throw new InvalidParticipantError();
     }
 
-    // Canonical order (a < b): one representation per pair, so the
-    // UNIQUE constraint can do its job regardless of who initiates.
-    const [userAId, userBId] = [currentUserId, participantId].sort();
-
-    if (await this.conversationsRepository.existsByPair(userAId, userBId)) {
-      throw new AppException(
-        409,
-        'CONVERSATION_ALREADY_EXISTS',
-        'A conversation with this user already exists',
-      );
-    }
-
+    const pairKey = buildPairKey(currentUserId, participantId);
     const id = randomUUID();
     try {
-      await this.conversationsRepository.insert(id, userAId, userBId);
+      await this.conversationsRepository.insert(
+        id,
+        canonicalPair(currentUserId, participantId),
+        pairKey,
+      );
     } catch (error) {
-      // race-proof backstop: two simultaneous creates -> DB constraint
-      if (isUniqueViolation(error)) {
-        throw new AppException(
-          409,
-          'CONVERSATION_ALREADY_EXISTS',
-          'A conversation with this user already exists',
-        );
+      // The unique pairKey index is the only real guard against duplicates:
+      // a collision — including from a concurrent create — is rejected here
+      // and mapped to 409. (A read-then-write pre-check can't be race-safe.)
+      if (isDuplicateKeyError(error)) {
+        throw new ConversationAlreadyExistsError();
       }
       throw error;
     }
 
-    const conversation = await this.getByIdOrThrow(id);
-    return { conversation };
+    return this.getByIdOrThrow(id);
   }
 
   async setPinned(
     conversationId: string,
     userId: string,
     dto: PatchConversationDto,
-  ): Promise<PatchConversationResponse> {
-    // Gate on the participant pair only — no need to hydrate the whole
-    // conversation just to authorize. The single full read happens once,
-    // after the write, to build the response.
+  ): Promise<StoredConversation> {
     await this.assertParticipant(conversationId, userId);
     await this.conversationsRepository.setPinned(conversationId, dto.pinned);
-
-    const conversation = await this.getByIdOrThrow(conversationId);
-    return { conversation };
+    return this.getByIdOrThrow(conversationId);
   }
 
   /**
-   * Same 404-before-403 rule as getForParticipant, but authorizes off the
-   * lightweight pair lookup instead of the full hydrated read.
+   * Refresh the denormalized last-message snapshot. Called inside the
+   * send-message transaction (session) so the message write and this update
+   * commit together. lastMessage is immutable, so this is safe to denormalize.
    */
-  private async assertParticipant(
+  updateLastMessage(
     conversationId: string,
-    userId: string,
+    snapshot: LastMessageSnapshot,
+    session?: ClientSession,
   ): Promise<void> {
-    const pair =
-      await this.conversationsRepository.findParticipantIds(conversationId);
-    if (!pair) {
-      throw new AppException(
-        404,
-        'CONVERSATION_NOT_FOUND',
-        'Conversation not found',
-      );
-    }
-    if (pair.userAId !== userId && pair.userBId !== userId) {
-      throw new AppException(
-        403,
-        'NOT_A_PARTICIPANT',
-        'You are not a participant of this conversation',
-      );
-    }
+    return this.conversationsRepository.updateLastMessage(
+      conversationId,
+      snapshot,
+      session,
+    );
   }
 
   /**
-   * The authorization rule, in one place: 404 if the conversation
-   * doesn't exist, 403 if the caller isn't one of its two users.
-   * MessagesService composes this — every message read/write passes
-   * through here first.
+   * The authorization rule, in one place: 404 if the conversation doesn't
+   * exist, 403 if the caller isn't one of its two users.
    */
   async getForParticipant(
     conversationId: string,
     userId: string,
-  ): Promise<Conversation> {
+  ): Promise<StoredConversation> {
     const conversation = await this.getByIdOrThrow(conversationId);
-
-    const isParticipant = conversation.participants.some(
-      (participant) => participant.id === userId,
-    );
-    if (!isParticipant) {
-      throw new AppException(
-        403,
-        'NOT_A_PARTICIPANT',
-        'You are not a participant of this conversation',
-      );
+    if (!conversation.participantIds.includes(userId)) {
+      throw new NotAParticipantError();
     }
-
     return conversation;
   }
 
-  private async getByIdOrThrow(id: string): Promise<Conversation> {
+  /**
+   * Lightweight authorization for writes that don't need the full read:
+   * reads only the participant id list (projection), 404 if missing, 403 if
+   * the caller isn't one of the two users. Used by pinning and send-message.
+   */
+  async assertParticipant(
+    conversationId: string,
+    userId: string,
+  ): Promise<void> {
+    const participantIds =
+      await this.conversationsRepository.findParticipantIds(conversationId);
+    if (!participantIds) {
+      throw new ConversationNotFoundError();
+    }
+    if (!participantIds.includes(userId)) {
+      throw new NotAParticipantError();
+    }
+  }
+
+  private async getByIdOrThrow(id: string): Promise<StoredConversation> {
     const conversation = await this.conversationsRepository.findById(id);
     if (!conversation) {
-      throw new AppException(
-        404,
-        'CONVERSATION_NOT_FOUND',
-        'Conversation not found',
-      );
+      throw new ConversationNotFoundError();
     }
     return conversation;
   }
@@ -170,9 +146,10 @@ export class ConversationsService implements OnModuleInit {
     for (const seed of SEED_CONVERSATIONS) {
       await this.conversationsRepository.insert(
         seed.id,
-        seed.userAId,
-        seed.userBId,
+        canonicalPair(seed.userAId, seed.userBId),
+        buildPairKey(seed.userAId, seed.userBId),
         seed.pinnedDaysAgo !== undefined ? daysAgo(seed.pinnedDaysAgo) : null,
+        buildSeedLastMessage(seed.id),
       );
     }
   }

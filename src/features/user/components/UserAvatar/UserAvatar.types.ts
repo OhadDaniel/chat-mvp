@@ -1,7 +1,8 @@
 export type AvatarSize = 'sm' | 'md' | 'lg' | 'xl'
 
 export type UserAvatarProps = {
-  initials: string
-  name:     string
-  size?:    AvatarSize
+  initials:   string
+  name:       string
+  size?:      AvatarSize
+  avatarUrl?: string | null
 }

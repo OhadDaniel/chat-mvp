@@ -8,6 +8,7 @@ import type { ConversationItemContextValue } from './ConversationItem.context'
 const defaultContext: ConversationItemContextValue = {
   initials:    'AL',
   name:        'Alice Levi',
+  avatarUrl:   null,
   lastMessage: 'sounds good!',
   time:        '2m',
   unreadCount: 0,

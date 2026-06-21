@@ -1,0 +1,43 @@
+import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
+import { SignupModule } from '../signup-orchestrator/signup.module';
+import { LoginModule } from '../login-orchestrator/login.module';
+import { MeModule } from '../me-orchestrator/me.module';
+import { UpdateProfileModule } from '../update-profile-orchestrator/update-profile.module';
+import { RequestAvatarUploadModule } from '../request-avatar-upload-orchestrator/request-avatar-upload.module';
+import { SetAvatarModule } from '../set-avatar-orchestrator/set-avatar.module';
+import { RemoveAvatarModule } from '../remove-avatar-orchestrator/remove-avatar.module';
+import { ListConversationsModule } from '../list-conversations-orchestrator/list-conversations.module';
+import { CreateConversationModule } from '../create-conversation-orchestrator/create-conversation.module';
+import { SetPinnedModule } from '../set-pinned-orchestrator/set-pinned.module';
+import { GetMessagesModule } from '../get-messages-orchestrator/get-messages.module';
+import { CreateMessageModule } from '../create-message-orchestrator/create-message.module';
+import { AuthController } from './auth.controller';
+import { ProfileController } from './profile.controller';
+import { ConversationsController } from './conversations.controller';
+import { MessagesController } from './messages.controller';
+
+@Module({
+  imports: [
+    AuthModule,
+    SignupModule,
+    LoginModule,
+    MeModule,
+    UpdateProfileModule,
+    RequestAvatarUploadModule,
+    SetAvatarModule,
+    RemoveAvatarModule,
+    ListConversationsModule,
+    CreateConversationModule,
+    SetPinnedModule,
+    GetMessagesModule,
+    CreateMessageModule,
+  ],
+  controllers: [
+    AuthController,
+    ProfileController,
+    ConversationsController,
+    MessagesController,
+  ],
+})
+export class ControllersModule {}

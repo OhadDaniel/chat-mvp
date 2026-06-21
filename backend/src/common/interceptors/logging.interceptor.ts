@@ -8,11 +8,7 @@ import {
 import type { Request, Response } from 'express';
 import { Observable, tap } from 'rxjs';
 
-/**
- * Nest replacement for the week-3 requestLogger middleware.
- * Wraps every request and logs method, path, status and duration —
- * including failures (where the status comes from the exception).
- */
+
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger('HTTP');

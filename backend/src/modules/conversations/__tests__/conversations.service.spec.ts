@@ -1,15 +1,12 @@
 import { AppException } from '../../../common/errors/app.exception';
 import type { ConversationsRepository } from '../conversations.repository';
 import { ConversationsService } from '../conversations.service';
-import type { Conversation } from '../conversations.types';
+import type { StoredConversation } from '../conversations.types';
 
-function conversationBetween(a: string, b: string): Conversation {
+function storedBetween(a: string, b: string): StoredConversation {
   return {
     id: 'conv-x',
-    participants: [
-      { id: a, name: a, avatarInitials: 'X' },
-      { id: b, name: b, avatarInitials: 'Y' },
-    ],
+    participantIds: [a, b],
     lastMessage: null,
     lastMessageAt: null,
     pinnedAt: null,
@@ -25,9 +22,9 @@ function fakeRepository(
     findAllByUserId: jest.fn(() => Promise.resolve([])),
     findById: jest.fn(() => Promise.resolve(undefined)),
     findParticipantIds: jest.fn(() => Promise.resolve(undefined)),
-    existsByPair: jest.fn(() => Promise.resolve(false)),
     insert: jest.fn(() => Promise.resolve()),
     setPinned: jest.fn(() => Promise.resolve()),
+    updateLastMessage: jest.fn(() => Promise.resolve()),
     count: jest.fn(() => Promise.resolve(0)),
     ...overrides,
   } as unknown as ConversationsRepository;
@@ -42,41 +39,34 @@ describe('ConversationsService.create (pair rules, single-entity)', () => {
     });
   });
 
-  it('always stores the pair in canonical order, whoever initiates', async () => {
+  it('stores participant ids in canonical order with a canonical pairKey', async () => {
     const insert = jest.fn(() => Promise.resolve());
     const service = new ConversationsService(
       fakeRepository({
         insert,
-        findById: () =>
-          Promise.resolve(conversationBetween('user-1', 'user-9')),
+        findById: () => Promise.resolve(storedBetween('user-1', 'user-9')),
       }),
     );
 
-    // user-9 starts the conversation with user-1
+    // user-9 initiates the conversation with user-1
     await service.create('user-9', 'user-1');
 
     // stored as (user-1, user-9) — sorted, NOT (initiator, peer)
-    expect(insert).toHaveBeenCalledWith(expect.any(String), 'user-1', 'user-9');
-  });
-
-  it('rejects an existing pair with 409', async () => {
-    const service = new ConversationsService(
-      fakeRepository({ existsByPair: () => Promise.resolve(true) }),
+    expect(insert).toHaveBeenCalledWith(
+      expect.any(String),
+      ['user-1', 'user-9'],
+      'user-1:user-9',
     );
-
-    await expect(service.create('user-1', 'user-2')).rejects.toMatchObject({
-      code: 'CONVERSATION_ALREADY_EXISTS',
-    });
   });
 
-  it('maps a DB unique-violation race to the same 409', async () => {
+  it('maps the unique-index violation (duplicate pair) to a 409', async () => {
+    // The DB unique index on pairKey is the guard; a duplicate insert — from a
+    // second request or a concurrent race — is rejected and surfaces as 409.
     const service = new ConversationsService(
       fakeRepository({
-        existsByPair: () => Promise.resolve(false), // pre-check passes...
         insert: () =>
-          // ...but the insert loses the race to a parallel request
           Promise.reject(
-            Object.assign(new Error('duplicate key'), { code: '23505' }),
+            Object.assign(new Error('duplicate key'), { code: 11000 }),
           ),
       }),
     );
@@ -101,8 +91,7 @@ describe('ConversationsService.getForParticipant (the 403 rule)', () => {
   it('403 for an authenticated user who is not one of the two participants', async () => {
     const service = new ConversationsService(
       fakeRepository({
-        findById: () =>
-          Promise.resolve(conversationBetween('user-1', 'user-2')),
+        findById: () => Promise.resolve(storedBetween('user-1', 'user-2')),
       }),
     );
 
@@ -115,8 +104,7 @@ describe('ConversationsService.getForParticipant (the 403 rule)', () => {
   it('returns the conversation for a participant', async () => {
     const service = new ConversationsService(
       fakeRepository({
-        findById: () =>
-          Promise.resolve(conversationBetween('user-1', 'user-2')),
+        findById: () => Promise.resolve(storedBetween('user-1', 'user-2')),
       }),
     );
 
@@ -131,8 +119,7 @@ describe('ConversationsService.setPinned', () => {
     const setPinned = jest.fn(() => Promise.resolve());
     const service = new ConversationsService(
       fakeRepository({
-        findParticipantIds: () =>
-          Promise.resolve({ userAId: 'user-1', userBId: 'user-2' }),
+        findParticipantIds: () => Promise.resolve(['user-1', 'user-2']),
         setPinned,
       }),
     );

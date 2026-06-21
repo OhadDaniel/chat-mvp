@@ -1,67 +1,58 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Pool } from 'pg';
-import { PG_POOL } from '../../database/database.constants';
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { ClientSession, Model } from 'mongoose';
 import type { UserProfile } from '../users/users.types';
-import {
-  COUNT_MESSAGES,
-  FIND_CURSOR_POINT,
-  FIND_NEWEST_PAGE,
-  FIND_PAGE_BEFORE_CURSOR,
-  INSERT_MESSAGE,
-  INSERT_SEED_MESSAGE,
-} from './messages.queries';
+import { buildPageFilter } from './messages.helpers';
+import { MESSAGE_STATUS_SENT, MessageDocument } from './messages.schema';
 import type {
   CursorPoint,
   Message,
-  MessagePage,
-  MessageRow,
+  StoredMessage,
+  StoredMessagePage,
 } from './messages.types';
 
-/**
- * Postgres store for messages. SQL lives in messages.queries.ts;
- * this class only runs it and maps rows. Pagination happens IN the
- * query (keyset) — never reads more than one page.
- * NOT exported from MessagesModule.
- */
+type MessageLean = {
+  _id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  sentAt: Date;
+};
+
 @Injectable()
 export class MessagesRepository {
-  constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
+  constructor(
+    @InjectModel(MessageDocument.name)
+    private readonly messageModel: Model<MessageDocument>,
+  ) {}
 
-  /** Resolve a cursor (message id) to its position in the timeline. */
   async findCursorPoint(
     conversationId: string,
     messageId: string,
   ): Promise<CursorPoint | undefined> {
-    const result = await this.pool.query<{ id: string; sent_at: Date }>(
-      FIND_CURSOR_POINT,
-      [messageId, conversationId],
-    );
-    const row = result.rows[0];
-    return row && { id: row.id, sentAt: row.sent_at };
+    const doc = await this.messageModel
+      .findOne({ _id: messageId, conversationId })
+      .select('sentAt')
+      .lean<{ _id: string; sentAt: Date } | null>()
+      .exec();
+    return doc ? { id: doc._id, sentAt: doc.sentAt } : undefined;
   }
 
- 
   async findPageBefore(
     conversationId: string,
     before: CursorPoint | undefined,
     limit: number,
-  ): Promise<MessagePage> {
-    const result = before
-      ? await this.pool.query<MessageRow>(FIND_PAGE_BEFORE_CURSOR, [
-          conversationId,
-          before.sentAt,
-          before.id,
-          limit + 1,
-        ])
-      : await this.pool.query<MessageRow>(FIND_NEWEST_PAGE, [
-          conversationId,
-          limit + 1,
-        ]);
+  ): Promise<StoredMessagePage> {
+    const rows = await this.messageModel
+      .find(buildPageFilter(conversationId, before))
+      .sort({ sentAt: -1, _id: -1 })
+      .limit(limit + 1)
+      .lean<MessageLean[]>()
+      .exec();
 
-    const hasMore = result.rows.length > limit;
-    const page = result.rows.slice(0, limit).reverse(); // back to ascending
-
-    return { messages: page.map(rowToMessage), hasMore };
+    const hasMore = rows.length > limit;
+    const page = rows.slice(0, limit).reverse();
+    return { messages: page.map(mapDocToStoredMessage), hasMore };
   }
 
   async insert(
@@ -69,24 +60,23 @@ export class MessagesRepository {
     conversationId: string,
     sender: UserProfile,
     content: string,
+    session?: ClientSession,
   ): Promise<Message> {
-    const result = await this.pool.query<{ sent_at: Date; status: string }>(
-      INSERT_MESSAGE,
-      [id, conversationId, sender.id, content],
+    const [created] = await this.messageModel.create(
+      [{ _id: id, conversationId, senderId: sender.id, content }],
+      { session },
     );
 
-    const row = result.rows[0];
     return {
       id,
       conversationId,
       sender,
       content,
-      sentAt: row.sent_at.toISOString(),
-      status: 'sent',
+      sentAt: created.sentAt.toISOString(),
+      status: MESSAGE_STATUS_SENT,
     };
   }
 
-  /** Seed-only: explicit id and sent_at so demo history is stable. */
   async insertSeed(
     id: string,
     conversationId: string,
@@ -94,32 +84,26 @@ export class MessagesRepository {
     content: string,
     sentAt: Date,
   ): Promise<void> {
-    await this.pool.query(INSERT_SEED_MESSAGE, [
-      id,
+    await this.messageModel.create({
+      _id: id,
       conversationId,
       senderId,
       content,
       sentAt,
-    ]);
+    });
   }
 
   async count(): Promise<number> {
-    const result = await this.pool.query<{ count: string }>(COUNT_MESSAGES);
-    return Number(result.rows[0]?.count ?? 0);
+    return this.messageModel.countDocuments().exec();
   }
 }
 
-function rowToMessage(row: MessageRow): Message {
+function mapDocToStoredMessage(doc: MessageLean): StoredMessage {
   return {
-    id: row.id,
-    conversationId: row.conversation_id,
-    sender: {
-      id: row.s_id,
-      name: row.s_name,
-      avatarInitials: row.s_initials,
-    },
-    content: row.content,
-    sentAt: row.sent_at.toISOString(),
-    status: 'sent',
+    id: doc._id,
+    conversationId: doc.conversationId,
+    senderId: doc.senderId,
+    content: doc.content,
+    sentAt: doc.sentAt.toISOString(),
   };
 }

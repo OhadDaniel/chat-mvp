@@ -1,5 +1,18 @@
 /** All types for the users module, in one place. */
 
+import { displayName, initialsOf } from './users.helpers';
+
+/* ── Value objects ──────────────────────────────────────── */
+
+/**
+ * A stored avatar: the S3 key (kept to delete the object later) and the public
+ * CloudFront URL. Both are resolved once, at upload time — reads return srcUrl.
+ */
+export type Avatar = {
+  storageKey: string;
+  srcUrl: string;
+};
+
 /* ── Domain ─────────────────────────────────────────────── */
 
 /**
@@ -9,20 +22,38 @@
 export type User = {
   id: string;
   email: string;
-  name: string;
-  avatarInitials: string;
+  firstName: string;
+  lastName: string;
   passwordHash: string;
+  avatar: Avatar | null;
 };
 
-/** The user's OWN safe shape — returned to that user (auth/me). Includes email. */
-export type PublicUser = Omit<User, 'passwordHash'>;
+/**
+ * The user's OWN safe shape — returned to that user (auth/me). Includes email.
+ * `name` + `avatarInitials` are DERIVED from firstName/lastName so the external
+ * contract is unchanged.
+ */
+export type PublicUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  name: string;
+  avatarInitials: string;
+  avatarUrl: string | null;
+};
 
 /**
  * What other people are allowed to see — a participant or message sender.
  * No email: the UI only shows name + initials, and a counterpart's email
  * must never leave the API.
  */
-export type UserProfile = Omit<PublicUser, 'email'>;
+export type UserProfile = {
+  id: string;
+  name: string;
+  avatarInitials: string;
+  avatarUrl: string | null;
+};
 
 /* ── Service inputs ─────────────────────────────────────── */
 
@@ -32,36 +63,34 @@ export type CreateUserInput = {
   password: string;
 };
 
-/* ── Storage rows (snake_case, as Postgres returns them) ──
-   Only the repository should import these. */
-
-export type UserRow = {
-  id: string;
-  email: string;
-  name: string;
-  avatar_initials: string;
-  password_hash: string;
+export type UpdateProfileInput = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
 };
 
-/* ── Helpers bound to these types ───────────────────────── */
+/* ── Mappers ────────────────────────────────────────────── */
 
-export function toPublicUser(user: User): PublicUser {
-  const { id, email, name, avatarInitials } = user;
-  return { id, email, name, avatarInitials };
+export function mapToPublicUser(user: User): PublicUser {
+  const { id, email, firstName, lastName } = user;
+  return {
+    id,
+    email,
+    firstName,
+    lastName,
+    name: displayName(firstName, lastName),
+    avatarInitials: initialsOf(firstName, lastName),
+    avatarUrl: user.avatar?.srcUrl ?? null,
+  };
 }
 
 /** Drop email too — the shape safe to hand to other participants. */
-export function toUserProfile(user: User): UserProfile {
-  const { id, name, avatarInitials } = user;
-  return { id, name, avatarInitials };
-}
-
-/** "Ohad Daniel" -> "OD", "alice" -> "A" */
-export function initialsOf(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('');
+export function mapToUserProfile(user: User): UserProfile {
+  const { id, firstName, lastName } = user;
+  return {
+    id,
+    name: displayName(firstName, lastName),
+    avatarInitials: initialsOf(firstName, lastName),
+    avatarUrl: user.avatar?.srcUrl ?? null,
+  };
 }

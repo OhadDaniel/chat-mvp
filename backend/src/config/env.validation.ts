@@ -15,12 +15,32 @@ export class EnvironmentVariables {
   @MinLength(32, { message: 'JWT_SECRET must be at least 32 characters' })
   JWT_SECRET!: string;
 
-  /** e.g. postgres://user@localhost:5432/chat_mvp */
+  /** e.g. mongodb://127.0.0.1:27017/chat_mvp?replicaSet=rs0 */
   @IsString()
-  @Matches(/^postgres(ql)?:\/\//, {
-    message: 'DATABASE_URL must be a postgres:// connection string',
+  @Matches(/^mongodb(\+srv)?:\/\//, {
+    message: 'MONGO_URI must be a mongodb:// or mongodb+srv:// connection string',
   })
-  DATABASE_URL!: string;
+  MONGO_URI!: string;
+
+  @IsString()
+  AWS_REGION!: string;
+
+  @IsString()
+  AWS_ACCESS_KEY_ID!: string;
+
+  @IsString()
+  AWS_SECRET_ACCESS_KEY!: string;
+
+  /** S3 bucket that stores avatar objects. */
+  @IsString()
+  AVATAR_BUCKET!: string;
+
+  /** CloudFront base URL the avatars are served from. */
+  @IsString()
+  @Matches(/^https?:\/\//, {
+    message: 'AVATAR_PUBLIC_BASE_URL must be an http(s) URL',
+  })
+  AVATAR_PUBLIC_BASE_URL!: string;
 
   @IsOptional()
   @IsInt()

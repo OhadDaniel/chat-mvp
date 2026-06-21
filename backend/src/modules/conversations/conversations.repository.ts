@@ -1,138 +1,110 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Pool } from 'pg';
-import { PG_POOL } from '../../database/database.constants';
-import {
-  COUNT_CONVERSATIONS,
-  FIND_CONVERSATION_BY_ID,
-  FIND_CONVERSATIONS_BY_USER,
-  FIND_PARTICIPANT_IDS,
-  INSERT_CONVERSATION,
-  PAIR_EXISTS,
-  SEARCH_CONVERSATIONS_BY_NAME,
-  SET_PINNED,
-} from './conversations.queries';
-import type { Conversation, ConversationRow } from './conversations.types';
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { ClientSession, Model } from 'mongoose';
+import { ConversationDocument } from './conversations.schema';
+import type {
+  LastMessageSnapshot,
+  StoredConversation,
+} from './conversations.types';
 
-/**
- * Postgres store for conversations. SQL lives in
- * conversations.queries.ts; this class only runs it and maps rows.
- * Note: no lastMessage column anywhere — it is DERIVED from the
- * messages table on every read, so it can never go stale.
- * NOT exported from ConversationsModule.
- */
+type ConversationLean = {
+  _id: string;
+  participantIds: string[];
+  lastMessage: { content: string; sentAt: Date; senderId: string } | null;
+  lastMessageAt: Date | null;
+  pinnedAt: Date | null;
+};
+
 @Injectable()
 export class ConversationsRepository {
-  constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
+  constructor(
+    @InjectModel(ConversationDocument.name)
+    private readonly conversationModel: Model<ConversationDocument>,
+  ) {}
 
-  async findAllByUserId(
-    userId: string,
-    search?: string,
-  ): Promise<Conversation[]> {
-    const result = search
-      ? await this.pool.query<ConversationRow>(SEARCH_CONVERSATIONS_BY_NAME, [
-          userId,
-          `%${escapeLikePattern(search)}%`,
-        ])
-      : await this.pool.query<ConversationRow>(FIND_CONVERSATIONS_BY_USER, [
-          userId,
-        ]);
-
-    return result.rows.map(rowToConversation);
+  async findAllByUserId(userId: string): Promise<StoredConversation[]> {
+    const docs = await this.conversationModel
+      .find({ participantIds: userId })
+      .sort({ lastMessageAt: -1, createdAt: -1 })
+      .lean<ConversationLean[]>()
+      .exec();
+    return docs.map(mapDocToStored);
   }
 
-  async findById(id: string): Promise<Conversation | undefined> {
-    const result = await this.pool.query<ConversationRow>(
-      FIND_CONVERSATION_BY_ID,
-      [id],
-    );
-    return result.rows[0] && rowToConversation(result.rows[0]);
+  async findById(id: string): Promise<StoredConversation | undefined> {
+    const doc = await this.conversationModel
+      .findById(id)
+      .lean<ConversationLean | null>()
+      .exec();
+    return doc ? mapDocToStored(doc) : undefined;
   }
 
-  /** Authorization-only read: the participant pair for a conversation, or undefined. */
-  async findParticipantIds(
-    id: string,
-  ): Promise<{ userAId: string; userBId: string } | undefined> {
-    const result = await this.pool.query<{
-      user_a_id: string;
-      user_b_id: string;
-    }>(FIND_PARTICIPANT_IDS, [id]);
-    const row = result.rows[0];
-    return row && { userAId: row.user_a_id, userBId: row.user_b_id };
-  }
-
-  /** Pair lookup — callers must pass the canonical order (a < b). */
-  async existsByPair(userAId: string, userBId: string): Promise<boolean> {
-    const result = await this.pool.query<{ exists: boolean }>(PAIR_EXISTS, [
-      userAId,
-      userBId,
-    ]);
-    return result.rows[0]?.exists ?? false;
+  async findParticipantIds(id: string): Promise<string[] | undefined> {
+    const doc = await this.conversationModel
+      .findById(id)
+      .select('participantIds')
+      .lean<{ participantIds: string[] } | null>()
+      .exec();
+    return doc ? doc.participantIds : undefined;
   }
 
   async insert(
     id: string,
-    userAId: string,
-    userBId: string,
+    participantIds: string[],
+    pairKey: string,
     pinnedAt: Date | null = null,
+    lastMessage: LastMessageSnapshot | null = null,
   ): Promise<void> {
-    await this.pool.query(INSERT_CONVERSATION, [
-      id,
-      userAId,
-      userBId,
+    await this.conversationModel.create({
+      _id: id,
+      participantIds,
+      pairKey,
       pinnedAt,
-    ]);
+      lastMessage,
+      lastMessageAt: lastMessage ? lastMessage.sentAt : null,
+    });
   }
 
   async setPinned(id: string, pinned: boolean): Promise<void> {
-    await this.pool.query(SET_PINNED, [id, pinned]);
+    await this.conversationModel
+      .updateOne(
+        { _id: id },
+        { $set: { pinnedAt: pinned ? new Date() : null } },
+      )
+      .exec();
+  }
+
+  async updateLastMessage(
+    conversationId: string,
+    snapshot: LastMessageSnapshot,
+    session?: ClientSession,
+  ): Promise<void> {
+    await this.conversationModel
+      .updateOne(
+        { _id: conversationId },
+        { $set: { lastMessage: snapshot, lastMessageAt: snapshot.sentAt } },
+        { session },
+      )
+      .exec();
   }
 
   async count(): Promise<number> {
-    const result = await this.pool.query<{ count: string }>(
-      COUNT_CONVERSATIONS,
-    );
-    return Number(result.rows[0]?.count ?? 0);
+    return this.conversationModel.countDocuments().exec();
   }
 }
 
-/**
- * Treat user input as a literal in ILIKE: escape the pattern
- * metacharacters % and _ (and the escape char \ itself) so a typed
- * "_" matches an underscore, not "any character". Postgres LIKE/ILIKE
- * uses backslash as the default escape, so no ESCAPE clause is needed.
- */
-function escapeLikePattern(input: string): string {
-  return input.replace(/[\\%_]/g, (char) => `\\${char}`);
-}
-
-function rowToConversation(row: ConversationRow): Conversation {
-  const lastMessage =
-    row.lm_content !== null &&
-    row.lm_sent_at !== null &&
-    row.lm_sender_id !== null
-      ? {
-          content: row.lm_content,
-          sentAt: row.lm_sent_at.toISOString(),
-          senderId: row.lm_sender_id,
-        }
-      : null;
-
+function mapDocToStored(doc: ConversationLean): StoredConversation {
   return {
-    id: row.id,
-    participants: [
-      {
-        id: row.a_id,
-        name: row.a_name,
-        avatarInitials: row.a_initials,
-      },
-      {
-        id: row.b_id,
-        name: row.b_name,
-        avatarInitials: row.b_initials,
-      },
-    ],
-    lastMessage,
-    lastMessageAt: lastMessage?.sentAt ?? null,
-    pinnedAt: row.pinned_at?.toISOString() ?? null,
+    id: doc._id,
+    participantIds: doc.participantIds,
+    lastMessage: doc.lastMessage
+      ? {
+          content: doc.lastMessage.content,
+          sentAt: doc.lastMessage.sentAt.toISOString(),
+          senderId: doc.lastMessage.senderId,
+        }
+      : null,
+    lastMessageAt: doc.lastMessageAt ? doc.lastMessageAt.toISOString() : null,
+    pinnedAt: doc.pinnedAt ? doc.pinnedAt.toISOString() : null,
   };
 }

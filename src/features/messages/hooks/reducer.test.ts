@@ -6,7 +6,7 @@ import type { Message } from '../types'
 const makeMessage = (overrides: Partial<Message> = {}): Message => ({
   id:             'msg-1',
   conversationId: 'conv-1',
-  sender:         { id: 'user-1', name: 'Alice', avatarInitials: 'AL' },
+  sender:         { id: 'user-1', email: 'alice@chat.dev', firstName: 'Alice', lastName: 'Levi', name: 'Alice', avatarInitials: 'AL', avatarUrl: null },
   content:        'Hello',
   sentAt:         '2024-01-01T00:00:00.000Z',
   status:         'sent',

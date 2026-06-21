@@ -1,8 +1,8 @@
 import { useSignupContext }       from '../SignupScreen.context'
 import { useAuthScreensContext }  from '@/features/auth/components/AuthScreens/AuthScreens.context'
-import { AuthInput }              from '@/features/auth/components/shared/AuthInput'
-import { AuthErrorMessage }       from '@/features/auth/components/shared/AuthErrorMessage'
-import { AuthSubmitButton }       from '@/features/auth/components/shared/AuthSubmitButton'
+import { TextInput }              from '@/shared/components/TextInput'
+import { FormError }              from '@/shared/components/FormError'
+import { SubmitButton }           from '@/shared/components/SubmitButton'
 import { AuthSwitchLink }         from '@/features/auth/components/shared/AuthSwitchLink'
 import {
   SIGNUP_NAME_PLACEHOLDER,
@@ -29,7 +29,7 @@ export function SignupForm() {
 
   return (
     <form onSubmit={handleSubmit} className={SIGNUP_FORM_CLASS}>
-      <AuthInput
+      <TextInput
         type="text"
         placeholder={SIGNUP_NAME_PLACEHOLDER}
         value={name}
@@ -37,7 +37,7 @@ export function SignupForm() {
         disabled={isLoading}
         className={SIGNUP_INPUT_CLASS}
       />
-      <AuthInput
+      <TextInput
         type="email"
         placeholder={SIGNUP_EMAIL_PLACEHOLDER}
         value={email}
@@ -45,7 +45,7 @@ export function SignupForm() {
         disabled={isLoading}
         className={SIGNUP_INPUT_CLASS}
       />
-      <AuthInput
+      <TextInput
         type="password"
         placeholder={SIGNUP_PASSWORD_PLACEHOLDER}
         value={password}
@@ -53,8 +53,8 @@ export function SignupForm() {
         disabled={isLoading}
         className={SIGNUP_INPUT_CLASS}
       />
-      <AuthErrorMessage error={error} className={SIGNUP_ERROR_CLASS} />
-      <AuthSubmitButton
+      <FormError error={error} className={SIGNUP_ERROR_CLASS} />
+      <SubmitButton
         label={SIGNUP_SUBMIT_LABEL}
         loadingLabel={SIGNUP_LOADING_LABEL}
         isLoading={isLoading}

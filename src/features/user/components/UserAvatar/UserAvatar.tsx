@@ -1,7 +1,11 @@
-import type { UserAvatarProps }   from './UserAvatar.types'
-import { buildAvatarClassName }   from './UserAvatar.constants'
+import type { UserAvatarProps }                       from './UserAvatar.types'
+import { buildAvatarClassName, buildAvatarImageClassName } from './UserAvatar.constants'
 
-export function UserAvatar({ initials, name, size = 'md' }: UserAvatarProps) {
+export function UserAvatar({ initials, name, size = 'md', avatarUrl }: UserAvatarProps) {
+  if (avatarUrl) {
+    return <img src={avatarUrl} alt={name} className={buildAvatarImageClassName(size)} />
+  }
+
   const className = buildAvatarClassName(initials, size)
 
   return (

@@ -1,57 +1,75 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Pool } from 'pg';
-import { PG_POOL } from '../../database/database.constants';
-import {
-  COUNT_USERS,
-  FIND_USER_BY_EMAIL,
-  FIND_USER_BY_ID,
-  INSERT_USER,
-} from './users.queries';
-import type { User, UserRow } from './users.types';
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { UserDocument } from './users.schema';
+import type { User } from './users.types';
 
-/**
- * Postgres store for users. Deliberately dumb: no hashing, no
- * uniqueness logic, no normalization — that stays in UsersService.
- * SQL lives in users.queries.ts; this class only runs it and maps rows.
- * NOT exported from UsersModule.
- */
 @Injectable()
 export class UsersRepository {
-  constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
+  constructor(
+    @InjectModel(UserDocument.name)
+    private readonly userModel: Model<UserDocument>,
+  ) {}
 
   async findById(id: string): Promise<User | undefined> {
-    const result = await this.pool.query<UserRow>(FIND_USER_BY_ID, [id]);
-    return result.rows[0] && rowToUser(result.rows[0]);
+    const doc = await this.userModel
+      .findById(id)
+      .lean<UserDocument | null>()
+      .exec();
+    return doc ? mapDocToUser(doc) : undefined;
   }
 
   async findByEmail(email: string): Promise<User | undefined> {
-    const result = await this.pool.query<UserRow>(FIND_USER_BY_EMAIL, [email]);
-    return result.rows[0] && rowToUser(result.rows[0]);
+    const doc = await this.userModel
+      .findOne({ email })
+      .lean<UserDocument | null>()
+      .exec();
+    return doc ? mapDocToUser(doc) : undefined;
+  }
+
+  async findByIds(ids: string[]): Promise<User[]> {
+    const docs = await this.userModel
+      .find({ _id: { $in: ids } })
+      .lean<UserDocument[]>()
+      .exec();
+    return docs.map(mapDocToUser);
   }
 
   async insert(user: User): Promise<User> {
-    await this.pool.query(INSERT_USER, [
-      user.id,
-      user.email,
-      user.name,
-      user.avatarInitials,
-      user.passwordHash,
-    ]);
+    await this.userModel.create({
+      _id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      passwordHash: user.passwordHash,
+      avatar: user.avatar,
+    });
     return user;
   }
 
+  async update(
+    id: string,
+    fields: Partial<Pick<User, 'firstName' | 'lastName' | 'email' | 'avatar'>>,
+  ): Promise<User | undefined> {
+    const doc = await this.userModel
+      .findByIdAndUpdate(id, { $set: fields }, { returnDocument: 'after' })
+      .lean<UserDocument | null>()
+      .exec();
+    return doc ? mapDocToUser(doc) : undefined;
+  }
+
   async count(): Promise<number> {
-    const result = await this.pool.query<{ count: string }>(COUNT_USERS);
-    return Number(result.rows[0]?.count ?? 0);
+    return this.userModel.countDocuments().exec();
   }
 }
 
-function rowToUser(row: UserRow): User {
+function mapDocToUser(doc: UserDocument): User {
   return {
-    id: row.id,
-    email: row.email,
-    name: row.name,
-    avatarInitials: row.avatar_initials,
-    passwordHash: row.password_hash,
+    id: doc._id,
+    email: doc.email,
+    firstName: doc.firstName,
+    lastName: doc.lastName,
+    passwordHash: doc.passwordHash,
+    avatar: doc.avatar ?? null,
   };
 }

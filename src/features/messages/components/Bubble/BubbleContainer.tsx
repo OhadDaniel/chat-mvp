@@ -8,7 +8,7 @@ import {
 }                                    from './utils/bubble.utils'
 import { Bubble }                    from './Bubble'
 
-export function BubbleContainer({ content, sentAt, senderName, senderInitials, isFromCurrentUser }: BubbleContainerProps) {
+export function BubbleContainer({ content, sentAt, senderName, senderInitials, senderAvatarUrl, isFromCurrentUser }: BubbleContainerProps) {
   const classes = {
     wrapper:        buildWrapperClass(isFromCurrentUser),
     bubble:         buildBubbleClass(isFromCurrentUser),
@@ -23,6 +23,7 @@ export function BubbleContainer({ content, sentAt, senderName, senderInitials, i
       time={formatMessageTime(sentAt)}
       senderName={senderName}
       senderInitials={senderInitials}
+      senderAvatarUrl={senderAvatarUrl}
       showSenderName={!isFromCurrentUser}
     />
   )

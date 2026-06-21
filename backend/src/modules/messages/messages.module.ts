@@ -1,15 +1,18 @@
 import { Module } from '@nestjs/common';
-import { DatabaseModule } from '../../database/database.module';
+import { MongooseModule } from '@nestjs/mongoose';
+import { MongoModule } from '../mongo/mongo.module';
+import { MessageDocument, MessageSchema } from './messages.schema';
 import { MessagesRepository } from './messages.repository';
 import { MessagesService } from './messages.service';
 
-/**
- * Single-entity service module: the messages domain only. No controller
- * and no ConversationsService — the 403 authz gate is composed in front
- * of this service by the message orchestrators.
- */
+
 @Module({
-  imports: [DatabaseModule],
+  imports: [
+    MongoModule,
+    MongooseModule.forFeature([
+      { name: MessageDocument.name, schema: MessageSchema },
+    ]),
+  ],
   providers: [MessagesService, MessagesRepository],
   exports: [MessagesService],
 })

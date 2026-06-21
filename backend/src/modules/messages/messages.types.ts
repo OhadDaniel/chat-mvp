@@ -26,27 +26,33 @@ export type CreateMessageResponse = {
 
 /* ── Pagination ─────────────────────────────────────────── */
 
+/**
+ * A page of messages in domain terms: the items plus the cursor for older
+ * history. The service speaks this; an orchestrator maps it to the HTTP
+ * envelope (GetMessagesResponse).
+ */
+export type MessagePage = {
+  items: Message[];
+  nextCursor: string | null;
+};
+
 /** A point in the message timeline — used for keyset pagination. */
 export type CursorPoint = {
   sentAt: Date;
   id: string;
 };
 
-export type MessagePage = {
-  messages: Message[];
-  hasMore: boolean;
+/* ── Stored shape (no sender — resolved by the service) ─── */
+
+export type StoredMessage = {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  sentAt: string;
 };
 
-/* ── Storage rows (snake_case, produced by MESSAGE_SELECT) ──
-   Only the repository should import these. */
-
-export type MessageRow = {
-  id: string;
-  conversation_id: string;
-  content: string;
-  sent_at: Date;
-  status: string;
-  s_id: string;
-  s_name: string;
-  s_initials: string;
+export type StoredMessagePage = {
+  messages: StoredMessage[];
+  hasMore: boolean;
 };
