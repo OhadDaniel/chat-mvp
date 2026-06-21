@@ -10,7 +10,7 @@ describe('RequestAvatarUploadOrchestrator', () => {
       presignUpload,
     } as unknown as StorageService);
 
-    const result = await orchestrator.run('user-1', {
+    const result = await orchestrator.execute('user-1', {
       contentType: 'image/png',
     });
 

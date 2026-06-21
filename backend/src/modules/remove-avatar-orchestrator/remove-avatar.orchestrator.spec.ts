@@ -24,7 +24,7 @@ describe('RemoveAvatarOrchestrator', () => {
       { deleteObject } as unknown as StorageService,
     );
 
-    const result = await orchestrator.run('user-1');
+    const result = await orchestrator.execute('user-1');
 
     expect(setAvatar).toHaveBeenCalledWith('user-1', null);
     expect(deleteObject).toHaveBeenCalledWith(oldKey);
@@ -40,7 +40,7 @@ describe('RemoveAvatarOrchestrator', () => {
       { deleteObject } as unknown as StorageService,
     );
 
-    await orchestrator.run('user-1');
+    await orchestrator.execute('user-1');
 
     expect(setAvatar).toHaveBeenCalledWith('user-1', null);
     expect(deleteObject).not.toHaveBeenCalled();

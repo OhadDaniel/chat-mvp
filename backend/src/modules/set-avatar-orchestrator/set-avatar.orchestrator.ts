@@ -13,7 +13,7 @@ export class SetAvatarOrchestrator {
     private readonly storage: StorageService,
   ) {}
 
-  async run(userId: string, key: string): Promise<SetAvatarResponse> {
+  async execute(userId: string, key: string): Promise<SetAvatarResponse> {
     if (!isOwnedAvatarKey(userId, key)) {
       throw new AppException(
         400,

@@ -8,7 +8,7 @@ import type { UpdateProfileResponse } from '../users/dto/update-profile.response
 export class UpdateProfileOrchestrator {
   constructor(private readonly usersService: UsersService) {}
 
-  async run(
+  async execute(
     userId: string,
     dto: UpdateProfileDto,
   ): Promise<UpdateProfileResponse> {

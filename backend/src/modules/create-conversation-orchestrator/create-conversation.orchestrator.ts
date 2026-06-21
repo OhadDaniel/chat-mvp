@@ -17,7 +17,7 @@ export class CreateConversationOrchestrator {
     private readonly conversationsService: ConversationsService,
   ) {}
 
-  async run(
+  async execute(
     currentUser: User,
     dto: CreateConversationDto,
   ): Promise<CreateConversationResponse> {

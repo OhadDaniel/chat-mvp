@@ -29,10 +29,10 @@ describe('SetAvatarOrchestrator', () => {
     );
 
     await expect(
-      orchestrator.run('user-1', 'avatars/user-2/stolen.png'),
+      orchestrator.execute('user-1', 'avatars/user-2/stolen.png'),
     ).rejects.toMatchObject({ code: 'INVALID_AVATAR_KEY' });
     await expect(
-      orchestrator.run('user-1', 'avatars/user-2/stolen.png'),
+      orchestrator.execute('user-1', 'avatars/user-2/stolen.png'),
     ).rejects.toBeInstanceOf(AppException);
 
     expect(setAvatar).not.toHaveBeenCalled();
@@ -52,7 +52,7 @@ describe('SetAvatarOrchestrator', () => {
     );
 
     await expect(
-      orchestrator.run('user-1', 'avatars/user-1/avatar'),
+      orchestrator.execute('user-1', 'avatars/user-1/avatar'),
     ).rejects.toMatchObject({ code: 'AVATAR_NOT_UPLOADED' });
 
     expect(objectExists).toHaveBeenCalledWith('avatars/user-1/avatar');
@@ -79,7 +79,7 @@ describe('SetAvatarOrchestrator', () => {
       { deleteObject, srcUrlFor, objectExists } as unknown as StorageService,
     );
 
-    const result = await orchestrator.run('user-1', newKey);
+    const result = await orchestrator.execute('user-1', newKey);
 
     expect(setAvatar).toHaveBeenCalledWith('user-1', {
       storageKey: newKey,
@@ -105,7 +105,7 @@ describe('SetAvatarOrchestrator', () => {
       } as unknown as StorageService,
     );
 
-    await orchestrator.run('user-1', newKey);
+    await orchestrator.execute('user-1', newKey);
 
     expect(deleteObject).not.toHaveBeenCalled();
   });

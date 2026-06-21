@@ -17,7 +17,7 @@ export class ListConversationsOrchestrator {
     private readonly usersService: UsersService,
   ) {}
 
-  async run(userId: string, search?: string): Promise<GetConversationsResponse> {
+  async execute(userId: string, search?: string): Promise<GetConversationsResponse> {
     const stored = await this.conversationsService.list(userId);
     const ids = [...new Set(stored.flatMap((c) => c.participantIds))];
     const profiles = profilesById(await this.usersService.findByIds(ids));

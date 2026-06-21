@@ -12,7 +12,7 @@ export class SignupOrchestrator {
     private readonly authService: AuthService,
   ) {}
 
-  async run(dto: SignupDto): Promise<AuthResponse> {
+  async execute(dto: SignupDto): Promise<AuthResponse> {
     const user = await this.usersService.create(dto);
     const token = await this.authService.issueToken(user);
     return { token, user: mapToPublicUser(user) };

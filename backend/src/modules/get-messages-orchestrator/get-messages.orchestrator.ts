@@ -14,7 +14,7 @@ export class GetMessagesOrchestrator {
     private readonly usersService: UsersService,
   ) {}
 
-  async run(
+  async execute(
     conversationId: string,
     userId: string,
     query: GetMessagesQueryDto,

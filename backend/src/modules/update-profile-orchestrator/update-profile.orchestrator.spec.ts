@@ -27,7 +27,7 @@ describe('UpdateProfileOrchestrator', () => {
       updateProfile,
     } as unknown as UsersService);
 
-    const result = await orchestrator.run('user-1', { firstName: 'Oh' });
+    const result = await orchestrator.execute('user-1', { firstName: 'Oh' });
 
     expect(updateProfile).toHaveBeenCalledWith('user-1', { firstName: 'Oh' });
     expect(result.user.avatarUrl).toBe('https://cdn/avatars/user-1/a.png');
@@ -43,7 +43,7 @@ describe('UpdateProfileOrchestrator', () => {
     } as unknown as UsersService);
 
     await expect(
-      orchestrator.run('user-1', { email: 'taken@chat.dev' }),
+      orchestrator.execute('user-1', { email: 'taken@chat.dev' }),
     ).rejects.toMatchObject({ code: 'EMAIL_ALREADY_EXISTS' });
   });
 });

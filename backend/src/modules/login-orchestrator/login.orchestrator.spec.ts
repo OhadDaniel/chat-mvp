@@ -40,10 +40,10 @@ describe('LoginOrchestrator', () => {
     );
 
     const failure1 = await unknownEmail
-      .run({ email: 'ghost@chat.dev', password: 'x' })
+      .execute({ email: 'ghost@chat.dev', password: 'x' })
       .catch((e: AppException) => e);
     const failure2 = await wrongPassword
-      .run({ email: 'ohad@chat.dev', password: 'wrong' })
+      .execute({ email: 'ohad@chat.dev', password: 'wrong' })
       .catch((e: AppException) => e);
 
     expect(failure1).toBeInstanceOf(AppException);
@@ -68,7 +68,7 @@ describe('LoginOrchestrator', () => {
       fakeAuth,
     );
 
-    const result = await orchestrator.run({
+    const result = await orchestrator.execute({
       email: 'ohad@chat.dev',
       password: 'right',
     });

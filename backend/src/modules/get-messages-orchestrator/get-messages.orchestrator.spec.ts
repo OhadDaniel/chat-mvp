@@ -28,7 +28,7 @@ describe('GetMessagesOrchestrator', () => {
     );
 
     await expect(
-      orchestrator.run('conv-1', 'eve-99', {}),
+      orchestrator.execute('conv-1', 'eve-99', {}),
     ).rejects.toMatchObject({ code: 'NOT_A_PARTICIPANT' });
 
     expect(getPage).not.toHaveBeenCalled();
@@ -44,7 +44,7 @@ describe('GetMessagesOrchestrator', () => {
       fakeUsers,
     );
 
-    const result = await orchestrator.run('conv-1', 'user-1', { limit: 10 });
+    const result = await orchestrator.execute('conv-1', 'user-1', { limit: 10 });
 
     expect(getPage).toHaveBeenCalledWith('conv-1', { limit: 10 }, []);
     // the domain page is mapped to the HTTP envelope

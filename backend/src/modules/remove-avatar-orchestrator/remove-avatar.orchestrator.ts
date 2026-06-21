@@ -11,7 +11,7 @@ export class RemoveAvatarOrchestrator {
     private readonly storage: StorageService,
   ) {}
 
-  async run(userId: string): Promise<RemoveAvatarResponse> {
+  async execute(userId: string): Promise<RemoveAvatarResponse> {
     // The JWT guard guarantees the user exists.
     const current = await this.usersService.findById(userId);
     const oldKey = current?.avatar?.storageKey ?? null;

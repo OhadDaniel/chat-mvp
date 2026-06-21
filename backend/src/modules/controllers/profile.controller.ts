@@ -38,7 +38,7 @@ export class ProfileController {
   /** Who am I? FE uses this to restore the session on page refresh. */
   @Get()
   me(@CurrentUser() user: User): { user: PublicUser } {
-    return this.meOrchestrator.run(user);
+    return this.meOrchestrator.execute(user);
   }
 
   /** Edit firstName / lastName / email. */
@@ -47,7 +47,7 @@ export class ProfileController {
     @CurrentUser() user: User,
     @Body() dto: UpdateProfileDto,
   ): Promise<UpdateProfileResponse> {
-    return this.updateProfileOrchestrator.run(user.id, dto);
+    return this.updateProfileOrchestrator.execute(user.id, dto);
   }
 
   /** Hand back a presigned URL the client uploads the avatar bytes to. */
@@ -56,7 +56,7 @@ export class ProfileController {
     @CurrentUser() user: User,
     @Body() dto: RequestAvatarUploadDto,
   ): Promise<RequestAvatarUploadResponse> {
-    return this.requestAvatarUploadOrchestrator.run(user.id, dto);
+    return this.requestAvatarUploadOrchestrator.execute(user.id, dto);
   }
 
   /** Point the profile at an already-uploaded avatar object. */
@@ -65,12 +65,12 @@ export class ProfileController {
     @CurrentUser() user: User,
     @Body() dto: SetAvatarDto,
   ): Promise<SetAvatarResponse> {
-    return this.setAvatarOrchestrator.run(user.id, dto.key);
+    return this.setAvatarOrchestrator.execute(user.id, dto.key);
   }
 
   /** Drop the avatar and delete the stored object. */
   @Delete('avatar')
   removeAvatar(@CurrentUser() user: User): Promise<RemoveAvatarResponse> {
-    return this.removeAvatarOrchestrator.run(user.id);
+    return this.removeAvatarOrchestrator.execute(user.id);
   }
 }

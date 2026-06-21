@@ -52,7 +52,7 @@ describe('CreateMessageOrchestrator', () => {
     );
 
     await expect(
-      orchestrator.run('conv-1', ohad, { content: 'let me in' }),
+      orchestrator.execute('conv-1', ohad, { content: 'let me in' }),
     ).rejects.toMatchObject({ code: 'NOT_A_PARTICIPANT' });
 
     expect(create).not.toHaveBeenCalled();
@@ -72,7 +72,7 @@ describe('CreateMessageOrchestrator', () => {
       transactionRunner,
     );
 
-    await orchestrator.run('conv-1', ohad, { content: 'hi' });
+    await orchestrator.execute('conv-1', ohad, { content: 'hi' });
 
     // both writes get the SAME session (atomic), and the snapshot is mapped from the message
     expect(create).toHaveBeenCalledWith(

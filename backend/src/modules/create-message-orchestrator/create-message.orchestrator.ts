@@ -15,7 +15,7 @@ export class CreateMessageOrchestrator {
     private readonly transactionRunner: TransactionRunner,
   ) {}
 
-  async run(
+  async execute(
     conversationId: string,
     sender: User,
     dto: CreateMessageDto,

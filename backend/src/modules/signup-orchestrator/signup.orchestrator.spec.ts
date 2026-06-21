@@ -26,7 +26,7 @@ describe('SignupOrchestrator', () => {
       password: 'Password123!',
       name: 'Ohad Daniel',
     };
-    const result = await orchestrator.run(dto);
+    const result = await orchestrator.execute(dto);
 
     expect(create).toHaveBeenCalledWith(dto);
     expect(result.token).toBe('signed-token-for-user-1');

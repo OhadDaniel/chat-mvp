@@ -33,7 +33,7 @@ export class MessagesController {
     @Param('conversationId') conversationId: string,
     @Query() query: GetMessagesQueryDto,
   ): Promise<GetMessagesResponse> {
-    return this.getMessagesOrchestrator.run(conversationId, user.id, query);
+    return this.getMessagesOrchestrator.execute(conversationId, user.id, query);
   }
 
   @Post()
@@ -42,6 +42,6 @@ export class MessagesController {
     @Param('conversationId') conversationId: string,
     @Body() dto: CreateMessageDto,
   ): Promise<CreateMessageResponse> {
-    return this.createMessageOrchestrator.run(conversationId, user, dto);
+    return this.createMessageOrchestrator.execute(conversationId, user, dto);
   }
 }

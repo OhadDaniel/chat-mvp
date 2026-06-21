@@ -15,13 +15,13 @@ export class AuthController {
   /** 201 — creates a user and logs them in immediately. */
   @Post('auth/signup')
   signup(@Body() dto: SignupDto): Promise<AuthResponse> {
-    return this.signupOrchestrator.run(dto);
+    return this.signupOrchestrator.execute(dto);
   }
 
   /** 200 — login verifies credentials, it doesn't create anything. */
   @Post('auth/login')
   @HttpCode(200)
   login(@Body() dto: LoginDto): Promise<AuthResponse> {
-    return this.loginOrchestrator.run(dto);
+    return this.loginOrchestrator.execute(dto);
   }
 }

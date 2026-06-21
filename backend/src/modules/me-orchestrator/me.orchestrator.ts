@@ -3,7 +3,7 @@ import { mapToPublicUser, type PublicUser, type User } from '../users/users.type
 
 @Injectable()
 export class MeOrchestrator {
-  run(user: User): { user: PublicUser } {
+  execute(user: User): { user: PublicUser } {
     return { user: mapToPublicUser(user) };
   }
 }

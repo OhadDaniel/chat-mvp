@@ -15,7 +15,7 @@ export class SetPinnedOrchestrator {
     private readonly usersService: UsersService,
   ) {}
 
-  async run(
+  async execute(
     conversationId: string,
     userId: string,
     dto: PatchConversationDto,

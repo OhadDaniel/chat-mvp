@@ -38,7 +38,7 @@ export class ConversationsController {
     @CurrentUser() user: User,
     @Query() query: GetConversationsQueryDto,
   ): Promise<GetConversationsResponse> {
-    return this.listConversationsOrchestrator.run(user.id, query.search);
+    return this.listConversationsOrchestrator.execute(user.id, query.search);
   }
 
   @Post()
@@ -46,7 +46,7 @@ export class ConversationsController {
     @CurrentUser() user: User,
     @Body() dto: CreateConversationDto,
   ): Promise<CreateConversationResponse> {
-    return this.createConversationOrchestrator.run(user, dto);
+    return this.createConversationOrchestrator.execute(user, dto);
   }
 
   @Patch(':id')
@@ -55,6 +55,6 @@ export class ConversationsController {
     @Param('id') id: string,
     @Body() dto: PatchConversationDto,
   ): Promise<PatchConversationResponse> {
-    return this.setPinnedOrchestrator.run(id, user.id, dto);
+    return this.setPinnedOrchestrator.execute(id, user.id, dto);
   }
 }

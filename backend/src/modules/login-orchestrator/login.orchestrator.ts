@@ -13,7 +13,7 @@ export class LoginOrchestrator {
     private readonly authService: AuthService,
   ) {}
 
-  async run(dto: LoginDto): Promise<AuthResponse> {
+  async execute(dto: LoginDto): Promise<AuthResponse> {
     const user = await this.usersService.findByEmail(dto.email);
     if (
       !user ||

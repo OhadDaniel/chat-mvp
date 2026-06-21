@@ -8,7 +8,7 @@ import type { RequestAvatarUploadResponse } from '../users/dto/request-avatar-up
 export class RequestAvatarUploadOrchestrator {
   constructor(private readonly storage: StorageService) {}
 
-  async run(
+  async execute(
     userId: string,
     dto: RequestAvatarUploadDto,
   ): Promise<RequestAvatarUploadResponse> {
