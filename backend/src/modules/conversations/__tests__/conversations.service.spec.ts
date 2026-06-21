@@ -22,7 +22,6 @@ function fakeRepository(
     findAllByUserId: jest.fn(() => Promise.resolve([])),
     findById: jest.fn(() => Promise.resolve(undefined)),
     findParticipantIds: jest.fn(() => Promise.resolve(undefined)),
-    existsByPair: jest.fn(() => Promise.resolve(false)),
     insert: jest.fn(() => Promise.resolve()),
     setPinned: jest.fn(() => Promise.resolve()),
     updateLastMessage: jest.fn(() => Promise.resolve()),
@@ -60,22 +59,12 @@ describe('ConversationsService.create (pair rules, single-entity)', () => {
     );
   });
 
-  it('rejects an existing pair with 409', async () => {
-    const service = new ConversationsService(
-      fakeRepository({ existsByPair: () => Promise.resolve(true) }),
-    );
-
-    await expect(service.create('user-1', 'user-2')).rejects.toMatchObject({
-      code: 'CONVERSATION_ALREADY_EXISTS',
-    });
-  });
-
-  it('maps a DB unique-violation race to the same 409', async () => {
+  it('maps the unique-index violation (duplicate pair) to a 409', async () => {
+    // The DB unique index on pairKey is the guard; a duplicate insert — from a
+    // second request or a concurrent race — is rejected and surfaces as 409.
     const service = new ConversationsService(
       fakeRepository({
-        existsByPair: () => Promise.resolve(false), // pre-check passes...
         insert: () =>
-          // ...but the insert loses the race to a parallel request
           Promise.reject(
             Object.assign(new Error('duplicate key'), { code: 11000 }),
           ),

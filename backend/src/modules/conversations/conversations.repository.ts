@@ -48,11 +48,6 @@ export class ConversationsRepository {
     return doc ? doc.participantIds : undefined;
   }
 
-  async existsByPair(pairKey: string): Promise<boolean> {
-    const existing = await this.conversationModel.exists({ pairKey }).exec();
-    return existing !== null;
-  }
-
   async insert(
     id: string,
     participantIds: string[],

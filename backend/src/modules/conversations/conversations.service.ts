@@ -48,10 +48,6 @@ export class ConversationsService implements OnModuleInit {
     }
 
     const pairKey = buildPairKey(currentUserId, participantId);
-    if (await this.conversationsRepository.existsByPair(pairKey)) {
-      throw new ConversationAlreadyExistsError();
-    }
-
     const id = randomUUID();
     try {
       await this.conversationsRepository.insert(
@@ -60,7 +56,9 @@ export class ConversationsService implements OnModuleInit {
         pairKey,
       );
     } catch (error) {
-      // race-proof backstop: two simultaneous creates -> DB constraint
+      // The unique pairKey index is the only real guard against duplicates:
+      // a collision — including from a concurrent create — is rejected here
+      // and mapped to 409. (A read-then-write pre-check can't be race-safe.)
       if (isDuplicateKeyError(error)) {
         throw new ConversationAlreadyExistsError();
       }
