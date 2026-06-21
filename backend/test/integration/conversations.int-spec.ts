@@ -265,4 +265,58 @@ describe('Conversations (integration)', () => {
         .expect(404);
     });
   });
+
+  describe('PATCH /conversations/groups/:id — rename (creator only)', () => {
+    it('is behind the guard: 401 without a token', async () => {
+      await http(app)
+        .patch('/conversations/groups/conv-4')
+        .send({ name: 'x' })
+        .expect(401);
+    });
+
+    it('the creator can rename the group', async () => {
+      const alice = await loginAs(app, 'alice@chat.dev'); // creator of the seeded group
+      const response = await http(app)
+        .patch('/conversations/groups/conv-4')
+        .set('Authorization', `Bearer ${alice}`)
+        .send({ name: 'Renamed Crew' })
+        .expect(200);
+
+      const { conversation } = response.body as { conversation: Conversation };
+      expect(conversation.type).toBe('group');
+      if (conversation.type === 'group') {
+        expect(conversation.name).toBe('Renamed Crew');
+      }
+    });
+
+    it('403 for a member who is not the creator', async () => {
+      const ben = await loginAs(app, 'ben@chat.dev'); // member of the group, not its creator
+      const response = await http(app)
+        .patch('/conversations/groups/conv-4')
+        .set('Authorization', `Bearer ${ben}`)
+        .send({ name: 'Nope' })
+        .expect(403);
+
+      expect(response.body).toMatchObject({
+        error: { code: 'NOT_GROUP_OWNER' },
+      });
+    });
+
+    it('404 when the id is a DM — there is no title to edit', async () => {
+      await http(app)
+        .patch('/conversations/groups/conv-1')
+        .set('Authorization', `Bearer ${ohad}`)
+        .send({ name: 'x' })
+        .expect(404);
+    });
+
+    it('400 for an empty title', async () => {
+      const alice = await loginAs(app, 'alice@chat.dev');
+      await http(app)
+        .patch('/conversations/groups/conv-4')
+        .set('Authorization', `Bearer ${alice}`)
+        .send({ name: '' })
+        .expect(400);
+    });
+  });
 });

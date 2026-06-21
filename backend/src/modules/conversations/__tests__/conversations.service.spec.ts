@@ -40,6 +40,7 @@ function fakeRepository(
     insertDirect: jest.fn(() => Promise.resolve()),
     insertGroup: jest.fn(() => Promise.resolve()),
     setPinned: jest.fn(() => Promise.resolve()),
+    setGroupName: jest.fn(() => Promise.resolve()),
     updateLastMessage: jest.fn(() => Promise.resolve()),
     count: jest.fn(() => Promise.resolve(0)),
     ...overrides,
@@ -135,6 +136,50 @@ describe('ConversationsService — group conversations pass through unchanged', 
       'Crew',
       'user-1',
     );
+  });
+
+  it('renameGroup lets the creator rename and persists the new title', async () => {
+    const setGroupName = jest.fn(() => Promise.resolve());
+    const service = new ConversationsService(
+      fakeRepository({
+        setGroupName,
+        findById: () => Promise.resolve(storedGroup()), // createdBy: user-1
+      }),
+    );
+
+    await service.renameGroup('conv-g', 'user-1', 'Renamed');
+
+    expect(setGroupName).toHaveBeenCalledWith('conv-g', 'Renamed');
+  });
+
+  it('renameGroup blocks a non-creator (403) and writes nothing', async () => {
+    const setGroupName = jest.fn();
+    const service = new ConversationsService(
+      fakeRepository({
+        setGroupName,
+        findById: () => Promise.resolve(storedGroup()), // member user-3 is NOT the creator
+      }),
+    );
+
+    await expect(
+      service.renameGroup('conv-g', 'user-3', 'Nope'),
+    ).rejects.toMatchObject({ code: 'NOT_GROUP_OWNER' });
+    expect(setGroupName).not.toHaveBeenCalled();
+  });
+
+  it('renameGroup 404s on a DM — there is no title to edit', async () => {
+    const setGroupName = jest.fn();
+    const service = new ConversationsService(
+      fakeRepository({
+        setGroupName,
+        findById: () => Promise.resolve(storedBetween('user-1', 'user-2')),
+      }),
+    );
+
+    await expect(
+      service.renameGroup('conv-x', 'user-1', 'Nope'),
+    ).rejects.toMatchObject({ code: 'CONVERSATION_NOT_FOUND' });
+    expect(setGroupName).not.toHaveBeenCalled();
   });
 });
 

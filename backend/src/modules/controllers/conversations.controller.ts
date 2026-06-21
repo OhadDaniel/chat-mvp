@@ -20,9 +20,11 @@ import { CreateConversationDto } from '../conversations/dto/create-conversation.
 import { CreateGroupDto } from '../conversations/dto/create-group.request.dto';
 import { GetConversationsQueryDto } from '../conversations/dto/get-conversations.query.dto';
 import { PatchConversationDto } from '../conversations/dto/patch-conversation.request.dto';
+import { RenameGroupDto } from '../conversations/dto/rename-group.request.dto';
 import { ListConversationsOrchestrator } from '../list-conversations-orchestrator/list-conversations.orchestrator';
 import { CreateConversationOrchestrator } from '../create-conversation-orchestrator/create-conversation.orchestrator';
 import { CreateGroupOrchestrator } from '../create-group-orchestrator/create-group.orchestrator';
+import { RenameGroupOrchestrator } from '../rename-group-orchestrator/rename-group.orchestrator';
 import { SetPinnedOrchestrator } from '../set-pinned-orchestrator/set-pinned.orchestrator';
 
 
@@ -33,6 +35,7 @@ export class ConversationsController {
     private readonly listConversationsOrchestrator: ListConversationsOrchestrator,
     private readonly createConversationOrchestrator: CreateConversationOrchestrator,
     private readonly createGroupOrchestrator: CreateGroupOrchestrator,
+    private readonly renameGroupOrchestrator: RenameGroupOrchestrator,
     private readonly setPinnedOrchestrator: SetPinnedOrchestrator,
   ) {}
 
@@ -58,6 +61,15 @@ export class ConversationsController {
     @Body() dto: CreateGroupDto,
   ): Promise<CreateConversationResponse> {
     return this.createGroupOrchestrator.execute(user, dto);
+  }
+
+  @Patch('groups/:id')
+  renameGroup(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body() dto: RenameGroupDto,
+  ): Promise<PatchConversationResponse> {
+    return this.renameGroupOrchestrator.execute(id, user.id, dto);
   }
 
   @Patch(':id')

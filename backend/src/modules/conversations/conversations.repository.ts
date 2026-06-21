@@ -107,6 +107,12 @@ export class ConversationsRepository {
       .exec();
   }
 
+  async setGroupName(id: string, name: string): Promise<void> {
+    await this.conversationModel
+      .updateOne({ _id: id }, { $set: { 'group.name': name } })
+      .exec();
+  }
+
   async updateLastMessage(
     conversationId: string,
     snapshot: LastMessageSnapshot,

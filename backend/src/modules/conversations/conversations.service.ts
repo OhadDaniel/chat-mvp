@@ -13,6 +13,7 @@ import { ConversationAlreadyExistsError } from './errors/conversation-already-ex
 import { ConversationNotFoundError } from './errors/conversation-not-found.error';
 import { InvalidParticipantError } from './errors/invalid-participant.error';
 import { NotAParticipantError } from './errors/not-a-participant.error';
+import { NotGroupOwnerError } from './errors/not-group-owner.error';
 import type {
   LastMessageSnapshot,
   StoredConversation,
@@ -99,6 +100,17 @@ export class ConversationsService implements OnModuleInit {
     return this.getByIdOrThrow(conversationId);
   }
 
+  /** Rename a group — creator only. Title is a plain field, nothing derives from it. */
+  async renameGroup(
+    conversationId: string,
+    userId: string,
+    name: string,
+  ): Promise<StoredConversation> {
+    await this.assertGroupOwner(conversationId, userId);
+    await this.conversationsRepository.setGroupName(conversationId, name);
+    return this.getByIdOrThrow(conversationId);
+  }
+
   /**
    * Refresh the denormalized last-message snapshot. Called inside the
    * send-message transaction (session) so the message write and this update
@@ -147,6 +159,23 @@ export class ConversationsService implements OnModuleInit {
     }
     if (!participantIds.includes(userId)) {
       throw new NotAParticipantError();
+    }
+  }
+
+  /**
+   * Authorization for editing a group: 404 if it's not an existing group (a DM
+   * has no title to edit), 403 if the caller didn't create it.
+   */
+  private async assertGroupOwner(
+    conversationId: string,
+    userId: string,
+  ): Promise<void> {
+    const conversation = await this.getByIdOrThrow(conversationId);
+    if (conversation.type !== 'group') {
+      throw new ConversationNotFoundError();
+    }
+    if (conversation.createdBy !== userId) {
+      throw new NotGroupOwnerError();
     }
   }
 

@@ -11,6 +11,7 @@ import { RemoveAvatarModule } from '../remove-avatar-orchestrator/remove-avatar.
 import { ListConversationsModule } from '../list-conversations-orchestrator/list-conversations.module';
 import { CreateConversationModule } from '../create-conversation-orchestrator/create-conversation.module';
 import { CreateGroupModule } from '../create-group-orchestrator/create-group.module';
+import { RenameGroupModule } from '../rename-group-orchestrator/rename-group.module';
 import { SetPinnedModule } from '../set-pinned-orchestrator/set-pinned.module';
 import { GetMessagesModule } from '../get-messages-orchestrator/get-messages.module';
 import { CreateMessageModule } from '../create-message-orchestrator/create-message.module';
@@ -34,6 +35,7 @@ import { MessagesController } from './messages.controller';
     ListConversationsModule,
     CreateConversationModule,
     CreateGroupModule,
+    RenameGroupModule,
     SetPinnedModule,
     GetMessagesModule,
     CreateMessageModule,
