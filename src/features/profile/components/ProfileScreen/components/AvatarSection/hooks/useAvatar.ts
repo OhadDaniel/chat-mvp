@@ -3,6 +3,7 @@ import type { ChangeEvent } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { useToastContext } from '@/features/app/Toast/context/ToastContext'
 import { profileApi } from '@/features/profile/api/profile.api'
+import { uploadToPresignedPost } from '@/api/uploadToPresignedPost'
 import {
   PROFILE_AVATAR_SAVED_TOAST,
   PROFILE_AVATAR_REMOVED_TOAST,
@@ -25,7 +26,7 @@ export function useAvatar() {
     setBusy(true)
     try {
       const { url, fields } = await profileApi.requestAvatarUpload({ contentType: file.type })
-      await profileApi.uploadToPresignedPost(url, fields, file)
+      await uploadToPresignedPost(url, fields, file)
       const { user: updated } = await profileApi.setAvatar()
       updateUser(updated)
       showToast(PROFILE_AVATAR_SAVED_TOAST)

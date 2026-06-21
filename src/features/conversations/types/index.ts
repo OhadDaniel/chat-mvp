@@ -1,9 +1,9 @@
-import type { User }                                       from '@/features/user/types'
+import type { UserProfile }                                 from '@/features/user/types'
 import { CONVERSATIONS_ACTIONS, CONVERSATIONS_STATUS }      from '../constants'
 
-export type Conversation = {
+type ConversationBase = {
   id:            string
-  participants:  User[]
+  participants:  UserProfile[]
   lastMessage: {
     content:  string
     sentAt:   string
@@ -13,6 +13,17 @@ export type Conversation = {
   pinnedAt:      string | null
   unreadCount:   number
 }
+
+export type DirectConversation = ConversationBase & { type: 'direct' }
+
+export type GroupConversation = ConversationBase & {
+  type:      'group'
+  name:      string
+  createdBy: string
+  avatarUrl: string | null
+}
+
+export type Conversation = DirectConversation | GroupConversation
 
 export type ConversationsStatus = typeof CONVERSATIONS_STATUS[keyof typeof CONVERSATIONS_STATUS]
 

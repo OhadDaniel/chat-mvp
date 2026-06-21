@@ -1,6 +1,6 @@
-import type { User } from '@/features/user/types'
+import type { UserProfile } from '@/features/user/types'
 
-export function getOtherParticipant(participants: User[], currentUserId: string): User {
+export function getOtherParticipant(participants: UserProfile[], currentUserId: string): UserProfile {
   return participants.find(p => p.id !== currentUserId) ?? participants[0]
 }
 
