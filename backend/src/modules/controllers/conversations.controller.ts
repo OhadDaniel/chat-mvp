@@ -16,9 +16,9 @@ import type {
   GetConversationsResponse,
   PatchConversationResponse,
 } from '../conversations/conversations.types';
-import { CreateConversationDto } from '../conversations/dto/create-conversation.dto';
+import { CreateConversationDto } from '../conversations/dto/create-conversation.request.dto';
 import { GetConversationsQueryDto } from '../conversations/dto/get-conversations.query.dto';
-import { PatchConversationDto } from '../conversations/dto/patch-conversation.dto';
+import { PatchConversationDto } from '../conversations/dto/patch-conversation.request.dto';
 import { ListConversationsOrchestrator } from '../list-conversations-orchestrator/list-conversations.orchestrator';
 import { CreateConversationOrchestrator } from '../create-conversation-orchestrator/create-conversation.orchestrator';
 import { SetPinnedOrchestrator } from '../set-pinned-orchestrator/set-pinned.orchestrator';

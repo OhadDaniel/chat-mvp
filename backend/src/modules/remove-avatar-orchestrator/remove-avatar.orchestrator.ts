@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { StorageService } from '../storage/storage.service';
 import { UsersService } from '../users/users.service';
-import { mapToPublicUser, type PublicUser } from '../users/users.types';
-
-export type RemoveAvatarResponse = { user: PublicUser };
+import { mapToPublicUser } from '../users/users.types';
+import type { RemoveAvatarResponse } from '../users/dto/remove-avatar.response.dto';
 
 @Injectable()
 export class RemoveAvatarOrchestrator {

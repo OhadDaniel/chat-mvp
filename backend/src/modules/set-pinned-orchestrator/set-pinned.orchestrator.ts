@@ -6,7 +6,7 @@ import {
   toConversation,
 } from '../conversations/conversations.helpers';
 import type { PatchConversationResponse } from '../conversations/conversations.types';
-import type { PatchConversationDto } from '../conversations/dto/patch-conversation.dto';
+import type { PatchConversationDto } from '../conversations/dto/patch-conversation.request.dto';
 
 @Injectable()
 export class SetPinnedOrchestrator {

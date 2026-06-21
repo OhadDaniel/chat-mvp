@@ -8,7 +8,7 @@ import {
   toConversation,
 } from '../conversations/conversations.helpers';
 import type { CreateConversationResponse } from '../conversations/conversations.types';
-import type { CreateConversationDto } from '../conversations/dto/create-conversation.dto';
+import type { CreateConversationDto } from '../conversations/dto/create-conversation.request.dto';
 
 @Injectable()
 export class CreateConversationOrchestrator {

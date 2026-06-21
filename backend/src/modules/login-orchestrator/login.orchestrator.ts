@@ -4,7 +4,7 @@ import { mapToPublicUser } from '../users/users.types';
 import { UsersService } from '../users/users.service';
 import { AuthService } from '../auth/auth.service';
 import type { AuthResponse } from '../auth/auth.types';
-import type { LoginDto } from '../auth/dto/login.dto';
+import type { LoginDto } from '../auth/dto/login.request.dto';
 
 @Injectable()
 export class LoginOrchestrator {

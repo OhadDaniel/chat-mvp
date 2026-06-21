@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import type { AuthResponse } from '../auth/auth.types';
-import { LoginDto } from '../auth/dto/login.dto';
-import { SignupDto } from '../auth/dto/signup.dto';
+import { LoginDto } from '../auth/dto/login.request.dto';
+import { SignupDto } from '../auth/dto/signup.request.dto';
 import { SignupOrchestrator } from '../signup-orchestrator/signup.orchestrator';
 import { LoginOrchestrator } from '../login-orchestrator/login.orchestrator';
 

@@ -10,7 +10,7 @@ import {
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { User } from '../users/users.types';
-import { CreateMessageDto } from '../messages/dto/create-message.dto';
+import { CreateMessageDto } from '../messages/dto/create-message.request.dto';
 import { GetMessagesQueryDto } from '../messages/dto/get-messages.query.dto';
 import type {
   CreateMessageResponse,

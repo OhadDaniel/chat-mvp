@@ -14,7 +14,7 @@ import type {
   LastMessageSnapshot,
   StoredConversation,
 } from './conversations.types';
-import type { PatchConversationDto } from './dto/patch-conversation.dto';
+import type { PatchConversationDto } from './dto/patch-conversation.request.dto';
 
 /**
  * Owns the conversations domain: the pair rules (distinct users, one

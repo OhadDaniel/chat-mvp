@@ -5,7 +5,7 @@ import { TransactionRunner } from '../mongo/transaction.runner';
 import type { User } from '../users/users.types';
 import { MessagesService } from '../messages/messages.service';
 import type { CreateMessageResponse, Message } from '../messages/messages.types';
-import type { CreateMessageDto } from '../messages/dto/create-message.dto';
+import type { CreateMessageDto } from '../messages/dto/create-message.request.dto';
 
 @Injectable()
 export class CreateMessageOrchestrator {

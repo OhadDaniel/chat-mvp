@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { mapToPublicUser, type PublicUser } from '../users/users.types';
-import type { UpdateProfileDto } from '../users/dto/update-profile.dto';
-
-export type UpdateProfileResponse = { user: PublicUser };
+import { mapToPublicUser } from '../users/users.types';
+import type { UpdateProfileDto } from '../users/dto/update-profile.request.dto';
+import type { UpdateProfileResponse } from '../users/dto/update-profile.response.dto';
 
 @Injectable()
 export class UpdateProfileOrchestrator {

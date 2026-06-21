@@ -5,7 +5,7 @@ import { minutesAgo, SEED_MESSAGES } from '../mongo/seed-data';
 import { mapToUserProfile, type User, type UserProfile } from '../users/users.types';
 import { MESSAGE_STATUS_SENT } from './messages.schema';
 import type { Message, MessagePage, StoredMessage } from './messages.types';
-import type { CreateMessageDto } from './dto/create-message.dto';
+import type { CreateMessageDto } from './dto/create-message.request.dto';
 import type { GetMessagesQueryDto } from './dto/get-messages.query.dto';
 import { MessagesRepository } from './messages.repository';
 

@@ -11,26 +11,18 @@ import {
 import type { PublicUser, User } from '../users/users.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { UpdateProfileDto } from '../users/dto/update-profile.dto';
-import { RequestAvatarUploadDto } from '../users/dto/request-avatar-upload.dto';
-import { SetAvatarDto } from '../users/dto/set-avatar.dto';
+import { UpdateProfileDto } from '../users/dto/update-profile.request.dto';
+import { RequestAvatarUploadDto } from '../users/dto/request-avatar-upload.request.dto';
+import { SetAvatarDto } from '../users/dto/set-avatar.request.dto';
 import { MeOrchestrator } from '../me-orchestrator/me.orchestrator';
-import {
-  UpdateProfileOrchestrator,
-  type UpdateProfileResponse,
-} from '../update-profile-orchestrator/update-profile.orchestrator';
-import {
-  RequestAvatarUploadOrchestrator,
-  type RequestAvatarUploadResponse,
-} from '../request-avatar-upload-orchestrator/request-avatar-upload.orchestrator';
-import {
-  SetAvatarOrchestrator,
-  type SetAvatarResponse,
-} from '../set-avatar-orchestrator/set-avatar.orchestrator';
-import {
-  RemoveAvatarOrchestrator,
-  type RemoveAvatarResponse,
-} from '../remove-avatar-orchestrator/remove-avatar.orchestrator';
+import { UpdateProfileOrchestrator } from '../update-profile-orchestrator/update-profile.orchestrator';
+import { RequestAvatarUploadOrchestrator } from '../request-avatar-upload-orchestrator/request-avatar-upload.orchestrator';
+import { SetAvatarOrchestrator } from '../set-avatar-orchestrator/set-avatar.orchestrator';
+import { RemoveAvatarOrchestrator } from '../remove-avatar-orchestrator/remove-avatar.orchestrator';
+import type { UpdateProfileResponse } from '../users/dto/update-profile.response.dto';
+import type { RequestAvatarUploadResponse } from '../users/dto/request-avatar-upload.response.dto';
+import type { SetAvatarResponse } from '../users/dto/set-avatar.response.dto';
+import type { RemoveAvatarResponse } from '../users/dto/remove-avatar.response.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('me')

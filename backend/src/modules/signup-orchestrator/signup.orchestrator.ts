@@ -3,7 +3,7 @@ import { mapToPublicUser } from '../users/users.types';
 import { UsersService } from '../users/users.service';
 import { AuthService } from '../auth/auth.service';
 import type { AuthResponse } from '../auth/auth.types';
-import type { SignupDto } from '../auth/dto/signup.dto';
+import type { SignupDto } from '../auth/dto/signup.request.dto';
 
 @Injectable()
 export class SignupOrchestrator {

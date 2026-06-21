@@ -3,13 +3,8 @@ import { AppException } from '../../common/errors/app.exception';
 import { StorageService } from '../storage/storage.service';
 import { isOwnedAvatarKey } from '../storage/storage.helpers';
 import { UsersService } from '../users/users.service';
-import {
-  mapToPublicUser,
-  type Avatar,
-  type PublicUser,
-} from '../users/users.types';
-
-export type SetAvatarResponse = { user: PublicUser };
+import { mapToPublicUser, type Avatar } from '../users/users.types';
+import type { SetAvatarResponse } from '../users/dto/set-avatar.response.dto';
 
 @Injectable()
 export class SetAvatarOrchestrator {
