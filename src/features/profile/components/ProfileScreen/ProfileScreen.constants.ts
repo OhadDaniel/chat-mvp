@@ -28,6 +28,10 @@ export const PROFILE_AVATAR_ACTIONS_CLASS = 'flex items-center gap-2'
 export const PROFILE_AVATAR_ACCEPT        = 'image/png,image/jpeg,image/webp'
 export const PROFILE_AVATAR_INPUT_CLASS   = 'hidden'
 
+// Mirrors the backend's AVATAR_MAX_BYTES — checked client-side for fast feedback.
+export const AVATAR_MAX_BYTES         = 5 * 1024 * 1024
+export const PROFILE_AVATAR_TOO_LARGE = 'Image must be under 5 MB'
+
 export const PROFILE_NAME_SAVED_TOAST     = 'Name updated'
 export const PROFILE_EMAIL_SAVED_TOAST    = 'Email updated'
 export const PROFILE_AVATAR_SAVED_TOAST   = 'Avatar updated'

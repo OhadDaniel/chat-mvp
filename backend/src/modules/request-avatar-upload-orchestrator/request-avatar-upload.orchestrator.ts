@@ -4,7 +4,8 @@ import { buildAvatarKey } from '../storage/storage.helpers';
 import type { RequestAvatarUploadDto } from '../users/dto/request-avatar-upload.dto';
 
 export type RequestAvatarUploadResponse = {
-  uploadUrl: string;
+  url: string;
+  fields: Record<string, string>;
   key: string;
 };
 
@@ -17,8 +18,11 @@ export class RequestAvatarUploadOrchestrator {
     dto: RequestAvatarUploadDto,
   ): Promise<RequestAvatarUploadResponse> {
     // contentType is already validated against ALLOWED_AVATAR_CONTENT_TYPES by the DTO.
-    const key = buildAvatarKey(userId, dto.contentType);
-    const uploadUrl = await this.storage.presignUpload(key, dto.contentType);
-    return { uploadUrl, key };
+    const key = buildAvatarKey(userId);
+    const { url, fields } = await this.storage.presignUpload(
+      key,
+      dto.contentType,
+    );
+    return { url, fields, key };
   }
 }

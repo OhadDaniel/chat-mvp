@@ -1,13 +1,15 @@
-import {
-  DeleteObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { DeleteObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AVATAR_MAX_BYTES } from './storage.helpers';
 
 const UPLOAD_URL_TTL_SECONDS = 60;
+
+export type PresignedUpload = {
+  url: string;
+  fields: Record<string, string>;
+};
 
 @Injectable()
 export class StorageService {
@@ -24,7 +26,7 @@ export class StorageService {
           'AWS_SECRET_ACCESS_KEY',
         ),
       },
-      // Keep presigned PUTs plain: don't add CRC checksum params a browser/curl
+      // Keep presigned uploads plain: don't add CRC checksum params a browser
       // upload can't reproduce, which S3 would otherwise reject.
       requestChecksumCalculation: 'WHEN_REQUIRED',
     });
@@ -34,14 +36,17 @@ export class StorageService {
     );
   }
 
-  presignUpload(key: string, contentType: string): Promise<string> {
-    const command = new PutObjectCommand({
+  /**
+   * A presigned POST (not PUT): its signed policy carries a content-length-range
+   * condition, so S3 itself rejects an upload larger than AVATAR_MAX_BYTES.
+   */
+  presignUpload(key: string, contentType: string): Promise<PresignedUpload> {
+    return createPresignedPost(this.client, {
       Bucket: this.bucket,
       Key: key,
-      ContentType: contentType,
-    });
-    return getSignedUrl(this.client, command, {
-      expiresIn: UPLOAD_URL_TTL_SECONDS,
+      Conditions: [['content-length-range', 1, AVATAR_MAX_BYTES]],
+      Fields: { 'Content-Type': contentType },
+      Expires: UPLOAD_URL_TTL_SECONDS,
     });
   }
 
@@ -51,8 +56,12 @@ export class StorageService {
     );
   }
 
-  /** The public CloudFront URL for a stored object — resolved once at upload. */
+  /**
+   * The public CloudFront URL for a stored object, resolved once at upload.
+   * The `?v` cache-buster lets a new upload show immediately even though the
+   * object key is fixed (the avatar always overwrites the same key).
+   */
   srcUrlFor(key: string): string {
-    return `${this.publicBaseUrl}/${key}`;
+    return `${this.publicBaseUrl}/${key}?v=${Date.now()}`;
   }
 }

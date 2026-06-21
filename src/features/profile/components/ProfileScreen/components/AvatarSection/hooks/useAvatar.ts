@@ -7,6 +7,8 @@ import {
   PROFILE_AVATAR_SAVED_TOAST,
   PROFILE_AVATAR_REMOVED_TOAST,
   PROFILE_AVATAR_ERROR_API,
+  PROFILE_AVATAR_TOO_LARGE,
+  AVATAR_MAX_BYTES,
 } from '../../../ProfileScreen.constants'
 import type { AvatarContextValue } from '../AvatarSection.types'
 
@@ -18,10 +20,14 @@ export function useAvatar(): AvatarContextValue {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const upload = async (file: File): Promise<void> => {
+    if (file.size > AVATAR_MAX_BYTES) {
+      showToast(PROFILE_AVATAR_TOO_LARGE)
+      return
+    }
     setBusy(true)
     try {
-      const { uploadUrl, key } = await profileApi.requestAvatarUpload({ contentType: file.type })
-      await profileApi.uploadToPresignedUrl(uploadUrl, file)
+      const { url, fields, key } = await profileApi.requestAvatarUpload({ contentType: file.type })
+      await profileApi.uploadToPresignedPost(url, fields, file)
       const { user: updated } = await profileApi.setAvatar({ key })
       updateUser(updated)
       showToast(PROFILE_AVATAR_SAVED_TOAST)

@@ -83,8 +83,8 @@ describe('Profile (integration)', () => {
     });
   });
 
-  describe('POST /me/avatar/upload-url — presigned upload', () => {
-    it('returns a presigned uploadUrl and a user-scoped key', async () => {
+  describe('POST /me/avatar/upload-url — presigned POST upload', () => {
+    it('returns a presigned POST (url + fields) and a user-scoped key', async () => {
       const me = await http(app)
         .get('/me')
         .set(...auth())
@@ -97,13 +97,14 @@ describe('Profile (integration)', () => {
         .send({ contentType: 'image/png' })
         .expect(201);
 
-      const { uploadUrl, key } = response.body as {
-        uploadUrl: string;
+      const { url, fields, key } = response.body as {
+        url: string;
+        fields: Record<string, string>;
         key: string;
       };
-      expect(uploadUrl).toContain('https://');
-      expect(key.startsWith(`avatars/${userId}/`)).toBe(true);
-      expect(key.endsWith('.png')).toBe(true);
+      expect(url).toContain('https://');
+      expect(fields).toBeTruthy();
+      expect(key).toBe(`avatars/${userId}/avatar`);
     });
 
     it('400 for an unsupported content-type', async () => {
@@ -134,7 +135,7 @@ describe('Profile (integration)', () => {
         .set(...auth())
         .expect(200);
       const userId = (me.body as MeBody).user.id;
-      const key = `avatars/${userId}/integration-fixed.png`;
+      const key = `avatars/${userId}/avatar`;
 
       const set = await http(app)
         .put('/me/avatar')
@@ -142,18 +143,15 @@ describe('Profile (integration)', () => {
         .send({ key })
         .expect(200);
 
-      // single URL authority: AVATAR_PUBLIC_BASE_URL + '/' + key
-      expect((set.body as MeBody).user.avatarUrl).toBe(
-        `https://test.cloudfront.net/${key}`,
-      );
+      // single URL authority: AVATAR_PUBLIC_BASE_URL + '/' + key (+ cache-busting ?v)
+      const expectedPrefix = `https://test.cloudfront.net/${key}?v=`;
+      expect((set.body as MeBody).user.avatarUrl?.startsWith(expectedPrefix)).toBe(true);
 
       const after = await http(app)
         .get('/me')
         .set(...auth())
         .expect(200);
-      expect((after.body as MeBody).user.avatarUrl).toBe(
-        `https://test.cloudfront.net/${key}`,
-      );
+      expect((after.body as MeBody).user.avatarUrl?.startsWith(expectedPrefix)).toBe(true);
     });
   });
 });
