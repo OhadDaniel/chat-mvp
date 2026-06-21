@@ -7,9 +7,8 @@ import {
   PROFILE_NAME_SAVED_TOAST,
   PROFILE_NAME_ERROR_API,
 } from '../../../ProfileScreen.constants'
-import type { NameFormContextValue } from '../NameForm.types'
 
-export function useNameForm(): NameFormContextValue {
+export function useNameForm() {
   const { user, updateUser } = useAuth()
   const { showToast } = useToastContext()
 

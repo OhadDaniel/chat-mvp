@@ -1,13 +1,5 @@
-import type { ChangeEvent, RefObject } from 'react'
+import type { useAvatar } from './hooks/useAvatar'
 
-export type AvatarContextValue = {
-  avatarUrl:      string | null
-  avatarInitials: string
-  avatarName:     string
-  hasAvatar:      boolean
-  busy:           boolean
-  fileInputRef:   RefObject<HTMLInputElement | null>
-  openFilePicker: () => void
-  onFileChange:   (e: ChangeEvent<HTMLInputElement>) => void
-  onRemove:       () => void
-}
+// Derived from the hook so the context value can never drift from what the
+// hook actually returns (context.md).
+export type AvatarContextValue = ReturnType<typeof useAvatar>

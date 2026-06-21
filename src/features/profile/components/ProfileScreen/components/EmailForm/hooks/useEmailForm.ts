@@ -9,9 +9,8 @@ import {
   PROFILE_EMAIL_ERROR_TAKEN,
   PROFILE_EMAIL_ERROR_API,
 } from '../../../ProfileScreen.constants'
-import type { EmailFormContextValue } from '../EmailForm.types'
 
-export function useEmailForm(): EmailFormContextValue {
+export function useEmailForm() {
   const { user, updateUser } = useAuth()
   const { showToast } = useToastContext()
 

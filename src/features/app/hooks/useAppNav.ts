@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import type { AppNavContextValue, AppView } from '../context/AppNavContext'
+import type { AppView } from '../context/AppNavContext'
 
-export function useAppNav(): AppNavContextValue {
+export function useAppNav() {
   const [view, setView] = useState<AppView>('chat')
 
   const goToProfile = () => setView('profile')

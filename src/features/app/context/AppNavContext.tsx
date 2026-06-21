@@ -3,11 +3,8 @@ import { useAppNav } from '../hooks/useAppNav'
 
 export type AppView = 'chat' | 'profile'
 
-export type AppNavContextValue = {
-  view:        AppView
-  goToProfile: () => void
-  goToChat:    () => void
-}
+// Derived from the hook so it can't drift from what the hook returns (context.md).
+export type AppNavContextValue = ReturnType<typeof useAppNav>
 
 const AppNavContext = createContext<AppNavContextValue | null>(null)
 

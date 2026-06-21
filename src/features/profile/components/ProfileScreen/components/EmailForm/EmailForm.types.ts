@@ -1,9 +1,4 @@
-import type { FormEvent } from 'react'
+import type { useEmailForm } from './hooks/useEmailForm'
 
-export type EmailFormContextValue = {
-  email:    string
-  error:    string | null
-  saving:   boolean
-  setEmail: (value: string) => void
-  onSubmit: (e: FormEvent<HTMLFormElement>) => void
-}
+// Derived from the hook so it can't drift from what the hook returns (context.md).
+export type EmailFormContextValue = ReturnType<typeof useEmailForm>

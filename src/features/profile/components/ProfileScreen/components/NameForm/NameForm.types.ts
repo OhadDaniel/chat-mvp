@@ -1,11 +1,4 @@
-import type { FormEvent } from 'react'
+import type { useNameForm } from './hooks/useNameForm'
 
-export type NameFormContextValue = {
-  firstName:    string
-  lastName:     string
-  error:        string | null
-  saving:       boolean
-  setFirstName: (value: string) => void
-  setLastName:  (value: string) => void
-  onSubmit:     (e: FormEvent<HTMLFormElement>) => void
-}
+// Derived from the hook so it can't drift from what the hook returns (context.md).
+export type NameFormContextValue = ReturnType<typeof useNameForm>

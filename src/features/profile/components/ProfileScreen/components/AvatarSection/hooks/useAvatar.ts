@@ -10,9 +10,7 @@ import {
   PROFILE_AVATAR_TOO_LARGE,
   AVATAR_MAX_BYTES,
 } from '../../../ProfileScreen.constants'
-import type { AvatarContextValue } from '../AvatarSection.types'
-
-export function useAvatar(): AvatarContextValue {
+export function useAvatar() {
   const { user, updateUser } = useAuth()
   const { showToast } = useToastContext()
 
