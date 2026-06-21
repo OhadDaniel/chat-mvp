@@ -64,6 +64,11 @@ export class UsersService implements OnModuleInit {
     return this.usersRepository.findByIds(ids);
   }
 
+  /** The whole directory — used to populate the new-conversation pickers. */
+  findAll(): Promise<User[]> {
+    return this.usersRepository.findAll();
+  }
+
   async verifyPassword(user: User, password: string): Promise<boolean> {
     return bcrypt.compare(password, user.passwordHash);
   }

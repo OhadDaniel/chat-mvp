@@ -3,6 +3,7 @@ import { AuthModule } from '../auth/auth.module';
 import { SignupModule } from '../signup-orchestrator/signup.module';
 import { LoginModule } from '../login-orchestrator/login.module';
 import { MeModule } from '../me-orchestrator/me.module';
+import { ListUsersModule } from '../list-users-orchestrator/list-users.module';
 import { UpdateProfileModule } from '../update-profile-orchestrator/update-profile.module';
 import { RequestAvatarUploadModule } from '../request-avatar-upload-orchestrator/request-avatar-upload.module';
 import { SetAvatarModule } from '../set-avatar-orchestrator/set-avatar.module';
@@ -14,6 +15,7 @@ import { GetMessagesModule } from '../get-messages-orchestrator/get-messages.mod
 import { CreateMessageModule } from '../create-message-orchestrator/create-message.module';
 import { AuthController } from './auth.controller';
 import { ProfileController } from './profile.controller';
+import { UsersController } from './users.controller';
 import { ConversationsController } from './conversations.controller';
 import { MessagesController } from './messages.controller';
 
@@ -23,6 +25,7 @@ import { MessagesController } from './messages.controller';
     SignupModule,
     LoginModule,
     MeModule,
+    ListUsersModule,
     UpdateProfileModule,
     RequestAvatarUploadModule,
     SetAvatarModule,
@@ -36,6 +39,7 @@ import { MessagesController } from './messages.controller';
   controllers: [
     AuthController,
     ProfileController,
+    UsersController,
     ConversationsController,
     MessagesController,
   ],
