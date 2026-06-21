@@ -20,7 +20,7 @@ export class CreateMessageOrchestrator {
     sender: User,
     dto: CreateMessageDto,
   ): Promise<CreateMessageResponse> {
-    await this.conversationsService.getForParticipant(conversationId, sender.id);
+    await this.conversationsService.assertParticipant(conversationId, sender.id);
 
     return this.transactionRunner.run(async (session) => {
       const response = await this.messagesService.create(

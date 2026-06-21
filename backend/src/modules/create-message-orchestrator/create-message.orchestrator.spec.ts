@@ -26,7 +26,7 @@ const transactionRunner = {
 } as unknown as TransactionRunner;
 
 const denyAccess = {
-  getForParticipant: jest.fn(() =>
+  assertParticipant: jest.fn(() =>
     Promise.reject(new AppException(403, 'NOT_A_PARTICIPANT', 'no')),
   ),
 } as unknown as ConversationsService;
@@ -62,7 +62,7 @@ describe('CreateMessageOrchestrator', () => {
     const create = jest.fn(() => Promise.resolve({ message: sentMessage() }));
     const updateLastMessage = jest.fn(() => Promise.resolve());
     const conversations = {
-      getForParticipant: jest.fn(() => Promise.resolve({})),
+      assertParticipant: jest.fn(() => Promise.resolve()),
       updateLastMessage,
     } as unknown as ConversationsService;
 

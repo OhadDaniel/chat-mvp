@@ -125,8 +125,12 @@ export class ConversationsService implements OnModuleInit {
     return conversation;
   }
 
-  /** Lightweight authorization for writes that don't need the full read. */
-  private async assertParticipant(
+  /**
+   * Lightweight authorization for writes that don't need the full read:
+   * reads only the participant id list (projection), 404 if missing, 403 if
+   * the caller isn't one of the two users. Used by pinning and send-message.
+   */
+  async assertParticipant(
     conversationId: string,
     userId: string,
   ): Promise<void> {
