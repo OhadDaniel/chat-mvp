@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -21,10 +23,15 @@ import { CreateGroupDto } from '../conversations/dto/create-group.request.dto';
 import { GetConversationsQueryDto } from '../conversations/dto/get-conversations.query.dto';
 import { PatchConversationDto } from '../conversations/dto/patch-conversation.request.dto';
 import { RenameGroupDto } from '../conversations/dto/rename-group.request.dto';
+import { RequestGroupAvatarUploadDto } from '../conversations/dto/request-group-avatar-upload.request.dto';
+import type { RequestGroupAvatarUploadResponse } from '../conversations/dto/request-group-avatar-upload.response.dto';
 import { ListConversationsOrchestrator } from '../list-conversations-orchestrator/list-conversations.orchestrator';
 import { CreateConversationOrchestrator } from '../create-conversation-orchestrator/create-conversation.orchestrator';
 import { CreateGroupOrchestrator } from '../create-group-orchestrator/create-group.orchestrator';
 import { RenameGroupOrchestrator } from '../rename-group-orchestrator/rename-group.orchestrator';
+import { RequestGroupAvatarUploadOrchestrator } from '../request-group-avatar-upload-orchestrator/request-group-avatar-upload.orchestrator';
+import { SetGroupAvatarOrchestrator } from '../set-group-avatar-orchestrator/set-group-avatar.orchestrator';
+import { RemoveGroupAvatarOrchestrator } from '../remove-group-avatar-orchestrator/remove-group-avatar.orchestrator';
 import { SetPinnedOrchestrator } from '../set-pinned-orchestrator/set-pinned.orchestrator';
 
 
@@ -36,6 +43,9 @@ export class ConversationsController {
     private readonly createConversationOrchestrator: CreateConversationOrchestrator,
     private readonly createGroupOrchestrator: CreateGroupOrchestrator,
     private readonly renameGroupOrchestrator: RenameGroupOrchestrator,
+    private readonly requestGroupAvatarUploadOrchestrator: RequestGroupAvatarUploadOrchestrator,
+    private readonly setGroupAvatarOrchestrator: SetGroupAvatarOrchestrator,
+    private readonly removeGroupAvatarOrchestrator: RemoveGroupAvatarOrchestrator,
     private readonly setPinnedOrchestrator: SetPinnedOrchestrator,
   ) {}
 
@@ -70,6 +80,31 @@ export class ConversationsController {
     @Body() dto: RenameGroupDto,
   ): Promise<PatchConversationResponse> {
     return this.renameGroupOrchestrator.execute(id, user.id, dto);
+  }
+
+  @Post('groups/:id/avatar/upload-url')
+  requestGroupAvatarUpload(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body() dto: RequestGroupAvatarUploadDto,
+  ): Promise<RequestGroupAvatarUploadResponse> {
+    return this.requestGroupAvatarUploadOrchestrator.execute(id, user.id, dto);
+  }
+
+  @Put('groups/:id/avatar')
+  setGroupAvatar(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+  ): Promise<PatchConversationResponse> {
+    return this.setGroupAvatarOrchestrator.execute(id, user.id);
+  }
+
+  @Delete('groups/:id/avatar')
+  removeGroupAvatar(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+  ): Promise<PatchConversationResponse> {
+    return this.removeGroupAvatarOrchestrator.execute(id, user.id);
   }
 
   @Patch(':id')

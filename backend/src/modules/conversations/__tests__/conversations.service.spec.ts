@@ -41,6 +41,7 @@ function fakeRepository(
     insertGroup: jest.fn(() => Promise.resolve()),
     setPinned: jest.fn(() => Promise.resolve()),
     setGroupName: jest.fn(() => Promise.resolve()),
+    setGroupAvatar: jest.fn(() => Promise.resolve()),
     updateLastMessage: jest.fn(() => Promise.resolve()),
     count: jest.fn(() => Promise.resolve(0)),
     ...overrides,
@@ -180,6 +181,37 @@ describe('ConversationsService — group conversations pass through unchanged', 
       service.renameGroup('conv-x', 'user-1', 'Nope'),
     ).rejects.toMatchObject({ code: 'CONVERSATION_NOT_FOUND' });
     expect(setGroupName).not.toHaveBeenCalled();
+  });
+
+  it('setGroupAvatar lets the creator persist a photo; non-creator → 403', async () => {
+    const setGroupAvatar = jest.fn(() => Promise.resolve());
+    const service = new ConversationsService(
+      fakeRepository({
+        setGroupAvatar,
+        findById: () => Promise.resolve(storedGroup()), // createdBy: user-1
+      }),
+    );
+    const avatar = { storageKey: 'groups/conv-g/avatar', srcUrl: 'https://cdn/g' };
+
+    await service.setGroupAvatar('conv-g', 'user-1', avatar);
+    expect(setGroupAvatar).toHaveBeenCalledWith('conv-g', avatar);
+
+    await expect(
+      service.setGroupAvatar('conv-g', 'user-3', avatar),
+    ).rejects.toMatchObject({ code: 'NOT_GROUP_OWNER' });
+  });
+
+  it('removeGroupAvatar lets the creator clear the photo (null)', async () => {
+    const setGroupAvatar = jest.fn(() => Promise.resolve());
+    const service = new ConversationsService(
+      fakeRepository({
+        setGroupAvatar,
+        findById: () => Promise.resolve(storedGroup()),
+      }),
+    );
+
+    await service.removeGroupAvatar('conv-g', 'user-1');
+    expect(setGroupAvatar).toHaveBeenCalledWith('conv-g', null);
   });
 });
 

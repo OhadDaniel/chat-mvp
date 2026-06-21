@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model } from 'mongoose';
 import { ConversationDocument } from './conversations.schema';
+import type { Avatar } from '../users/users.types';
 import type {
   LastMessageSnapshot,
   StoredConversation,
@@ -110,6 +111,12 @@ export class ConversationsRepository {
   async setGroupName(id: string, name: string): Promise<void> {
     await this.conversationModel
       .updateOne({ _id: id }, { $set: { 'group.name': name } })
+      .exec();
+  }
+
+  async setGroupAvatar(id: string, avatar: Avatar | null): Promise<void> {
+    await this.conversationModel
+      .updateOne({ _id: id }, { $set: { 'group.avatar': avatar } })
       .exec();
   }
 

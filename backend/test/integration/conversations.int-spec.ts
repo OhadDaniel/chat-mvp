@@ -319,4 +319,73 @@ describe('Conversations (integration)', () => {
         .expect(400);
     });
   });
+
+  describe('group avatar (creator only)', () => {
+    it('401 without a token', async () => {
+      await http(app).put('/conversations/groups/conv-4/avatar').expect(401);
+    });
+
+    it('upload-url: creator gets a presigned POST; member → 403; bad type → 400; DM → 404', async () => {
+      const alice = await loginAs(app, 'alice@chat.dev'); // creator
+      const ok = await http(app)
+        .post('/conversations/groups/conv-4/avatar/upload-url')
+        .set('Authorization', `Bearer ${alice}`)
+        .send({ contentType: 'image/png' })
+        .expect(201);
+      expect((ok.body as { url: string }).url).toContain('https://');
+      expect((ok.body as { fields: unknown }).fields).toBeTruthy();
+
+      const ben = await loginAs(app, 'ben@chat.dev'); // member, not creator
+      await http(app)
+        .post('/conversations/groups/conv-4/avatar/upload-url')
+        .set('Authorization', `Bearer ${ben}`)
+        .send({ contentType: 'image/png' })
+        .expect(403);
+
+      await http(app)
+        .post('/conversations/groups/conv-4/avatar/upload-url')
+        .set('Authorization', `Bearer ${alice}`)
+        .send({ contentType: 'image/gif' })
+        .expect(400);
+
+      await http(app)
+        .post('/conversations/groups/conv-1/avatar/upload-url') // conv-1 is a DM
+        .set('Authorization', `Bearer ${alice}`)
+        .send({ contentType: 'image/png' })
+        .expect(404);
+    });
+
+    it('set then remove: creator sets a photo url, a member is blocked, creator clears it', async () => {
+      const alice = await loginAs(app, 'alice@chat.dev');
+      const set = await http(app)
+        .put('/conversations/groups/conv-4/avatar')
+        .set('Authorization', `Bearer ${alice}`)
+        .expect(200);
+      const setBody = (set.body as { conversation: Conversation }).conversation;
+      expect(setBody.type).toBe('group');
+      if (setBody.type === 'group') {
+        expect(
+          setBody.avatarUrl?.startsWith(
+            'https://test.cloudfront.net/groups/conv-4/avatar?v=',
+          ),
+        ).toBe(true);
+      }
+
+      const ben = await loginAs(app, 'ben@chat.dev');
+      await http(app)
+        .put('/conversations/groups/conv-4/avatar')
+        .set('Authorization', `Bearer ${ben}`)
+        .expect(403);
+
+      const removed = await http(app)
+        .delete('/conversations/groups/conv-4/avatar')
+        .set('Authorization', `Bearer ${alice}`)
+        .expect(200);
+      const removedBody = (removed.body as { conversation: Conversation })
+        .conversation;
+      if (removedBody.type === 'group') {
+        expect(removedBody.avatarUrl).toBeNull();
+      }
+    });
+  });
 });

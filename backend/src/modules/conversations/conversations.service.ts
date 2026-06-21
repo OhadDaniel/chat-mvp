@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import type { ClientSession } from 'mongoose';
+import type { Avatar } from '../users/users.types';
 import { isDuplicateKeyError } from '../mongo/mongo-errors';
 import { daysAgo, SEED_CONVERSATIONS } from '../mongo/seed-data';
 import {
@@ -111,6 +112,31 @@ export class ConversationsService implements OnModuleInit {
     return this.getByIdOrThrow(conversationId);
   }
 
+  /** Point a group at its uploaded photo — creator only. */
+  async setGroupAvatar(
+    conversationId: string,
+    userId: string,
+    avatar: Avatar,
+  ): Promise<StoredConversation> {
+    await this.assertGroupOwner(conversationId, userId);
+    await this.conversationsRepository.setGroupAvatar(conversationId, avatar);
+    return this.getByIdOrThrow(conversationId);
+  }
+
+  /**
+   * Clear a group's photo — creator only. Like the user avatar, the stored
+   * object is left in place (overwritten on the next upload), so there is no
+   * post-commit delete that could fail an already-saved change.
+   */
+  async removeGroupAvatar(
+    conversationId: string,
+    userId: string,
+  ): Promise<StoredConversation> {
+    await this.assertGroupOwner(conversationId, userId);
+    await this.conversationsRepository.setGroupAvatar(conversationId, null);
+    return this.getByIdOrThrow(conversationId);
+  }
+
   /**
    * Refresh the denormalized last-message snapshot. Called inside the
    * send-message transaction (session) so the message write and this update
@@ -163,10 +189,11 @@ export class ConversationsService implements OnModuleInit {
   }
 
   /**
-   * Authorization for editing a group: 404 if it's not an existing group (a DM
-   * has no title to edit), 403 if the caller didn't create it.
+   * Authorization for editing a group (title or photo): 404 if it's not an
+   * existing group, 403 if the caller didn't create it. Used by rename and the
+   * group-avatar endpoints.
    */
-  private async assertGroupOwner(
+  async assertGroupOwner(
     conversationId: string,
     userId: string,
   ): Promise<void> {
