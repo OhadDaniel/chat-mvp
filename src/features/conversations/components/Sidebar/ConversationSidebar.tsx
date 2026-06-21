@@ -2,6 +2,8 @@ import { ConversationSearchContainer } from '../SearchBar/ConversationSearchCont
 import { ConversationListContainer }   from '../ConversationList/ConversationListContainer'
 import { NewDirectMessageProvider }    from '../NewDirectMessage/NewDirectMessage.context'
 import { NewDirectMessage }            from '../NewDirectMessage/NewDirectMessage'
+import { NewGroupProvider }            from '../NewGroup/NewGroup.context'
+import { NewGroup }                    from '../NewGroup/NewGroup'
 import { LogoutButton }                from '@/features/auth/components/LogoutButton/LogoutButton'
 import { SIDEBAR_CLASS }               from './ConversationSidebar.constants'
 
@@ -17,6 +19,9 @@ export function ConversationSidebar() {
           <NewDirectMessageProvider>
             <NewDirectMessage />
           </NewDirectMessageProvider>
+          <NewGroupProvider>
+            <NewGroup />
+          </NewGroupProvider>
           <LogoutButton />
         </div>
       </div>
