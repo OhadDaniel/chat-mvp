@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { AppException } from '../../common/errors/app.exception';
 import type { User } from '../users/users.types';
 import { UsersService } from '../users/users.service';
+import { UserNotFoundError } from '../users/errors/user-not-found.error';
 import { ConversationsService } from '../conversations/conversations.service';
 import {
   profilesById,
@@ -23,7 +23,7 @@ export class CreateConversationOrchestrator {
   ): Promise<CreateConversationResponse> {
     const participant = await this.usersService.findById(dto.participantId);
     if (!participant) {
-      throw new AppException(404, 'USER_NOT_FOUND', 'Participant not found');
+      throw new UserNotFoundError('Participant not found');
     }
 
     const stored = await this.conversationsService.create(

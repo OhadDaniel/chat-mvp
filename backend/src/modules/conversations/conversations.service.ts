@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import type { ClientSession } from 'mongoose';
-import { AppException } from '../../common/errors/app.exception';
 import { isDuplicateKeyError } from '../mongo/mongo-errors';
 import { daysAgo, SEED_CONVERSATIONS } from '../mongo/seed-data';
 import {
@@ -10,6 +9,10 @@ import {
   canonicalPair,
 } from './conversations.helpers';
 import { ConversationsRepository } from './conversations.repository';
+import { ConversationAlreadyExistsError } from './errors/conversation-already-exists.error';
+import { ConversationNotFoundError } from './errors/conversation-not-found.error';
+import { InvalidParticipantError } from './errors/invalid-participant.error';
+import { NotAParticipantError } from './errors/not-a-participant.error';
 import type {
   LastMessageSnapshot,
   StoredConversation,
@@ -41,20 +44,12 @@ export class ConversationsService implements OnModuleInit {
     participantId: string,
   ): Promise<StoredConversation> {
     if (participantId === currentUserId) {
-      throw new AppException(
-        400,
-        'INVALID_PARTICIPANT',
-        'Cannot start a conversation with yourself',
-      );
+      throw new InvalidParticipantError();
     }
 
     const pairKey = buildPairKey(currentUserId, participantId);
     if (await this.conversationsRepository.existsByPair(pairKey)) {
-      throw new AppException(
-        409,
-        'CONVERSATION_ALREADY_EXISTS',
-        'A conversation with this user already exists',
-      );
+      throw new ConversationAlreadyExistsError();
     }
 
     const id = randomUUID();
@@ -67,11 +62,7 @@ export class ConversationsService implements OnModuleInit {
     } catch (error) {
       // race-proof backstop: two simultaneous creates -> DB constraint
       if (isDuplicateKeyError(error)) {
-        throw new AppException(
-          409,
-          'CONVERSATION_ALREADY_EXISTS',
-          'A conversation with this user already exists',
-        );
+        throw new ConversationAlreadyExistsError();
       }
       throw error;
     }
@@ -116,11 +107,7 @@ export class ConversationsService implements OnModuleInit {
   ): Promise<StoredConversation> {
     const conversation = await this.getByIdOrThrow(conversationId);
     if (!conversation.participantIds.includes(userId)) {
-      throw new AppException(
-        403,
-        'NOT_A_PARTICIPANT',
-        'You are not a participant of this conversation',
-      );
+      throw new NotAParticipantError();
     }
     return conversation;
   }
@@ -137,29 +124,17 @@ export class ConversationsService implements OnModuleInit {
     const participantIds =
       await this.conversationsRepository.findParticipantIds(conversationId);
     if (!participantIds) {
-      throw new AppException(
-        404,
-        'CONVERSATION_NOT_FOUND',
-        'Conversation not found',
-      );
+      throw new ConversationNotFoundError();
     }
     if (!participantIds.includes(userId)) {
-      throw new AppException(
-        403,
-        'NOT_A_PARTICIPANT',
-        'You are not a participant of this conversation',
-      );
+      throw new NotAParticipantError();
     }
   }
 
   private async getByIdOrThrow(id: string): Promise<StoredConversation> {
     const conversation = await this.conversationsRepository.findById(id);
     if (!conversation) {
-      throw new AppException(
-        404,
-        'CONVERSATION_NOT_FOUND',
-        'Conversation not found',
-      );
+      throw new ConversationNotFoundError();
     }
     return conversation;
   }

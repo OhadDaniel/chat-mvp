@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { AppException } from '../../common/errors/app.exception';
 import { StorageService } from '../storage/storage.service';
 import { isOwnedAvatarKey } from '../storage/storage.helpers';
+import { AvatarNotUploadedError } from '../storage/errors/avatar-not-uploaded.error';
+import { InvalidAvatarKeyError } from '../storage/errors/invalid-avatar-key.error';
 import { UsersService } from '../users/users.service';
 import { mapToPublicUser, type Avatar } from '../users/users.types';
 import type { SetAvatarResponse } from '../users/dto/set-avatar.response.dto';
@@ -15,20 +16,12 @@ export class SetAvatarOrchestrator {
 
   async execute(userId: string, key: string): Promise<SetAvatarResponse> {
     if (!isOwnedAvatarKey(userId, key)) {
-      throw new AppException(
-        400,
-        'INVALID_AVATAR_KEY',
-        'Avatar key does not belong to this user',
-      );
+      throw new InvalidAvatarKeyError();
     }
 
     // Trust, but verify: only claim a key that actually points at an object.
     if (!(await this.storage.objectExists(key))) {
-      throw new AppException(
-        400,
-        'AVATAR_NOT_UPLOADED',
-        'No uploaded image was found for this key',
-      );
+      throw new AvatarNotUploadedError();
     }
 
     // The JWT guard guarantees the user exists.

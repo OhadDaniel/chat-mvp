@@ -2,9 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { AppException } from '../../common/errors/app.exception';
 import { SEED_USER_PASSWORD, SEED_USERS } from '../mongo/seed-data';
 import { UsersRepository } from './users.repository';
+import { EmailAlreadyExistsError } from './errors/email-already-exists.error';
+import { UserNotFoundError } from './errors/user-not-found.error';
 import { splitName } from './users.helpers';
 import {
   type Avatar,
@@ -35,11 +36,7 @@ export class UsersService implements OnModuleInit {
     const email = normalizeEmail(input.email);
 
     if (await this.usersRepository.findByEmail(email)) {
-      throw new AppException(
-        409,
-        'EMAIL_ALREADY_EXISTS',
-        'A user with this email already exists',
-      );
+      throw new EmailAlreadyExistsError();
     }
 
     const { firstName, lastName } = splitName(input.name);
@@ -87,11 +84,7 @@ export class UsersService implements OnModuleInit {
       const email = normalizeEmail(input.email);
       const existing = await this.usersRepository.findByEmail(email);
       if (existing && existing.id !== userId) {
-        throw new AppException(
-          409,
-          'EMAIL_ALREADY_EXISTS',
-          'A user with this email already exists',
-        );
+        throw new EmailAlreadyExistsError();
       }
       fields.email = email;
     }
@@ -110,7 +103,7 @@ export class UsersService implements OnModuleInit {
   ): Promise<User> {
     const user = await this.usersRepository.update(userId, fields);
     if (!user) {
-      throw new AppException(404, 'USER_NOT_FOUND', 'User not found');
+      throw new UserNotFoundError();
     }
     return user;
   }
