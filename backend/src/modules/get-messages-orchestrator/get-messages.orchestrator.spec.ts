@@ -36,7 +36,7 @@ describe('GetMessagesOrchestrator', () => {
 
   it('pages once authorized, passing the joined participants for sender resolution', async () => {
     const getPage = jest.fn(() =>
-      Promise.resolve({ messages: [], nextCursor: null }),
+      Promise.resolve({ items: [], nextCursor: null }),
     );
     const orchestrator = new GetMessagesOrchestrator(
       allowAccess,
@@ -44,8 +44,10 @@ describe('GetMessagesOrchestrator', () => {
       fakeUsers,
     );
 
-    await orchestrator.run('conv-1', 'user-1', { limit: 10 });
+    const result = await orchestrator.run('conv-1', 'user-1', { limit: 10 });
 
     expect(getPage).toHaveBeenCalledWith('conv-1', { limit: 10 }, []);
+    // the domain page is mapped to the HTTP envelope
+    expect(result).toEqual({ messages: [], nextCursor: null });
   });
 });

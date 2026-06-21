@@ -107,9 +107,9 @@ describe('MessagesService.getPage (pagination, single-entity)', () => {
         Promise.resolve({ messages: [storedMessage('msg-2')], hasMore: false }),
     });
 
-    const { messages } = await service.getPage('conv-1', {}, participants);
+    const { items } = await service.getPage('conv-1', {}, participants);
 
-    expect(messages[0].sender).toMatchObject({
+    expect(items[0].sender).toMatchObject({
       id: 'user-1',
       name: 'Ohad Daniel',
       avatarInitials: 'OD',

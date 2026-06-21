@@ -26,6 +26,16 @@ export type CreateMessageResponse = {
 
 /* ── Pagination ─────────────────────────────────────────── */
 
+/**
+ * A page of messages in domain terms: the items plus the cursor for older
+ * history. The service speaks this; an orchestrator maps it to the HTTP
+ * envelope (GetMessagesResponse).
+ */
+export type MessagePage = {
+  items: Message[];
+  nextCursor: string | null;
+};
+
 /** A point in the message timeline — used for keyset pagination. */
 export type CursorPoint = {
   sentAt: Date;

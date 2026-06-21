@@ -4,12 +4,7 @@ import type { ClientSession } from 'mongoose';
 import { minutesAgo, SEED_MESSAGES } from '../mongo/seed-data';
 import { mapToUserProfile, type User, type UserProfile } from '../users/users.types';
 import { MESSAGE_STATUS_SENT } from './messages.schema';
-import type {
-  CreateMessageResponse,
-  GetMessagesResponse,
-  Message,
-  StoredMessage,
-} from './messages.types';
+import type { Message, MessagePage, StoredMessage } from './messages.types';
 import type { CreateMessageDto } from './dto/create-message.dto';
 import type { GetMessagesQueryDto } from './dto/get-messages.query.dto';
 import { MessagesRepository } from './messages.repository';
@@ -29,7 +24,7 @@ export class MessagesService implements OnModuleInit {
     conversationId: string,
     query: GetMessagesQueryDto,
     participants: UserProfile[],
-  ): Promise<GetMessagesResponse> {
+  ): Promise<MessagePage> {
     const limit = Math.min(query.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const before = query.cursor
       ? await this.messagesRepository.findCursorPoint(
@@ -45,11 +40,11 @@ export class MessagesService implements OnModuleInit {
     );
 
     const senderById = new Map(participants.map((p) => [p.id, p]));
-    const mapped = messages.map((stored) => toMessage(stored, senderById));
+    const items = messages.map((stored) => toMessage(stored, senderById));
 
     return {
-      messages: mapped,
-      nextCursor: hasMore && mapped.length > 0 ? mapped[0].id : null,
+      items,
+      nextCursor: hasMore && items.length > 0 ? items[0].id : null,
     };
   }
 
@@ -58,16 +53,14 @@ export class MessagesService implements OnModuleInit {
     sender: User,
     dto: CreateMessageDto,
     session?: ClientSession,
-  ): Promise<CreateMessageResponse> {
-    const message = await this.messagesRepository.insert(
+  ): Promise<Message> {
+    return this.messagesRepository.insert(
       randomUUID(),
       conversationId,
       mapToUserProfile(sender),
       dto.content,
       session,
     );
-
-    return { message };
   }
 
   private async seedDemoMessages(): Promise<void> {

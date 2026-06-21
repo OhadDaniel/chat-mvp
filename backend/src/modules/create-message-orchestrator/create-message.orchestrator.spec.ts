@@ -59,7 +59,7 @@ describe('CreateMessageOrchestrator', () => {
   });
 
   it('inserts the message AND refreshes the conversation snapshot, both in one transaction session', async () => {
-    const create = jest.fn(() => Promise.resolve({ message: sentMessage() }));
+    const create = jest.fn(() => Promise.resolve(sentMessage()));
     const updateLastMessage = jest.fn(() => Promise.resolve());
     const conversations = {
       assertParticipant: jest.fn(() => Promise.resolve()),

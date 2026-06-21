@@ -23,7 +23,7 @@ export class CreateMessageOrchestrator {
     await this.conversationsService.assertParticipant(conversationId, sender.id);
 
     return this.transactionRunner.run(async (session) => {
-      const response = await this.messagesService.create(
+      const message = await this.messagesService.create(
         conversationId,
         sender,
         dto,
@@ -31,10 +31,10 @@ export class CreateMessageOrchestrator {
       );
       await this.conversationsService.updateLastMessage(
         conversationId,
-        mapMessageToSnapshot(response.message),
+        mapMessageToSnapshot(message),
         session,
       );
-      return response;
+      return { message };
     });
   }
 }

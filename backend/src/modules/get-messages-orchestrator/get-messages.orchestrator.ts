@@ -26,6 +26,11 @@ export class GetMessagesOrchestrator {
     const participants = (
       await this.usersService.findByIds(conversation.participantIds)
     ).map(mapToUserProfile);
-    return this.messagesService.getPage(conversationId, query, participants);
+    const page = await this.messagesService.getPage(
+      conversationId,
+      query,
+      participants,
+    );
+    return { messages: page.items, nextCursor: page.nextCursor };
   }
 }
