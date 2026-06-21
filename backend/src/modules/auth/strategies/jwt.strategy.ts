@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { AppException } from '../../../common/errors/app.exception';
 import type { User } from '../../users/users.types';
 import { UsersService } from '../../users/users.service';
+import { SessionUserNotFoundError } from '../errors/session-user-not-found.error';
 import type { JwtPayload } from '../auth.types';
 
 /**
@@ -37,7 +37,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.usersService.findById(payload.sub);
 
     if (!user) {
-      throw new AppException(401, 'UNAUTHORIZED', 'User no longer exists');
+      throw new SessionUserNotFoundError();
     }
 
     return user;
