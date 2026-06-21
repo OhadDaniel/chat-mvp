@@ -9,15 +9,11 @@ export const ALLOWED_AVATAR_CONTENT_TYPES: string[] = [
 export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
 /**
- * One fixed object per user: a new upload overwrites it, so the bucket never
- * accumulates stale copies — the upload is idempotent. The userId prefix is
- * what proves ownership later (see `isOwnedAvatarKey`).
+ * One fixed object per user, derived server-side from the userId: a new upload
+ * overwrites it in place, so the bucket never accumulates stale copies and the
+ * upload is idempotent. Because the key is derived (never sent by the client),
+ * there is nothing to validate ownership of.
  */
 export function buildAvatarKey(userId: string): string {
   return `avatars/${userId}/avatar`;
-}
-
-/** True when the key lives under this user's avatar prefix — i.e. they own it. */
-export function isOwnedAvatarKey(userId: string, key: string): boolean {
-  return key.startsWith(`avatars/${userId}/`);
 }

@@ -4,7 +4,6 @@ import type {
   UpdateProfileResponse,
   RequestAvatarUploadRequest,
   RequestAvatarUploadResponse,
-  SetAvatarRequest,
   SetAvatarResponse,
   RemoveAvatarResponse,
 } from './profile.types'
@@ -22,10 +21,9 @@ export const profileApi = {
       body: JSON.stringify(body),
     }),
 
-  setAvatar: (body: SetAvatarRequest): Promise<SetAvatarResponse> =>
+  setAvatar: (): Promise<SetAvatarResponse> =>
     request('/me/avatar', {
       method: 'PUT',
-      body: JSON.stringify(body),
     }),
 
   removeAvatar: (): Promise<RemoveAvatarResponse> =>

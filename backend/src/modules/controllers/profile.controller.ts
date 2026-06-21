@@ -13,7 +13,6 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateProfileDto } from '../users/dto/update-profile.request.dto';
 import { RequestAvatarUploadDto } from '../users/dto/request-avatar-upload.request.dto';
-import { SetAvatarDto } from '../users/dto/set-avatar.request.dto';
 import { MeOrchestrator } from '../me-orchestrator/me.orchestrator';
 import { UpdateProfileOrchestrator } from '../update-profile-orchestrator/update-profile.orchestrator';
 import { RequestAvatarUploadOrchestrator } from '../request-avatar-upload-orchestrator/request-avatar-upload.orchestrator';
@@ -59,16 +58,13 @@ export class ProfileController {
     return this.requestAvatarUploadOrchestrator.execute(user.id, dto);
   }
 
-  /** Point the profile at an already-uploaded avatar object. */
+  /** Claim the just-uploaded avatar: the key is derived from the user, not sent. */
   @Put('avatar')
-  setAvatar(
-    @CurrentUser() user: User,
-    @Body() dto: SetAvatarDto,
-  ): Promise<SetAvatarResponse> {
-    return this.setAvatarOrchestrator.execute(user.id, dto.key);
+  setAvatar(@CurrentUser() user: User): Promise<SetAvatarResponse> {
+    return this.setAvatarOrchestrator.execute(user.id);
   }
 
-  /** Drop the avatar and delete the stored object. */
+  /** Drop the avatar from the profile. */
   @Delete('avatar')
   removeAvatar(@CurrentUser() user: User): Promise<RemoveAvatarResponse> {
     return this.removeAvatarOrchestrator.execute(user.id);

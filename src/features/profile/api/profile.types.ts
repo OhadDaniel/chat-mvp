@@ -17,11 +17,6 @@ export type RequestAvatarUploadRequest = {
 export type RequestAvatarUploadResponse = {
   url:    string
   fields: Record<string, string>
-  key:    string
-}
-
-export type SetAvatarRequest = {
-  key: string
 }
 
 export type SetAvatarResponse = {

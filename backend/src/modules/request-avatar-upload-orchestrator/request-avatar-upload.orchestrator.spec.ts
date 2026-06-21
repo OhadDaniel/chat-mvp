@@ -14,10 +14,12 @@ describe('RequestAvatarUploadOrchestrator', () => {
       contentType: 'image/png',
     });
 
-    // one fixed, user-scoped key (idempotent — a new upload overwrites it)
-    expect(result.key).toBe('avatars/user-1/avatar');
-    expect(presignUpload).toHaveBeenCalledWith(result.key, 'image/png');
-    expect(result.url).toBe('https://s3/upload');
-    expect(result.fields).toEqual({ key: 'k' });
+    // one fixed, user-scoped key (idempotent — a new upload overwrites it),
+    // derived server-side and baked into the presigned POST, not returned
+    expect(presignUpload).toHaveBeenCalledWith(
+      'avatars/user-1/avatar',
+      'image/png',
+    );
+    expect(result).toEqual({ url: 'https://s3/upload', fields: { key: 'k' } });
   });
 });

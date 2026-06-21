@@ -1,6 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
 import type { PublicUser } from '../../src/modules/users/users.types';
-import { StorageService } from '../../src/modules/storage/storage.service';
 import { expectNoSecrets, http, loginAs, signupAs } from '../helpers/api';
 import { createTestApp } from '../helpers/test-app';
 
@@ -12,9 +11,6 @@ describe('Profile (integration)', () => {
 
   beforeAll(async () => {
     app = await createTestApp();
-    // Tests never touch S3: treat any claimed upload as present so the
-    // avatar-claim path doesn't reach a real HeadObject call.
-    jest.spyOn(app.get(StorageService), 'objectExists').mockResolvedValue(true);
     // a brand-new user so edits here never collide with other suites' seeds
     token = await signupAs(app, 'profile@chat.dev', 'Pat Profile');
   });
@@ -32,7 +28,7 @@ describe('Profile (integration)', () => {
       .post('/me/avatar/upload-url')
       .send({ contentType: 'image/png' })
       .expect(401);
-    await http(app).put('/me/avatar').send({ key: 'x' }).expect(401);
+    await http(app).put('/me/avatar').expect(401);
     await http(app).delete('/me/avatar').expect(401);
   });
 
@@ -88,27 +84,21 @@ describe('Profile (integration)', () => {
   });
 
   describe('POST /me/avatar/upload-url — presigned POST upload', () => {
-    it('returns a presigned POST (url + fields) and a user-scoped key', async () => {
-      const me = await http(app)
-        .get('/me')
-        .set(...auth())
-        .expect(200);
-      const userId = (me.body as MeBody).user.id;
-
+    it('returns a presigned POST (url + fields); the key is server-side only', async () => {
       const response = await http(app)
         .post('/me/avatar/upload-url')
         .set(...auth())
         .send({ contentType: 'image/png' })
         .expect(201);
 
-      const { url, fields, key } = response.body as {
+      const { url, fields } = response.body as {
         url: string;
         fields: Record<string, string>;
-        key: string;
       };
       expect(url).toContain('https://');
       expect(fields).toBeTruthy();
-      expect(key).toBe(`avatars/${userId}/avatar`);
+      // the key is baked into the presigned fields, never returned to the client
+      expect(response.body).not.toHaveProperty('key');
     });
 
     it('400 for an unsupported content-type', async () => {
@@ -120,35 +110,21 @@ describe('Profile (integration)', () => {
     });
   });
 
-  describe('PUT /me/avatar — claiming an uploaded object', () => {
-    it('400 when the key is not under the caller-owned prefix', async () => {
-      const response = await http(app)
-        .put('/me/avatar')
-        .set(...auth())
-        .send({ key: 'avatars/someone-else/stolen.png' })
-        .expect(400);
-
-      expect(response.body).toMatchObject({
-        error: { code: 'INVALID_AVATAR_KEY' },
-      });
-    });
-
-    it('sets the avatar and now /me exposes a non-null avatarUrl', async () => {
+  describe('PUT /me/avatar — claiming the uploaded object (no body)', () => {
+    it('sets the avatar from the user-derived key and exposes a non-null avatarUrl', async () => {
       const me = await http(app)
         .get('/me')
         .set(...auth())
         .expect(200);
       const userId = (me.body as MeBody).user.id;
-      const key = `avatars/${userId}/avatar`;
 
       const set = await http(app)
         .put('/me/avatar')
         .set(...auth())
-        .send({ key })
         .expect(200);
 
-      // single URL authority: AVATAR_PUBLIC_BASE_URL + '/' + key (+ cache-busting ?v)
-      const expectedPrefix = `https://test.cloudfront.net/${key}?v=`;
+      // single URL authority: AVATAR_PUBLIC_BASE_URL + '/' + derived key (+ cache-busting ?v)
+      const expectedPrefix = `https://test.cloudfront.net/avatars/${userId}/avatar?v=`;
       expect((set.body as MeBody).user.avatarUrl?.startsWith(expectedPrefix)).toBe(true);
 
       const after = await http(app)

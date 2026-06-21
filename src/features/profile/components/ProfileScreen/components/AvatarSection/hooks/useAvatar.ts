@@ -26,9 +26,9 @@ export function useAvatar(): AvatarContextValue {
     }
     setBusy(true)
     try {
-      const { url, fields, key } = await profileApi.requestAvatarUpload({ contentType: file.type })
+      const { url, fields } = await profileApi.requestAvatarUpload({ contentType: file.type })
       await profileApi.uploadToPresignedPost(url, fields, file)
-      const { user: updated } = await profileApi.setAvatar({ key })
+      const { user: updated } = await profileApi.setAvatar()
       updateUser(updated)
       showToast(PROFILE_AVATAR_SAVED_TOAST)
     } catch {
