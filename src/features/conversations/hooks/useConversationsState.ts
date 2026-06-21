@@ -6,6 +6,7 @@ import type { Conversation, ConversationsStatus, ConversationsState } from '../t
 type UseConversationsStateReturn = {
   state:             ConversationsState
   setConversations:  (payload: Conversation[]) => void
+  addConversation:   (payload: Conversation) => void
   setStatus:         (payload: ConversationsStatus) => void
   setSearch:         (payload: string) => void
   applyTogglePin:    (id: string, pinnedAt: string | null) => void
@@ -17,6 +18,9 @@ export function useConversationsState(): UseConversationsStateReturn {
   const setConversations = (payload: Conversation[]) =>
     dispatch({ type: CONVERSATIONS_ACTIONS.SET_CONVERSATIONS, payload })
 
+  const addConversation = (payload: Conversation) =>
+    dispatch({ type: CONVERSATIONS_ACTIONS.ADD_CONVERSATION, payload })
+
   const setStatus = (payload: ConversationsStatus) =>
     dispatch({ type: CONVERSATIONS_ACTIONS.SET_STATUS, payload })
 
@@ -26,5 +30,5 @@ export function useConversationsState(): UseConversationsStateReturn {
   const applyTogglePin = (id: string, pinnedAt: string | null) =>
     dispatch({ type: CONVERSATIONS_ACTIONS.TOGGLE_PIN, payload: { id, pinnedAt } })
 
-  return { state, setConversations, setStatus, setSearch, applyTogglePin }
+  return { state, setConversations, addConversation, setStatus, setSearch, applyTogglePin }
 }

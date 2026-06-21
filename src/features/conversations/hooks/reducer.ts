@@ -16,6 +16,11 @@ export function conversationsReducer(
     case CONVERSATIONS_ACTIONS.SET_CONVERSATIONS:
       return { ...state, conversations: action.payload }
 
+    case CONVERSATIONS_ACTIONS.ADD_CONVERSATION:
+      return state.conversations.some(c => c.id === action.payload.id)
+        ? state
+        : { ...state, conversations: [action.payload, ...state.conversations] }
+
     case CONVERSATIONS_ACTIONS.SET_STATUS:
       return { ...state, status: action.payload }
 

@@ -1,5 +1,7 @@
 import { ConversationSearchContainer } from '../SearchBar/ConversationSearchContainer'
 import { ConversationListContainer }   from '../ConversationList/ConversationListContainer'
+import { NewDirectMessageProvider }    from '../NewDirectMessage/NewDirectMessage.context'
+import { NewDirectMessage }            from '../NewDirectMessage/NewDirectMessage'
 import { LogoutButton }                from '@/features/auth/components/LogoutButton/LogoutButton'
 import { SIDEBAR_CLASS }               from './ConversationSidebar.constants'
 
@@ -11,7 +13,12 @@ export function ConversationSidebar() {
           <h1 className="text-lg font-bold text-white tracking-tight">FellowshipChat</h1>
           <p className="text-xs text-slate-500 mt-0.5">Messages</p>
         </div>
-        <LogoutButton />
+        <div className="flex items-center gap-1">
+          <NewDirectMessageProvider>
+            <NewDirectMessage />
+          </NewDirectMessageProvider>
+          <LogoutButton />
+        </div>
       </div>
       <ConversationSearchContainer />
       <ConversationListContainer />
