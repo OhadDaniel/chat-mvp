@@ -2,6 +2,7 @@ import { useConversationsContext }        from '@/features/conversations/context
 import { ConversationsProvider }         from '@/features/conversations/context/ConversationsProvider'
 import { ConversationSidebarContainer }  from '@/features/conversations/components/Sidebar/ConversationSidebarContainer'
 import { MessagesPanelContainer }        from '@/features/messages/components/MessagesPanel/MessagesPanelContainer'
+import { getConversationDisplay }        from '@/features/conversations/utils/conversations.utils'
 import { useAuth }                       from '@/features/auth/hooks/useAuth'
 import { useAppLayout }                  from './hooks/useAppLayout'
 import { AppLayout }                     from './AppLayout'
@@ -11,11 +12,8 @@ function AppLayoutInner() {
   const { user } = useAuth()
 
   const selectedConversation     = conversations.find(c => c.id === selectedConversationId) ?? null
-  const selectedConversationName = selectedConversation
-    ? selectedConversation.participants
-        .filter(p => p.id !== user?.id)
-        .map(p => p.name)
-        .join(', ')
+  const selectedConversationName = selectedConversation && user
+    ? getConversationDisplay(selectedConversation, user.id).title
     : null
 
   return (

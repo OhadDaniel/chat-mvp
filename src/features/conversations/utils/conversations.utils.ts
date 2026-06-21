@@ -1,4 +1,29 @@
-import type { Conversation } from '../types'
+import type { Conversation, ConversationDisplay } from '../types'
+
+export function getConversationDisplay(
+  conversation: Conversation,
+  currentUserId: string,
+): ConversationDisplay {
+  if (conversation.type === 'group') {
+    return {
+      title:     conversation.name,
+      avatarUrl: conversation.avatarUrl,
+      initials:  '',
+      isGroup:   true,
+    }
+  }
+
+  const other =
+    conversation.participants.find(p => p.id !== currentUserId) ??
+    conversation.participants[0]
+
+  return {
+    title:     other.name,
+    avatarUrl: other.avatarUrl,
+    initials:  other.avatarInitials,
+    isGroup:   false,
+  }
+}
 
 export function applyTogglePin(
   conversations: Conversation[],

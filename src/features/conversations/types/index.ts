@@ -25,6 +25,13 @@ export type GroupConversation = ConversationBase & {
 
 export type Conversation = DirectConversation | GroupConversation
 
+export type ConversationDisplay = {
+  title:     string
+  avatarUrl: string | null
+  initials:  string
+  isGroup:   boolean
+}
+
 export type ConversationsStatus = typeof CONVERSATIONS_STATUS[keyof typeof CONVERSATIONS_STATUS]
 
 export type ConversationsState = {

@@ -4,6 +4,7 @@ export type ConversationItemContextValue = {
   initials:    string
   name:        string
   avatarUrl:   string | null
+  isGroup:     boolean
   lastMessage: string
   time:        string
   unreadCount: number
