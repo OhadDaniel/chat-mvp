@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { mapToUserProfile } from '../users/users.types';
+import { mapToUserProfile } from '../users/users.mappers';
 import type { ListUsersResponse } from '../users/dto/list-users.response.dto';
 
 @Injectable()

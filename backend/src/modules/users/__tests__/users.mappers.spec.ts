@@ -1,16 +1,5 @@
-import { initialsOf } from '../users.helpers';
-import { mapToPublicUser, type User } from '../users.types';
-
-describe('initialsOf', () => {
-  it('takes the first letter of firstName and lastName, uppercased', () => {
-    expect(initialsOf('Ohad', 'Daniel')).toBe('OD');
-  });
-
-  it('handles single names and messy whitespace', () => {
-    expect(initialsOf('alice', '')).toBe('A');
-    expect(initialsOf('  alice  ', '  levi  ')).toBe('AL');
-  });
-});
+import { mapToPublicUser } from '../users.mappers';
+import type { User } from '../users.types';
 
 describe('mapToPublicUser', () => {
   const base: User = {

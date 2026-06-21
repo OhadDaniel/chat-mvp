@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { StorageService } from '../storage/storage.service';
 import { buildAvatarKey } from '../storage/storage.helpers';
 import { UsersService } from '../users/users.service';
-import { mapToPublicUser, type Avatar } from '../users/users.types';
+import type { Avatar } from '../users/users.types';
+import { mapToPublicUser } from '../users/users.mappers';
 import type { SetAvatarResponse } from '../users/dto/set-avatar.response.dto';
 
 @Injectable()

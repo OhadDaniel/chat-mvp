@@ -1,5 +1,6 @@
 import { minutesAgo, SEED_MESSAGES } from '../mongo/seed-data';
-import { mapToUserProfile, type User, type UserProfile } from '../users/users.types';
+import type { User, UserProfile } from '../users/users.types';
+import { mapToUserProfile } from '../users/users.mappers';
 import type {
   Conversation,
   LastMessageSnapshot,

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { mapToPublicUser, type PublicUser, type User } from '../users/users.types';
+import type { PublicUser, User } from '../users/users.types';
+import { mapToPublicUser } from '../users/users.mappers';
 
 @Injectable()
 export class MeOrchestrator {
