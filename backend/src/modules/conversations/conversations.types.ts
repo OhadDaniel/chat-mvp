@@ -32,18 +32,19 @@ export type PatchConversationResponse = {
   conversation: Conversation;
 };
 
-/* ── Storage snapshots (written onto a conversation) ────── */
+/* ── Stored shape (participants by reference — joined on read) ── */
 
+export type StoredConversation = {
+  id: string;
+  participantIds: string[];
+  lastMessage: LastMessage | null;
+  lastMessageAt: string | null;
+  pinnedAt: string | null;
+};
+
+/** Written onto a conversation when a message is sent. */
 export type LastMessageSnapshot = {
   content: string;
   sentAt: Date;
   senderId: string;
-};
-
-/** A participant's display data, denormalized onto the conversation. */
-export type ParticipantSnapshot = {
-  userId: string;
-  name: string;
-  avatarInitials: string;
-  avatarUrl: string | null;
 };

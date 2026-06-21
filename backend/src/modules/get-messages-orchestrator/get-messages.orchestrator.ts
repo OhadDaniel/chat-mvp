@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConversationsService } from '../conversations/conversations.service';
 import { MessagesService } from '../messages/messages.service';
+import { UsersService } from '../users/users.service';
+import { mapToUserProfile } from '../users/users.types';
 import type { GetMessagesResponse } from '../messages/messages.types';
 import type { GetMessagesQueryDto } from '../messages/dto/get-messages.query.dto';
 
@@ -9,6 +11,7 @@ export class GetMessagesOrchestrator {
   constructor(
     private readonly conversationsService: ConversationsService,
     private readonly messagesService: MessagesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async run(
@@ -20,10 +23,9 @@ export class GetMessagesOrchestrator {
       conversationId,
       userId,
     );
-    return this.messagesService.getPage(
-      conversationId,
-      query,
-      conversation.participants,
-    );
+    const participants = (
+      await this.usersService.findByIds(conversation.participantIds)
+    ).map(mapToUserProfile);
+    return this.messagesService.getPage(conversationId, query, participants);
   }
 }

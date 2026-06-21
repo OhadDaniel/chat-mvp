@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { AppException } from '../../common/errors/app.exception';
-import { mapToUserProfile, type User } from '../users/users.types';
+import type { User } from '../users/users.types';
 import { UsersService } from '../users/users.service';
 import { ConversationsService } from '../conversations/conversations.service';
+import {
+  profilesById,
+  toConversation,
+} from '../conversations/conversations.helpers';
 import type { CreateConversationResponse } from '../conversations/conversations.types';
 import type { CreateConversationDto } from '../conversations/dto/create-conversation.dto';
 
@@ -22,9 +26,11 @@ export class CreateConversationOrchestrator {
       throw new AppException(404, 'USER_NOT_FOUND', 'Participant not found');
     }
 
-    return this.conversationsService.create(
-      mapToUserProfile(currentUser),
-      mapToUserProfile(participant),
+    const stored = await this.conversationsService.create(
+      currentUser.id,
+      participant.id,
     );
+    const profiles = profilesById([currentUser, participant]);
+    return { conversation: toConversation(stored, profiles) };
   }
 }

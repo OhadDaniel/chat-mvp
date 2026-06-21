@@ -62,6 +62,11 @@ export class UsersService implements OnModuleInit {
     return this.usersRepository.findById(id);
   }
 
+  /** Batch lookup — used to join participants/senders onto a read. */
+  findByIds(ids: string[]): Promise<User[]> {
+    return this.usersRepository.findByIds(ids);
+  }
+
   async verifyPassword(user: User, password: string): Promise<boolean> {
     return bcrypt.compare(password, user.passwordHash);
   }

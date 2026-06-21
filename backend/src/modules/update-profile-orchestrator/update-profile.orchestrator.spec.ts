@@ -1,6 +1,5 @@
 import { AppException } from '../../common/errors/app.exception';
 import type { UsersService } from '../users/users.service';
-import type { ConversationsService } from '../conversations/conversations.service';
 import type { User } from '../users/users.types';
 import { UpdateProfileOrchestrator } from './update-profile.orchestrator';
 
@@ -13,12 +12,8 @@ const ohad: User = {
   avatar: null,
 };
 
-const noopConversations = {
-  applyParticipantUpdate: jest.fn(() => Promise.resolve()),
-} as unknown as ConversationsService;
-
 describe('UpdateProfileOrchestrator', () => {
-  it('updates the profile, propagates the snapshot, returns a public user (no hash)', async () => {
+  it('updates the profile and returns a public user (no hash) with a derived avatarUrl', async () => {
     const updated: User = {
       ...ohad,
       firstName: 'Oh',
@@ -28,21 +23,13 @@ describe('UpdateProfileOrchestrator', () => {
       },
     };
     const updateProfile = jest.fn(() => Promise.resolve(updated));
-    const applyParticipantUpdate = jest.fn(() => Promise.resolve());
-    const orchestrator = new UpdateProfileOrchestrator(
-      { updateProfile } as unknown as UsersService,
-      { applyParticipantUpdate } as unknown as ConversationsService,
-    );
+    const orchestrator = new UpdateProfileOrchestrator({
+      updateProfile,
+    } as unknown as UsersService);
 
     const result = await orchestrator.run('user-1', { firstName: 'Oh' });
 
     expect(updateProfile).toHaveBeenCalledWith('user-1', { firstName: 'Oh' });
-    expect(applyParticipantUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'user-1',
-        avatarUrl: 'https://cdn/avatars/user-1/a.png',
-      }),
-    );
     expect(result.user.avatarUrl).toBe('https://cdn/avatars/user-1/a.png');
     expect(result.user).not.toHaveProperty('passwordHash');
   });
@@ -51,10 +38,9 @@ describe('UpdateProfileOrchestrator', () => {
     const updateProfile = jest.fn(() =>
       Promise.reject(new AppException(409, 'EMAIL_ALREADY_EXISTS', 'taken')),
     );
-    const orchestrator = new UpdateProfileOrchestrator(
-      { updateProfile } as unknown as UsersService,
-      noopConversations,
-    );
+    const orchestrator = new UpdateProfileOrchestrator({
+      updateProfile,
+    } as unknown as UsersService);
 
     await expect(
       orchestrator.run('user-1', { email: 'taken@chat.dev' }),

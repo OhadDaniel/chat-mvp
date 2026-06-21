@@ -1,8 +1,9 @@
 import { minutesAgo, SEED_MESSAGES } from '../mongo/seed-data';
-import type { UserProfile } from '../users/users.types';
+import { mapToUserProfile, type User, type UserProfile } from '../users/users.types';
 import type {
+  Conversation,
   LastMessageSnapshot,
-  ParticipantSnapshot,
+  StoredConversation,
 } from './conversations.types';
 
 const PAIR_KEY_SEPARATOR = ':';
@@ -15,29 +16,26 @@ export function buildPairKey(userAId: string, userBId: string): string {
   return canonicalPair(userAId, userBId).join(PAIR_KEY_SEPARATOR);
 }
 
-export function toParticipantSnapshot(profile: UserProfile): ParticipantSnapshot {
+/** Index the fetched participants by id, as public profiles, for the join. */
+export function profilesById(users: User[]): Map<string, UserProfile> {
+  return new Map(users.map((user) => [user.id, mapToUserProfile(user)]));
+}
+
+/** Assemble the API conversation by joining the stored ids with current profiles. */
+export function toConversation(
+  stored: StoredConversation,
+  profiles: Map<string, UserProfile>,
+): Conversation {
   return {
-    userId: profile.id,
-    name: profile.name,
-    avatarInitials: profile.avatarInitials,
-    avatarUrl: profile.avatarUrl,
+    id: stored.id,
+    participants: stored.participantIds.map(
+      (id) =>
+        profiles.get(id) ?? { id, name: '', avatarInitials: '', avatarUrl: null },
+    ),
+    lastMessage: stored.lastMessage,
+    lastMessageAt: stored.lastMessageAt,
+    pinnedAt: stored.pinnedAt,
   };
-}
-
-/** Store the pair in a stable order so reads are deterministic. */
-export function orderParticipants(
-  a: ParticipantSnapshot,
-  b: ParticipantSnapshot,
-): ParticipantSnapshot[] {
-  return [a, b].sort((x, y) => (x.userId < y.userId ? -1 : 1));
-}
-
-export function buildNameSearchRegex(search: string): RegExp {
-  return new RegExp(escapeRegex(search), 'i');
-}
-
-function escapeRegex(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export function buildSeedLastMessage(

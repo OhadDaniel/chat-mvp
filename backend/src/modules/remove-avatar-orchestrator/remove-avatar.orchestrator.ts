@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { StorageService } from '../storage/storage.service';
 import { UsersService } from '../users/users.service';
-import { ConversationsService } from '../conversations/conversations.service';
-import {
-  mapToPublicUser,
-  mapToUserProfile,
-  type PublicUser,
-} from '../users/users.types';
+import { mapToPublicUser, type PublicUser } from '../users/users.types';
 
 export type RemoveAvatarResponse = { user: PublicUser };
 
@@ -15,7 +10,6 @@ export class RemoveAvatarOrchestrator {
   constructor(
     private readonly usersService: UsersService,
     private readonly storage: StorageService,
-    private readonly conversationsService: ConversationsService,
   ) {}
 
   async run(userId: string): Promise<RemoveAvatarResponse> {
@@ -28,10 +22,6 @@ export class RemoveAvatarOrchestrator {
     if (oldKey) {
       await this.storage.deleteObject(oldKey);
     }
-
-    await this.conversationsService.applyParticipantUpdate(
-      mapToUserProfile(updated),
-    );
 
     return { user: mapToPublicUser(updated) };
   }

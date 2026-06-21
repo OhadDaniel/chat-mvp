@@ -33,20 +33,27 @@ describe('CreateConversationOrchestrator', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('delegates to ConversationsService.create with both participant profiles', async () => {
+  it('delegates to ConversationsService.create with both ids, then assembles', async () => {
     const create = jest.fn(() =>
-      Promise.resolve({ conversation: { id: 'conv-x' } }),
+      Promise.resolve({
+        id: 'conv-x',
+        participantIds: ['user-1', 'user-2'],
+        lastMessage: null,
+        lastMessageAt: null,
+        pinnedAt: null,
+      }),
     );
     const orchestrator = new CreateConversationOrchestrator(
       fakeUsers((id) => ({ ...ohad, id })),
       { create } as unknown as ConversationsService,
     );
 
-    await orchestrator.run(ohad, { participantId: 'user-2' });
+    const result = await orchestrator.run(ohad, { participantId: 'user-2' });
 
-    expect(create).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'user-1' }),
-      expect.objectContaining({ id: 'user-2' }),
-    );
+    expect(create).toHaveBeenCalledWith('user-1', 'user-2');
+    expect(result.conversation.participants.map((p) => p.id)).toEqual([
+      'user-1',
+      'user-2',
+    ]);
   });
 });

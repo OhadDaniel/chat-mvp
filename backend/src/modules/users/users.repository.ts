@@ -27,6 +27,14 @@ export class UsersRepository {
     return doc ? mapDocToUser(doc) : undefined;
   }
 
+  async findByIds(ids: string[]): Promise<User[]> {
+    const docs = await this.userModel
+      .find({ _id: { $in: ids } })
+      .lean<UserDocument[]>()
+      .exec();
+    return docs.map(mapDocToUser);
+  }
+
   async insert(user: User): Promise<User> {
     await this.userModel.create({
       _id: user.id,
