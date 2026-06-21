@@ -21,7 +21,10 @@ function fakeRepository(): UsersRepository {
       return Promise.resolve(user);
     },
     update: (id: string, fields: Partial<User>) => {
-      const user = users.find((u) => u.id === id) as User;
+      const user = users.find((u) => u.id === id);
+      if (!user) {
+        return Promise.resolve(undefined);
+      }
       Object.assign(user, fields);
       return Promise.resolve(user);
     },
@@ -179,6 +182,20 @@ describe('UsersService', () => {
 
       const cleared = await service.setAvatar(user.id, null);
       expect(cleared.avatar).toBeNull();
+    });
+  });
+
+  describe('when the user no longer exists', () => {
+    it('updateProfile and setAvatar surface a clean 404 USER_NOT_FOUND', async () => {
+      await expect(
+        service.updateProfile('ghost', { firstName: 'X' }),
+      ).rejects.toMatchObject({ code: 'USER_NOT_FOUND' });
+      await expect(service.setAvatar('ghost', null)).rejects.toMatchObject({
+        code: 'USER_NOT_FOUND',
+      });
+      await expect(service.setAvatar('ghost', null)).rejects.toBeInstanceOf(
+        AppException,
+      );
     });
   });
 });

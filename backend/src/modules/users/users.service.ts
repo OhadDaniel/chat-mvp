@@ -96,11 +96,23 @@ export class UsersService implements OnModuleInit {
       fields.email = email;
     }
 
-    return this.usersRepository.update(userId, fields);
+    return this.applyUpdate(userId, fields);
   }
 
   setAvatar(userId: string, avatar: Avatar | null): Promise<User> {
-    return this.usersRepository.update(userId, { avatar });
+    return this.applyUpdate(userId, { avatar });
+  }
+
+  /** Persist a partial update, or 404 if the user no longer exists. */
+  private async applyUpdate(
+    userId: string,
+    fields: Partial<Pick<User, 'firstName' | 'lastName' | 'email' | 'avatar'>>,
+  ): Promise<User> {
+    const user = await this.usersRepository.update(userId, fields);
+    if (!user) {
+      throw new AppException(404, 'USER_NOT_FOUND', 'User not found');
+    }
+    return user;
   }
 
 

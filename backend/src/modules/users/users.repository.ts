@@ -50,12 +50,12 @@ export class UsersRepository {
   async update(
     id: string,
     fields: Partial<Pick<User, 'firstName' | 'lastName' | 'email' | 'avatar'>>,
-  ): Promise<User> {
+  ): Promise<User | undefined> {
     const doc = await this.userModel
       .findByIdAndUpdate(id, { $set: fields }, { returnDocument: 'after' })
       .lean<UserDocument | null>()
       .exec();
-    return mapDocToUser(doc as UserDocument);
+    return doc ? mapDocToUser(doc) : undefined;
   }
 
   async count(): Promise<number> {
