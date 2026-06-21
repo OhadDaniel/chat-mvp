@@ -68,6 +68,27 @@ export class ConversationsService implements OnModuleInit {
     return this.getByIdOrThrow(id);
   }
 
+  /**
+   * Create a group. Unlike a DM there is no uniqueness rule — two groups may
+   * share the same members (the title tells them apart), so there's no pairKey
+   * and no duplicate to guard against. The creator is always a member.
+   */
+  async createGroup(
+    currentUserId: string,
+    name: string,
+    participantIds: string[],
+  ): Promise<StoredConversation> {
+    const id = randomUUID();
+    const members = [...new Set([currentUserId, ...participantIds])];
+    await this.conversationsRepository.insertGroup(
+      id,
+      members,
+      name,
+      currentUserId,
+    );
+    return this.getByIdOrThrow(id);
+  }
+
   async setPinned(
     conversationId: string,
     userId: string,

@@ -116,6 +116,26 @@ describe('ConversationsService — group conversations pass through unchanged', 
       service.getForParticipant('conv-g', 'user-2'),
     ).rejects.toMatchObject({ code: 'NOT_A_PARTICIPANT' });
   });
+
+  it('createGroup stores the creator + members (deduped, creator first) and records the creator', async () => {
+    const insertGroup = jest.fn(() => Promise.resolve());
+    const service = new ConversationsService(
+      fakeRepository({
+        insertGroup,
+        findById: () => Promise.resolve(storedGroup()),
+      }),
+    );
+
+    // creator passed self in the list, and a dup — both collapse
+    await service.createGroup('user-1', 'Crew', ['user-2', 'user-1', 'user-3']);
+
+    expect(insertGroup).toHaveBeenCalledWith(
+      expect.any(String),
+      ['user-1', 'user-2', 'user-3'],
+      'Crew',
+      'user-1',
+    );
+  });
 });
 
 describe('ConversationsService.getForParticipant (the 403 rule)', () => {

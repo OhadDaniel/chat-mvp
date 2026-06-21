@@ -10,6 +10,7 @@ import { SetAvatarModule } from '../set-avatar-orchestrator/set-avatar.module';
 import { RemoveAvatarModule } from '../remove-avatar-orchestrator/remove-avatar.module';
 import { ListConversationsModule } from '../list-conversations-orchestrator/list-conversations.module';
 import { CreateConversationModule } from '../create-conversation-orchestrator/create-conversation.module';
+import { CreateGroupModule } from '../create-group-orchestrator/create-group.module';
 import { SetPinnedModule } from '../set-pinned-orchestrator/set-pinned.module';
 import { GetMessagesModule } from '../get-messages-orchestrator/get-messages.module';
 import { CreateMessageModule } from '../create-message-orchestrator/create-message.module';
@@ -32,6 +33,7 @@ import { MessagesController } from './messages.controller';
     RemoveAvatarModule,
     ListConversationsModule,
     CreateConversationModule,
+    CreateGroupModule,
     SetPinnedModule,
     GetMessagesModule,
     CreateMessageModule,

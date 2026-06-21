@@ -17,10 +17,12 @@ import type {
   PatchConversationResponse,
 } from '../conversations/conversations.types';
 import { CreateConversationDto } from '../conversations/dto/create-conversation.request.dto';
+import { CreateGroupDto } from '../conversations/dto/create-group.request.dto';
 import { GetConversationsQueryDto } from '../conversations/dto/get-conversations.query.dto';
 import { PatchConversationDto } from '../conversations/dto/patch-conversation.request.dto';
 import { ListConversationsOrchestrator } from '../list-conversations-orchestrator/list-conversations.orchestrator';
 import { CreateConversationOrchestrator } from '../create-conversation-orchestrator/create-conversation.orchestrator';
+import { CreateGroupOrchestrator } from '../create-group-orchestrator/create-group.orchestrator';
 import { SetPinnedOrchestrator } from '../set-pinned-orchestrator/set-pinned.orchestrator';
 
 
@@ -30,6 +32,7 @@ export class ConversationsController {
   constructor(
     private readonly listConversationsOrchestrator: ListConversationsOrchestrator,
     private readonly createConversationOrchestrator: CreateConversationOrchestrator,
+    private readonly createGroupOrchestrator: CreateGroupOrchestrator,
     private readonly setPinnedOrchestrator: SetPinnedOrchestrator,
   ) {}
 
@@ -47,6 +50,14 @@ export class ConversationsController {
     @Body() dto: CreateConversationDto,
   ): Promise<CreateConversationResponse> {
     return this.createConversationOrchestrator.execute(user, dto);
+  }
+
+  @Post('groups')
+  createGroup(
+    @CurrentUser() user: User,
+    @Body() dto: CreateGroupDto,
+  ): Promise<CreateConversationResponse> {
+    return this.createGroupOrchestrator.execute(user, dto);
   }
 
   @Patch(':id')

@@ -199,4 +199,70 @@ describe('Conversations (integration)', () => {
         .expect(400);
     });
   });
+
+  describe('POST /conversations/groups', () => {
+    it('is behind the guard: 401 without a token', async () => {
+      await http(app)
+        .post('/conversations/groups')
+        .send({ name: 'x', participantIds: [] })
+        .expect(401);
+    });
+
+    it('201 creates a group with title, creator, and all members joined', async () => {
+      const created = await http(app)
+        .post('/conversations/groups')
+        .set('Authorization', `Bearer ${ohad}`)
+        .send({ name: 'Planning', participantIds: ['user-2', 'user-3'] })
+        .expect(201);
+
+      const { conversation } = created.body as { conversation: Conversation };
+      expect(conversation.type).toBe('group');
+      if (conversation.type === 'group') {
+        expect(conversation.name).toBe('Planning');
+        expect(conversation.createdBy).toBe('user-1');
+        expect(conversation.avatarUrl).toBeNull();
+      }
+      // creator + the two picked, deduped, joined to profiles
+      expect(conversation.participants.map((p) => p.id)).toEqual([
+        'user-1',
+        'user-2',
+        'user-3',
+      ]);
+
+      // and it shows up in the creator's list, as a group
+      const list = await http(app)
+        .get('/conversations')
+        .set('Authorization', `Bearer ${ohad}`)
+        .expect(200);
+      const mine = (
+        list.body as { conversations: Conversation[] }
+      ).conversations.find((c) => c.id === conversation.id);
+      expect(mine?.type).toBe('group');
+    });
+
+    it('400 for an empty title, and 400 for more than 30 members', async () => {
+      await http(app)
+        .post('/conversations/groups')
+        .set('Authorization', `Bearer ${ohad}`)
+        .send({ name: '', participantIds: [] })
+        .expect(400);
+
+      await http(app)
+        .post('/conversations/groups')
+        .set('Authorization', `Bearer ${ohad}`)
+        .send({
+          name: 'Too big',
+          participantIds: Array.from({ length: 31 }, (_, i) => `u${i}`),
+        })
+        .expect(400);
+    });
+
+    it('404 when a picked participant does not exist', async () => {
+      await http(app)
+        .post('/conversations/groups')
+        .set('Authorization', `Bearer ${ohad}`)
+        .send({ name: 'Ghosts', participantIds: ['ghost-99'] })
+        .expect(404);
+    });
+  });
 });
