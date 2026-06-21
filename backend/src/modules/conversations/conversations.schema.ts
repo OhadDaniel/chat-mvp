@@ -14,16 +14,66 @@ export class LastMessageDocument {
 
 export const LastMessageSchema = SchemaFactory.createForClass(LastMessageDocument);
 
+/** Direct-only payload: the canonical pair key that makes a 1:1 unique. */
+@Schema({ _id: false, versionKey: false })
+export class DirectDocument {
+  @Prop({ type: String, required: true })
+  pairKey!: string;
+}
+
+export const DirectSchema = SchemaFactory.createForClass(DirectDocument);
+
+/** A group's own avatar — its source of truth lives on the group row. */
+@Schema({ _id: false, versionKey: false })
+export class GroupAvatarDocument {
+  @Prop({ type: String, required: true })
+  storageKey!: string;
+
+  @Prop({ type: String, required: true })
+  srcUrl!: string;
+}
+
+export const GroupAvatarSchema =
+  SchemaFactory.createForClass(GroupAvatarDocument);
+
+/** Group-only payload: title, who may edit it, and its optional photo. */
+@Schema({ _id: false, versionKey: false })
+export class GroupDocument {
+  @Prop({ type: String, required: true })
+  name!: string;
+
+  @Prop({ type: String, required: true })
+  createdBy!: string;
+
+  @Prop({ type: GroupAvatarSchema, default: null })
+  avatar!: GroupAvatarDocument | null;
+}
+
+export const GroupSchema = SchemaFactory.createForClass(GroupDocument);
+
+export const CONVERSATION_TYPES = ['direct', 'group'] as const;
+export type ConversationType = (typeof CONVERSATION_TYPES)[number];
+
 @Schema({ collection: 'conversations', versionKey: false })
 export class ConversationDocument {
   @Prop({ type: String })
   _id!: string;
 
+  @Prop({ type: String, required: true, enum: CONVERSATION_TYPES })
+  type!: ConversationType;
+
   @Prop({ type: [String], required: true })
   participantIds!: string[];
 
-  @Prop({ type: String, required: true })
-  pairKey!: string;
+  // Exactly one of these is set, matching `type` — see the discriminated
+  // StoredConversation. Modelling the variant fields as their own sub-docs
+  // (instead of nullable top-level columns) keeps a "DM with a title" or a
+  // "group with a pairKey" unrepresentable.
+  @Prop({ type: DirectSchema, default: null })
+  direct!: DirectDocument | null;
+
+  @Prop({ type: GroupSchema, default: null })
+  group!: GroupDocument | null;
 
   @Prop({ type: LastMessageSchema, default: null })
   lastMessage!: LastMessageDocument | null;
@@ -40,5 +90,11 @@ export class ConversationDocument {
 
 export const ConversationSchema = SchemaFactory.createForClass(ConversationDocument);
 
-ConversationSchema.index({ pairKey: 1 }, { unique: true });
+// One DM per pair — enforced ONLY for direct conversations. Groups are
+// intentionally exempt (they have their own identity), so the unique index is
+// partial.
+ConversationSchema.index(
+  { 'direct.pairKey': 1 },
+  { unique: true, partialFilterExpression: { type: 'direct' } },
+);
 ConversationSchema.index({ participantIds: 1, lastMessageAt: -1, createdAt: -1 });

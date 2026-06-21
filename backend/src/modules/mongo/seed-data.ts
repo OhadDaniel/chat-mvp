@@ -13,12 +13,24 @@ type SeedUser = {
   lastName: string;
 };
 
-type SeedConversation = {
+type SeedDirectConversation = {
   id: string;
+  type: 'direct';
   userAId: string;
   userBId: string;
   pinnedDaysAgo?: number;
 };
+
+type SeedGroupConversation = {
+  id: string;
+  type: 'group';
+  name: string;
+  createdBy: string;
+  memberIds: string[];
+  pinnedDaysAgo?: number;
+};
+
+type SeedConversation = SeedDirectConversation | SeedGroupConversation;
 
 type SeedMessage = {
   id: string;
@@ -36,9 +48,16 @@ export const SEED_USERS: readonly SeedUser[] = [
 ];
 
 export const SEED_CONVERSATIONS: readonly SeedConversation[] = [
-  { id: 'conv-1', userAId: 'user-1', userBId: 'user-2', pinnedDaysAgo: 1 },
-  { id: 'conv-2', userAId: 'user-1', userBId: 'user-3' },
-  { id: 'conv-3', userAId: 'user-1', userBId: 'user-4' },
+  { id: 'conv-1', type: 'direct', userAId: 'user-1', userBId: 'user-2', pinnedDaysAgo: 1 },
+  { id: 'conv-2', type: 'direct', userAId: 'user-1', userBId: 'user-3' },
+  { id: 'conv-3', type: 'direct', userAId: 'user-1', userBId: 'user-4' },
+  {
+    id: 'conv-4',
+    type: 'group',
+    name: 'Fellowship Crew',
+    createdBy: 'user-2',
+    memberIds: ['user-2', 'user-3', 'user-4'],
+  },
 ];
 
 export const SEED_MESSAGES: readonly SeedMessage[] = [

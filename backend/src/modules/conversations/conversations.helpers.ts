@@ -26,7 +26,7 @@ export function toConversation(
   stored: StoredConversation,
   profiles: Map<string, UserProfile>,
 ): Conversation {
-  return {
+  const base = {
     id: stored.id,
     participants: stored.participantIds.map(
       (id) =>
@@ -36,6 +36,18 @@ export function toConversation(
     lastMessageAt: stored.lastMessageAt,
     pinnedAt: stored.pinnedAt,
   };
+
+  if (stored.type === 'group') {
+    return {
+      ...base,
+      type: 'group',
+      name: stored.name,
+      createdBy: stored.createdBy,
+      avatarUrl: stored.avatar?.srcUrl ?? null,
+    };
+  }
+
+  return { ...base, type: 'direct' };
 }
 
 export function buildSeedLastMessage(

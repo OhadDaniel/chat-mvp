@@ -7,13 +7,26 @@ import type {
   StoredConversation,
 } from './conversations.types';
 
-type ConversationLean = {
+type LeanBase = {
   _id: string;
   participantIds: string[];
   lastMessage: { content: string; sentAt: Date; senderId: string } | null;
   lastMessageAt: Date | null;
   pinnedAt: Date | null;
 };
+
+type DirectLean = LeanBase & { type: 'direct' };
+
+type GroupLean = LeanBase & {
+  type: 'group';
+  group: {
+    name: string;
+    createdBy: string;
+    avatar: { storageKey: string; srcUrl: string } | null;
+  };
+};
+
+type ConversationLean = DirectLean | GroupLean;
 
 @Injectable()
 export class ConversationsRepository {
@@ -48,7 +61,7 @@ export class ConversationsRepository {
     return doc ? doc.participantIds : undefined;
   }
 
-  async insert(
+  async insertDirect(
     id: string,
     participantIds: string[],
     pairKey: string,
@@ -57,8 +70,28 @@ export class ConversationsRepository {
   ): Promise<void> {
     await this.conversationModel.create({
       _id: id,
+      type: 'direct',
       participantIds,
-      pairKey,
+      direct: { pairKey },
+      pinnedAt,
+      lastMessage,
+      lastMessageAt: lastMessage ? lastMessage.sentAt : null,
+    });
+  }
+
+  async insertGroup(
+    id: string,
+    participantIds: string[],
+    name: string,
+    createdBy: string,
+    pinnedAt: Date | null = null,
+    lastMessage: LastMessageSnapshot | null = null,
+  ): Promise<void> {
+    await this.conversationModel.create({
+      _id: id,
+      type: 'group',
+      participantIds,
+      group: { name, createdBy, avatar: null },
       pinnedAt,
       lastMessage,
       lastMessageAt: lastMessage ? lastMessage.sentAt : null,
@@ -94,7 +127,7 @@ export class ConversationsRepository {
 }
 
 function mapDocToStored(doc: ConversationLean): StoredConversation {
-  return {
+  const base = {
     id: doc._id,
     participantIds: doc.participantIds,
     lastMessage: doc.lastMessage
@@ -107,4 +140,16 @@ function mapDocToStored(doc: ConversationLean): StoredConversation {
     lastMessageAt: doc.lastMessageAt ? doc.lastMessageAt.toISOString() : null,
     pinnedAt: doc.pinnedAt ? doc.pinnedAt.toISOString() : null,
   };
+
+  if (doc.type === 'group') {
+    return {
+      ...base,
+      type: 'group',
+      name: doc.group.name,
+      createdBy: doc.group.createdBy,
+      avatar: doc.group.avatar ?? null,
+    };
+  }
+
+  return { ...base, type: 'direct' };
 }

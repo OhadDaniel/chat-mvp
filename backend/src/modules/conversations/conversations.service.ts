@@ -50,7 +50,7 @@ export class ConversationsService implements OnModuleInit {
     const pairKey = buildPairKey(currentUserId, participantId);
     const id = randomUUID();
     try {
-      await this.conversationsRepository.insert(
+      await this.conversationsRepository.insertDirect(
         id,
         canonicalPair(currentUserId, participantId),
         pairKey,
@@ -144,13 +144,28 @@ export class ConversationsService implements OnModuleInit {
     }
 
     for (const seed of SEED_CONVERSATIONS) {
-      await this.conversationsRepository.insert(
-        seed.id,
-        canonicalPair(seed.userAId, seed.userBId),
-        buildPairKey(seed.userAId, seed.userBId),
-        seed.pinnedDaysAgo !== undefined ? daysAgo(seed.pinnedDaysAgo) : null,
-        buildSeedLastMessage(seed.id),
-      );
+      const pinnedAt =
+        seed.pinnedDaysAgo !== undefined ? daysAgo(seed.pinnedDaysAgo) : null;
+      const lastMessage = buildSeedLastMessage(seed.id);
+
+      if (seed.type === 'group') {
+        await this.conversationsRepository.insertGroup(
+          seed.id,
+          seed.memberIds,
+          seed.name,
+          seed.createdBy,
+          pinnedAt,
+          lastMessage,
+        );
+      } else {
+        await this.conversationsRepository.insertDirect(
+          seed.id,
+          canonicalPair(seed.userAId, seed.userBId),
+          buildPairKey(seed.userAId, seed.userBId),
+          pinnedAt,
+          lastMessage,
+        );
+      }
     }
   }
 }

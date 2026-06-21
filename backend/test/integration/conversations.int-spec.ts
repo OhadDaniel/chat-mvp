@@ -41,7 +41,8 @@ describe('Conversations (integration)', () => {
         conversations: Conversation[];
       };
 
-      // newest activity first: conv-1 (2m) > conv-2 (18m) > conv-3 (60m)
+      // newest activity first: conv-1 (2m) > conv-2 (18m) > conv-3 (60m).
+      // ohad isn't in the seeded group, so his list is unchanged.
       expect(conversations.map((c) => c.id)).toEqual([
         'conv-1',
         'conv-2',
@@ -53,6 +54,28 @@ describe('Conversations (integration)', () => {
       expect(conversations[0].pinnedAt).not.toBeNull();
       expect(conversations[0].participants).toHaveLength(2);
       expectNoSecrets(response.body);
+    });
+
+    it('returns a group conversation with its title, creator, and all members', async () => {
+      const alice = await loginAs(app, 'alice@chat.dev'); // a member of the seeded group
+      const response = await http(app)
+        .get('/conversations')
+        .set('Authorization', `Bearer ${alice}`)
+        .expect(200);
+
+      const { conversations } = response.body as {
+        conversations: Conversation[];
+      };
+      const group = conversations.find((c) => c.id === 'conv-4');
+
+      expect(group?.type).toBe('group');
+      // narrow on the discriminant to reach the group-only fields
+      if (group?.type === 'group') {
+        expect(group.name).toBe('Fellowship Crew');
+        expect(group.createdBy).toBe('user-2');
+        expect(group.avatarUrl).toBeNull();
+        expect(group.participants).toHaveLength(3);
+      }
     });
 
     it('?search= filters by participant name, case-insensitively', async () => {

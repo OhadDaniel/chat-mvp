@@ -37,6 +37,7 @@ describe('CreateConversationOrchestrator', () => {
     const create = jest.fn(() =>
       Promise.resolve({
         id: 'conv-x',
+        type: 'direct',
         participantIds: ['user-1', 'user-2'],
         lastMessage: null,
         lastMessageAt: null,

@@ -6,7 +6,22 @@ import type { StoredConversation } from '../conversations.types';
 function storedBetween(a: string, b: string): StoredConversation {
   return {
     id: 'conv-x',
+    type: 'direct',
     participantIds: [a, b],
+    lastMessage: null,
+    lastMessageAt: null,
+    pinnedAt: null,
+  };
+}
+
+function storedGroup(): StoredConversation {
+  return {
+    id: 'conv-g',
+    type: 'group',
+    name: 'Fellowship Crew',
+    createdBy: 'user-1',
+    avatar: null,
+    participantIds: ['user-1', 'user-3', 'user-4'],
     lastMessage: null,
     lastMessageAt: null,
     pinnedAt: null,
@@ -22,7 +37,8 @@ function fakeRepository(
     findAllByUserId: jest.fn(() => Promise.resolve([])),
     findById: jest.fn(() => Promise.resolve(undefined)),
     findParticipantIds: jest.fn(() => Promise.resolve(undefined)),
-    insert: jest.fn(() => Promise.resolve()),
+    insertDirect: jest.fn(() => Promise.resolve()),
+    insertGroup: jest.fn(() => Promise.resolve()),
     setPinned: jest.fn(() => Promise.resolve()),
     updateLastMessage: jest.fn(() => Promise.resolve()),
     count: jest.fn(() => Promise.resolve(0)),
@@ -40,10 +56,10 @@ describe('ConversationsService.create (pair rules, single-entity)', () => {
   });
 
   it('stores participant ids in canonical order with a canonical pairKey', async () => {
-    const insert = jest.fn(() => Promise.resolve());
+    const insertDirect = jest.fn(() => Promise.resolve());
     const service = new ConversationsService(
       fakeRepository({
-        insert,
+        insertDirect,
         findById: () => Promise.resolve(storedBetween('user-1', 'user-9')),
       }),
     );
@@ -52,7 +68,7 @@ describe('ConversationsService.create (pair rules, single-entity)', () => {
     await service.create('user-9', 'user-1');
 
     // stored as (user-1, user-9) — sorted, NOT (initiator, peer)
-    expect(insert).toHaveBeenCalledWith(
+    expect(insertDirect).toHaveBeenCalledWith(
       expect.any(String),
       ['user-1', 'user-9'],
       'user-1:user-9',
@@ -64,7 +80,7 @@ describe('ConversationsService.create (pair rules, single-entity)', () => {
     // second request or a concurrent race — is rejected and surfaces as 409.
     const service = new ConversationsService(
       fakeRepository({
-        insert: () =>
+        insertDirect: () =>
           Promise.reject(
             Object.assign(new Error('duplicate key'), { code: 11000 }),
           ),
@@ -74,6 +90,31 @@ describe('ConversationsService.create (pair rules, single-entity)', () => {
     await expect(service.create('user-1', 'user-2')).rejects.toMatchObject({
       code: 'CONVERSATION_ALREADY_EXISTS',
     });
+  });
+});
+
+describe('ConversationsService — group conversations pass through unchanged', () => {
+  it('list returns a stored group as-is (no pair logic touches it)', async () => {
+    const group = storedGroup();
+    const service = new ConversationsService(
+      fakeRepository({ findAllByUserId: () => Promise.resolve([group]) }),
+    );
+
+    await expect(service.list('user-1')).resolves.toEqual([group]);
+  });
+
+  it('getForParticipant authorizes a group member by participant ids', async () => {
+    const group = storedGroup(); // members: user-1, user-3, user-4
+    const service = new ConversationsService(
+      fakeRepository({ findById: () => Promise.resolve(group) }),
+    );
+
+    await expect(
+      service.getForParticipant('conv-g', 'user-3'),
+    ).resolves.toMatchObject({ id: 'conv-g', type: 'group' });
+    await expect(
+      service.getForParticipant('conv-g', 'user-2'),
+    ).rejects.toMatchObject({ code: 'NOT_A_PARTICIPANT' });
   });
 });
 
