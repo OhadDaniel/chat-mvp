@@ -7,12 +7,12 @@ export const NEW_DM_ERROR_TOAST =
   'Could not start the conversation — please try again'
 
 export const NEW_DM_TRIGGER_CLASS =
-  'flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 hover:bg-slate-700/50 hover:text-white transition-colors'
+  'flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-lg text-muted hover:bg-white hover:text-accent hover:border-line transition-colors'
 export const NEW_DM_SEARCH_WRAP_CLASS = 'p-3'
 export const NEW_DM_SEARCH_INPUT_CLASS =
-  'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-slate-500 focus:outline-none'
+  'w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm text-ink placeholder-faint focus:border-accent focus:ring-2 focus:ring-accent/15 focus:outline-none transition-colors'
 export const NEW_DM_LIST_CLASS = 'max-h-72 overflow-y-auto pb-2'
 export const NEW_DM_ROW_CLASS =
-  'flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-700/50 disabled:opacity-50'
-export const NEW_DM_ROW_NAME_CLASS = 'text-sm text-white'
-export const NEW_DM_EMPTY_CLASS = 'px-4 py-6 text-center text-sm text-slate-500'
+  'flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-white disabled:opacity-50 transition-colors'
+export const NEW_DM_ROW_NAME_CLASS = 'text-sm text-ink'
+export const NEW_DM_EMPTY_CLASS = 'px-4 py-6 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-faint'

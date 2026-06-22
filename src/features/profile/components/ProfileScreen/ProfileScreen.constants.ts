@@ -1,15 +1,15 @@
-export const PROFILE_SCREEN_CLASS = 'min-h-screen flex items-start justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 py-12 px-4'
-export const PROFILE_CARD_CLASS   = 'w-full max-w-md rounded-2xl border border-slate-700/50 bg-slate-800/50 p-8 shadow-2xl backdrop-blur-sm'
+export const PROFILE_SCREEN_CLASS = 'min-h-screen flex items-start justify-center bg-canvas py-12 px-4'
+export const PROFILE_CARD_CLASS   = 'w-full max-w-md rounded-2xl border border-line-strong bg-panel p-8 shadow-2xl shadow-ink/5'
 
-export const PROFILE_BACK_CLASS = 'mb-6 inline-flex items-center gap-1 text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors duration-200'
+export const PROFILE_BACK_CLASS = 'mb-6 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.16em] text-accent hover:text-accent-deep transition-colors'
 export const PROFILE_BACK_LABEL = '← Back to chat'
 
 export const PROFILE_TITLE       = 'Your profile'
-export const PROFILE_TITLE_CLASS = 'text-xl font-bold text-white tracking-tight'
+export const PROFILE_TITLE_CLASS = 'text-2xl font-semibold text-ink tracking-tight'
 
-export const PROFILE_INPUT_CLASS  = 'w-full rounded-xl border border-slate-600/50 bg-slate-700/50 px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 focus:outline-none disabled:opacity-50 transition-all duration-200'
-export const PROFILE_BUTTON_CLASS = 'mt-1 w-full rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/25'
-export const PROFILE_ERROR_CLASS  = 'text-xs text-red-400 font-medium'
+export const PROFILE_INPUT_CLASS  = 'w-full rounded-xl border border-line-strong bg-white px-4 py-3 text-sm text-ink placeholder-faint focus:border-accent focus:ring-2 focus:ring-accent/15 focus:outline-none disabled:opacity-50 transition-colors'
+export const PROFILE_BUTTON_CLASS = 'mt-1 w-full rounded-lg bg-accent px-4 py-3 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-white hover:bg-accent-deep disabled:opacity-60 disabled:cursor-not-allowed transition-colors'
+export const PROFILE_ERROR_CLASS  = 'text-xs text-red-500 font-medium'
 
 export const PROFILE_FIRST_NAME_PLACEHOLDER = 'First name'
 export const PROFILE_LAST_NAME_PLACEHOLDER  = 'Last name'

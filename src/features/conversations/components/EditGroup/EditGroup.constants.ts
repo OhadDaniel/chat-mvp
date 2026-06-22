@@ -22,18 +22,18 @@ export const EDIT_GROUP_AVATAR_TOO_LARGE = 'Image must be under 5 MB'
 export const EDIT_GROUP_ERROR_TOAST = 'Could not update the group — please try again'
 
 export const EDIT_GROUP_TRIGGER_CLASS =
-  'flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200/70 hover:text-slate-700 transition-colors'
+  'flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-muted hover:bg-white hover:text-accent hover:border-line transition-colors'
 export const EDIT_GROUP_BODY_CLASS = 'space-y-5 p-4'
 export const EDIT_GROUP_SECTION_CLASS = 'space-y-2'
 export const EDIT_GROUP_SECTION_LABEL_CLASS =
-  'text-xs font-semibold uppercase tracking-wider text-slate-400'
+  'font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted'
 export const EDIT_GROUP_NAME_FORM_CLASS = 'flex flex-col gap-2'
 export const EDIT_GROUP_INPUT_CLASS =
-  'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-slate-500 focus:outline-none'
+  'w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm text-ink placeholder-faint focus:border-accent focus:ring-2 focus:ring-accent/15 focus:outline-none transition-colors'
 export const EDIT_GROUP_PRIMARY_BUTTON_CLASS =
-  'rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50'
+  'rounded-md bg-accent px-4 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-accent-deep disabled:opacity-50 transition-colors'
 export const EDIT_GROUP_PHOTO_ROW_CLASS = 'flex items-center gap-3'
 export const EDIT_GROUP_PHOTO_ACTIONS_CLASS = 'flex items-center gap-2'
 export const EDIT_GROUP_SECONDARY_BUTTON_CLASS =
-  'rounded-lg border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700/60 disabled:opacity-50'
+  'rounded-none border border-line-strong px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-ink hover:bg-white disabled:opacity-50 transition-colors'
 export const EDIT_GROUP_FILE_INPUT_CLASS = 'hidden'

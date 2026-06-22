@@ -1,7 +1,7 @@
 export const SIGNUP_FORM_CLASS   = 'flex flex-col gap-3'
-export const SIGNUP_INPUT_CLASS  = 'w-full rounded-xl border border-slate-600/50 bg-slate-700/50 px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 focus:outline-none disabled:opacity-50 transition-all duration-200'
-export const SIGNUP_BUTTON_CLASS = 'mt-2 w-full rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:from-violet-500 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-violet-500/25'
-export const SIGNUP_ERROR_CLASS  = 'text-xs text-red-400 font-medium'
+export const SIGNUP_INPUT_CLASS  = 'w-full rounded-xl border border-line-strong bg-white px-4 py-3 text-sm text-ink placeholder-faint focus:border-accent focus:ring-2 focus:ring-accent/15 focus:outline-none disabled:opacity-50 transition-colors'
+export const SIGNUP_BUTTON_CLASS = 'mt-2 w-full rounded-lg bg-accent px-4 py-3 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-white hover:bg-accent-deep disabled:opacity-60 disabled:cursor-not-allowed transition-colors'
+export const SIGNUP_ERROR_CLASS  = 'text-xs text-red-500 font-medium'
 
-export const SIGNUP_SWITCH_CLASS        = 'mt-2 text-center text-xs text-slate-500'
-export const SIGNUP_SWITCH_BUTTON_CLASS = 'font-semibold text-violet-400 hover:text-violet-300 transition-colors duration-200'
+export const SIGNUP_SWITCH_CLASS        = 'mt-2 text-center text-xs text-muted'
+export const SIGNUP_SWITCH_BUTTON_CLASS = 'font-semibold text-accent hover:text-accent-deep transition-colors'
