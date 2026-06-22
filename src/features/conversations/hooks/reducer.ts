@@ -1,6 +1,6 @@
-import { CONVERSATIONS_ACTIONS, CONVERSATIONS_STATUS } from '../constants'
-import { applyTogglePin }                             from '../utils/conversations.utils'
-import type { ConversationsState, ConversationsAction } from '../types'
+import { CONVERSATIONS_ACTIONS, CONVERSATIONS_STATUS }   from '../constants'
+import { applyTogglePin, applyConversationUpdate }       from '../utils/conversations.utils'
+import type { ConversationsState, ConversationsAction }  from '../types'
 
 export const initialState: ConversationsState = {
   conversations: [],
@@ -20,6 +20,12 @@ export function conversationsReducer(
       return state.conversations.some(c => c.id === action.payload.id)
         ? state
         : { ...state, conversations: [action.payload, ...state.conversations] }
+
+    case CONVERSATIONS_ACTIONS.UPDATE_CONVERSATION:
+      return {
+        ...state,
+        conversations: applyConversationUpdate(state.conversations, action.payload),
+      }
 
     case CONVERSATIONS_ACTIONS.SET_STATUS:
       return { ...state, status: action.payload }

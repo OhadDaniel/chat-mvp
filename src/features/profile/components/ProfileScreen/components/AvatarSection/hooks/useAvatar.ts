@@ -1,9 +1,6 @@
-import { useRef, useState } from 'react'
-import type { ChangeEvent } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
-import { useToastContext } from '@/features/app/Toast/context/ToastContext'
 import { profileApi } from '@/features/profile/api/profile.api'
-import { uploadToPresignedPost } from '@/api/uploadToPresignedPost'
+import { useAvatarUpload } from '@/shared/hooks/useAvatarUpload'
 import {
   PROFILE_AVATAR_SAVED_TOAST,
   PROFILE_AVATAR_REMOVED_TOAST,
@@ -11,58 +8,24 @@ import {
   PROFILE_AVATAR_TOO_LARGE,
   AVATAR_MAX_BYTES,
 } from '../../../ProfileScreen.constants'
+
 export function useAvatar() {
   const { user, updateUser } = useAuth()
-  const { showToast } = useToastContext()
 
-  const [busy, setBusy] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const upload = async (file: File): Promise<void> => {
-    if (file.size > AVATAR_MAX_BYTES) {
-      showToast(PROFILE_AVATAR_TOO_LARGE)
-      return
-    }
-    setBusy(true)
-    try {
-      const { url, fields } = await profileApi.requestAvatarUpload({ contentType: file.type })
-      await uploadToPresignedPost(url, fields, file)
-      const { user: updated } = await profileApi.setAvatar()
-      updateUser(updated)
-      showToast(PROFILE_AVATAR_SAVED_TOAST)
-    } catch {
-      showToast(PROFILE_AVATAR_ERROR_API)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const remove = async (): Promise<void> => {
-    setBusy(true)
-    try {
-      const { user: updated } = await profileApi.removeAvatar()
-      updateUser(updated)
-      showToast(PROFILE_AVATAR_REMOVED_TOAST)
-    } catch {
-      showToast(PROFILE_AVATAR_ERROR_API)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const openFilePicker = (): void => {
-    fileInputRef.current?.click()
-  }
-
-  const onFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    const file = e.target.files?.[0]
-    if (file) void upload(file)
-    e.target.value = ''
-  }
-
-  const onRemove = (): void => {
-    void remove()
-  }
+  const { busy, fileInputRef, openFilePicker, onFileChange, onRemove } = useAvatarUpload({
+    maxBytes: AVATAR_MAX_BYTES,
+    messages: {
+      tooLarge: PROFILE_AVATAR_TOO_LARGE,
+      saved:    PROFILE_AVATAR_SAVED_TOAST,
+      removed:  PROFILE_AVATAR_REMOVED_TOAST,
+      error:    PROFILE_AVATAR_ERROR_API,
+    },
+    requestUpload: contentType => profileApi.requestAvatarUpload({ contentType }),
+    setAvatar:     () => profileApi.setAvatar(),
+    removeAvatar:  () => profileApi.removeAvatar(),
+    onSaved:       ({ user: updated }) => updateUser(updated),
+    onRemoved:     ({ user: updated }) => updateUser(updated),
+  })
 
   return {
     avatarUrl:      user?.avatarUrl ?? null,

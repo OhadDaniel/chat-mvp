@@ -50,6 +50,11 @@ type AddConversationAction = {
   payload: Conversation
 }
 
+type UpdateConversationAction = {
+  type:    typeof CONVERSATIONS_ACTIONS.UPDATE_CONVERSATION
+  payload: Conversation
+}
+
 type SetStatusAction = {
   type:    typeof CONVERSATIONS_ACTIONS.SET_STATUS
   payload: ConversationsStatus
@@ -68,15 +73,17 @@ type TogglePinAction = {
 export type ConversationsAction =
   | SetConversationsAction
   | AddConversationAction
+  | UpdateConversationAction
   | SetStatusAction
   | SetSearchAction
   | TogglePinAction
 
 export type UseConversationsReturn = {
-  conversations:   Conversation[]
-  status:          ConversationsStatus
-  search:          string
-  setSearch:       (value: string) => void
-  togglePin:       (id: string, currentlyPinned: boolean) => Promise<void>
-  addConversation: (conversation: Conversation) => void
+  conversations:      Conversation[]
+  status:             ConversationsStatus
+  search:             string
+  setSearch:          (value: string) => void
+  togglePin:          (id: string, currentlyPinned: boolean) => Promise<void>
+  addConversation:    (conversation: Conversation) => void
+  updateConversation: (conversation: Conversation) => void
 }

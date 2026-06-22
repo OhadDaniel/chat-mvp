@@ -2,6 +2,8 @@ import { useConversationsContext }        from '@/features/conversations/context
 import { ConversationsProvider }         from '@/features/conversations/context/ConversationsProvider'
 import { ConversationSidebarContainer }  from '@/features/conversations/components/Sidebar/ConversationSidebarContainer'
 import { MessagesPanelContainer }        from '@/features/messages/components/MessagesPanel/MessagesPanelContainer'
+import { EditGroupProvider }             from '@/features/conversations/components/EditGroup/EditGroup.context'
+import { EditGroup }                     from '@/features/conversations/components/EditGroup/EditGroup'
 import { getConversationDisplay }        from '@/features/conversations/utils/conversations.utils'
 import { useAuth }                       from '@/features/auth/hooks/useAuth'
 import { useAppLayout }                  from './hooks/useAppLayout'
@@ -16,12 +18,22 @@ function AppLayoutInner() {
     ? getConversationDisplay(selectedConversation, user.id).title
     : null
 
+  const editableGroup =
+    selectedConversation?.type === 'group' && selectedConversation.createdBy === user?.id
+      ? selectedConversation
+      : null
+
   return (
     <AppLayout>
       <ConversationSidebarContainer />
       <MessagesPanelContainer
         conversationId={selectedConversationId}
         conversationName={selectedConversationName}
+        actions={editableGroup && (
+          <EditGroupProvider key={editableGroup.id} group={editableGroup}>
+            <EditGroup />
+          </EditGroupProvider>
+        )}
       />
     </AppLayout>
   )

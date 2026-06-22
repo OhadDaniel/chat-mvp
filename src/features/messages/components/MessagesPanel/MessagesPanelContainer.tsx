@@ -26,7 +26,7 @@ function MessageContent({ conversationId, messages, retryLoadMessages, isLoading
   return <MessageListContainer messages={messages} />
 }
 
-export function MessagesPanelContainer({ conversationId, conversationName }: MessagesPanelContainerProps) {
+export function MessagesPanelContainer({ conversationId, conversationName, actions }: MessagesPanelContainerProps) {
   const { messages, status, sendMessage, retryLoadMessages } = useMessages(conversationId)
 
   const isLoading          = status === MESSAGES_STATUS.LOADING
@@ -34,7 +34,7 @@ export function MessagesPanelContainer({ conversationId, conversationName }: Mes
   const isComposerDisabled = isLoading || isError
 
   return (
-    <MessagesPanel title={conversationName ?? DEFAULT_TITLE}>
+    <MessagesPanel title={conversationName ?? DEFAULT_TITLE} actions={actions}>
       <MessageContent
         conversationId={conversationId}
         messages={messages}

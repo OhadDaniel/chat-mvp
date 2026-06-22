@@ -35,6 +35,13 @@ export function applyTogglePin(
   )
 }
 
+export function applyConversationUpdate(
+  conversations: Conversation[],
+  updated:       Conversation,
+): Conversation[] {
+  return conversations.map(c => (c.id === updated.id ? updated : c))
+}
+
 export function sortConversations(conversations: Conversation[]): Conversation[] {
   const pinned = conversations
     .filter(c => c.pinnedAt !== null)
