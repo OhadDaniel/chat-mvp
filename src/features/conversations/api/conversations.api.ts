@@ -28,6 +28,11 @@ export const conversationsApi = {
       body: JSON.stringify(body),
     }),
 
+  createAssistant: (): Promise<ConversationResponse> =>
+    request('/conversations/assistant', {
+      method: 'POST',
+    }),
+
   renameGroup: (
     id: string,
     body: RenameGroupRequest,

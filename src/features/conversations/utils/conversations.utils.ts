@@ -1,4 +1,6 @@
+import { ASSISTANT_AVATAR_URL } from '@/shared/constants'
 import type { Conversation, ConversationDisplay } from '../types'
+import { ASSISTANT_DISPLAY_TITLE, ASSISTANT_DISPLAY_INITIALS } from '../constants'
 
 export function getConversationDisplay(
   conversation: Conversation,
@@ -10,6 +12,15 @@ export function getConversationDisplay(
       avatarUrl: conversation.avatarUrl,
       initials:  '',
       isGroup:   true,
+    }
+  }
+
+  if (conversation.type === 'assistant') {
+    return {
+      title:     ASSISTANT_DISPLAY_TITLE,
+      avatarUrl: ASSISTANT_AVATAR_URL,
+      initials:  ASSISTANT_DISPLAY_INITIALS,
+      isGroup:   false,
     }
   }
 
