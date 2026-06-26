@@ -10,6 +10,7 @@ import { SetAvatarModule } from '../set-avatar-orchestrator/set-avatar.module';
 import { RemoveAvatarModule } from '../remove-avatar-orchestrator/remove-avatar.module';
 import { ListConversationsModule } from '../list-conversations-orchestrator/list-conversations.module';
 import { CreateConversationModule } from '../create-conversation-orchestrator/create-conversation.module';
+import { CreateAssistantConversationModule } from '../create-assistant-conversation-orchestrator/create-assistant-conversation.module';
 import { CreateGroupModule } from '../create-group-orchestrator/create-group.module';
 import { RenameGroupModule } from '../rename-group-orchestrator/rename-group.module';
 import { RequestGroupAvatarUploadModule } from '../request-group-avatar-upload-orchestrator/request-group-avatar-upload.module';
@@ -18,11 +19,13 @@ import { RemoveGroupAvatarModule } from '../remove-group-avatar-orchestrator/rem
 import { SetPinnedModule } from '../set-pinned-orchestrator/set-pinned.module';
 import { GetMessagesModule } from '../get-messages-orchestrator/get-messages.module';
 import { CreateMessageModule } from '../create-message-orchestrator/create-message.module';
+import { StreamAssistantReplyModule } from '../stream-assistant-reply-orchestrator/stream-assistant-reply.module';
 import { AuthController } from './auth.controller';
 import { ProfileController } from './profile.controller';
 import { UsersController } from './users.controller';
 import { ConversationsController } from './conversations.controller';
 import { MessagesController } from './messages.controller';
+import { AssistantController } from './assistant.controller';
 
 @Module({
   imports: [
@@ -37,6 +40,7 @@ import { MessagesController } from './messages.controller';
     RemoveAvatarModule,
     ListConversationsModule,
     CreateConversationModule,
+    CreateAssistantConversationModule,
     CreateGroupModule,
     RenameGroupModule,
     RequestGroupAvatarUploadModule,
@@ -45,6 +49,7 @@ import { MessagesController } from './messages.controller';
     SetPinnedModule,
     GetMessagesModule,
     CreateMessageModule,
+    StreamAssistantReplyModule,
   ],
   controllers: [
     AuthController,
@@ -52,6 +57,7 @@ import { MessagesController } from './messages.controller';
     UsersController,
     ConversationsController,
     MessagesController,
+    AssistantController,
   ],
 })
 export class ControllersModule {}

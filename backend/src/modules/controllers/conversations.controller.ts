@@ -27,6 +27,7 @@ import { RequestGroupAvatarUploadDto } from '../conversations/dto/request-group-
 import type { RequestGroupAvatarUploadResponse } from '../conversations/dto/request-group-avatar-upload.response.dto';
 import { ListConversationsOrchestrator } from '../list-conversations-orchestrator/list-conversations.orchestrator';
 import { CreateConversationOrchestrator } from '../create-conversation-orchestrator/create-conversation.orchestrator';
+import { CreateAssistantConversationOrchestrator } from '../create-assistant-conversation-orchestrator/create-assistant-conversation.orchestrator';
 import { CreateGroupOrchestrator } from '../create-group-orchestrator/create-group.orchestrator';
 import { RenameGroupOrchestrator } from '../rename-group-orchestrator/rename-group.orchestrator';
 import { RequestGroupAvatarUploadOrchestrator } from '../request-group-avatar-upload-orchestrator/request-group-avatar-upload.orchestrator';
@@ -41,6 +42,7 @@ export class ConversationsController {
   constructor(
     private readonly listConversationsOrchestrator: ListConversationsOrchestrator,
     private readonly createConversationOrchestrator: CreateConversationOrchestrator,
+    private readonly createAssistantConversationOrchestrator: CreateAssistantConversationOrchestrator,
     private readonly createGroupOrchestrator: CreateGroupOrchestrator,
     private readonly renameGroupOrchestrator: RenameGroupOrchestrator,
     private readonly requestGroupAvatarUploadOrchestrator: RequestGroupAvatarUploadOrchestrator,
@@ -63,6 +65,13 @@ export class ConversationsController {
     @Body() dto: CreateConversationDto,
   ): Promise<CreateConversationResponse> {
     return this.createConversationOrchestrator.execute(user, dto);
+  }
+
+  @Post('assistant')
+  createAssistant(
+    @CurrentUser() user: User,
+  ): Promise<CreateConversationResponse> {
+    return this.createAssistantConversationOrchestrator.execute(user);
   }
 
   @Post('groups')
