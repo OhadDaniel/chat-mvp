@@ -28,6 +28,17 @@ function storedGroup(): StoredConversation {
   };
 }
 
+function storedAssistant(userId: string): StoredConversation {
+  return {
+    id: 'conv-ai',
+    type: 'assistant',
+    participantIds: [userId],
+    lastMessage: null,
+    lastMessageAt: null,
+    pinnedAt: null,
+  };
+}
+
 type RepoOverrides = Partial<Record<keyof ConversationsRepository, unknown>>;
 
 function fakeRepository(
@@ -39,6 +50,8 @@ function fakeRepository(
     findParticipantIds: jest.fn(() => Promise.resolve(undefined)),
     insertDirect: jest.fn(() => Promise.resolve()),
     insertGroup: jest.fn(() => Promise.resolve()),
+    insertAssistant: jest.fn(() => Promise.resolve()),
+    findAssistantByUserId: jest.fn(() => Promise.resolve(undefined)),
     setPinned: jest.fn(() => Promise.resolve()),
     setGroupName: jest.fn(() => Promise.resolve()),
     setGroupAvatar: jest.fn(() => Promise.resolve()),
@@ -267,5 +280,59 @@ describe('ConversationsService.setPinned', () => {
     ).rejects.toMatchObject({ code: 'NOT_A_PARTICIPANT' });
 
     expect(setPinned).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConversationsService.createAssistant (get-or-create, one per user)', () => {
+  it('returns the existing thread without inserting when one already exists', async () => {
+    const insertAssistant = jest.fn(() => Promise.resolve());
+    const existing = storedAssistant('user-1');
+    const service = new ConversationsService(
+      fakeRepository({
+        findAssistantByUserId: () => Promise.resolve(existing),
+        insertAssistant,
+      }),
+    );
+
+    await expect(service.createAssistant('user-1')).resolves.toEqual(existing);
+    expect(insertAssistant).not.toHaveBeenCalled();
+  });
+
+  it('creates the thread for the caller when none exists yet', async () => {
+    const insertAssistant = jest.fn(() => Promise.resolve());
+    const service = new ConversationsService(
+      fakeRepository({
+        findAssistantByUserId: () => Promise.resolve(undefined),
+        insertAssistant,
+        findById: () => Promise.resolve(storedAssistant('user-1')),
+      }),
+    );
+
+    const result = await service.createAssistant('user-1');
+
+    expect(insertAssistant).toHaveBeenCalledWith(expect.any(String), 'user-1');
+    expect(result).toMatchObject({
+      type: 'assistant',
+      participantIds: ['user-1'],
+    });
+  });
+
+  it('recovers from a concurrent duplicate (11000) by returning the winning thread', async () => {
+    const existing = storedAssistant('user-1');
+    const findAssistantByUserId = jest
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(existing);
+    const service = new ConversationsService(
+      fakeRepository({
+        findAssistantByUserId,
+        insertAssistant: () =>
+          Promise.reject(
+            Object.assign(new Error('duplicate key'), { code: 11000 }),
+          ),
+      }),
+    );
+
+    await expect(service.createAssistant('user-1')).resolves.toEqual(existing);
   });
 });

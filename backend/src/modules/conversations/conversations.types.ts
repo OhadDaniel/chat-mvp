@@ -1,8 +1,6 @@
 import type { Avatar, UserProfile } from '../users/users.types';
 
-/** All types for the conversations module, in one place. */
 
-/* ── Domain (API shape — frozen since week 3) ───────────── */
 
 export type LastMessage = {
   content: string;
@@ -10,11 +8,8 @@ export type LastMessage = {
   senderId: string;
 };
 
-/**
- * A conversation is a discriminated union on `type`. The shared fields are the
- * same for both kinds; only the variant-specific fields differ — so a DM can
- * never carry a title and a group can never carry a pairKey.
- */
+
+
 type ConversationBase = {
   id: string;
   participants: UserProfile[];
@@ -32,9 +27,14 @@ export type GroupConversation = ConversationBase & {
   avatarUrl: string | null;
 };
 
-export type Conversation = DirectConversation | GroupConversation;
+export type AssistantConversation = ConversationBase & { type: 'assistant' };
 
-/* ── API response envelopes ─────────────────────────────── */
+export type Conversation =
+  | DirectConversation
+  | GroupConversation
+  | AssistantConversation;
+
+
 
 export type GetConversationsResponse = {
   conversations: Conversation[];
@@ -48,7 +48,7 @@ export type PatchConversationResponse = {
   conversation: Conversation;
 };
 
-/* ── Stored shape (participants by reference — joined on read) ── */
+
 
 type StoredConversationBase = {
   id: string;
@@ -69,11 +69,16 @@ export type StoredGroupConversation = StoredConversationBase & {
   avatar: Avatar | null;
 };
 
+export type StoredAssistantConversation = StoredConversationBase & {
+  type: 'assistant';
+};
+
 export type StoredConversation =
   | StoredDirectConversation
-  | StoredGroupConversation;
+  | StoredGroupConversation
+  | StoredAssistantConversation;
 
-/** Written onto a conversation when a message is sent. */
+
 export type LastMessageSnapshot = {
   content: string;
   sentAt: Date;

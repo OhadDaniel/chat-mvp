@@ -17,12 +17,10 @@ export function buildPairKey(userAId: string, userBId: string): string {
   return canonicalPair(userAId, userBId).join(PAIR_KEY_SEPARATOR);
 }
 
-/** Index the fetched participants by id, as public profiles, for the join. */
 export function profilesById(users: User[]): Map<string, UserProfile> {
   return new Map(users.map((user) => [user.id, mapToUserProfile(user)]));
 }
 
-/** Assemble the API conversation by joining the stored ids with current profiles. */
 export function toConversation(
   stored: StoredConversation,
   profiles: Map<string, UserProfile>,
@@ -46,6 +44,10 @@ export function toConversation(
       createdBy: stored.createdBy,
       avatarUrl: stored.avatar?.srcUrl ?? null,
     };
+  }
+
+  if (stored.type === 'assistant') {
+    return { ...base, type: 'assistant' };
   }
 
   return { ...base, type: 'direct' };

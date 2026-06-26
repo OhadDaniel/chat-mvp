@@ -14,7 +14,6 @@ export class LastMessageDocument {
 
 export const LastMessageSchema = SchemaFactory.createForClass(LastMessageDocument);
 
-/** Direct-only payload: the canonical pair key that makes a 1:1 unique. */
 @Schema({ _id: false, versionKey: false })
 export class DirectDocument {
   @Prop({ type: String, required: true })
@@ -23,7 +22,6 @@ export class DirectDocument {
 
 export const DirectSchema = SchemaFactory.createForClass(DirectDocument);
 
-/** A group's own avatar — its source of truth lives on the group row. */
 @Schema({ _id: false, versionKey: false })
 export class GroupAvatarDocument {
   @Prop({ type: String, required: true })
@@ -36,7 +34,6 @@ export class GroupAvatarDocument {
 export const GroupAvatarSchema =
   SchemaFactory.createForClass(GroupAvatarDocument);
 
-/** Group-only payload: title, who may edit it, and its optional photo. */
 @Schema({ _id: false, versionKey: false })
 export class GroupDocument {
   @Prop({ type: String, required: true })
@@ -51,7 +48,7 @@ export class GroupDocument {
 
 export const GroupSchema = SchemaFactory.createForClass(GroupDocument);
 
-export const CONVERSATION_TYPES = ['direct', 'group'] as const;
+export const CONVERSATION_TYPES = ['direct', 'group', 'assistant'] as const;
 export type ConversationType = (typeof CONVERSATION_TYPES)[number];
 
 @Schema({ collection: 'conversations', versionKey: false })
@@ -65,10 +62,7 @@ export class ConversationDocument {
   @Prop({ type: [String], required: true })
   participantIds!: string[];
 
-  // Exactly one of these is set, matching `type` — see the discriminated
-  // StoredConversation. Modelling the variant fields as their own sub-docs
-  // (instead of nullable top-level columns) keeps a "DM with a title" or a
-  // "group with a pairKey" unrepresentable.
+ 
   @Prop({ type: DirectSchema, default: null })
   direct!: DirectDocument | null;
 
@@ -90,11 +84,13 @@ export class ConversationDocument {
 
 export const ConversationSchema = SchemaFactory.createForClass(ConversationDocument);
 
-// One DM per pair — enforced ONLY for direct conversations. Groups are
-// intentionally exempt (they have their own identity), so the unique index is
-// partial.
+
 ConversationSchema.index(
   { 'direct.pairKey': 1 },
   { unique: true, partialFilterExpression: { type: 'direct' } },
+);
+ConversationSchema.index(
+  { participantIds: 1 },
+  { unique: true, partialFilterExpression: { type: 'assistant' } },
 );
 ConversationSchema.index({ participantIds: 1, lastMessageAt: -1, createdAt: -1 });

@@ -27,7 +27,9 @@ type GroupLean = LeanBase & {
   };
 };
 
-type ConversationLean = DirectLean | GroupLean;
+type AssistantLean = LeanBase & { type: 'assistant' };
+
+type ConversationLean = DirectLean | GroupLean | AssistantLean;
 
 @Injectable()
 export class ConversationsRepository {
@@ -60,6 +62,16 @@ export class ConversationsRepository {
       .lean<{ participantIds: string[] } | null>()
       .exec();
     return doc ? doc.participantIds : undefined;
+  }
+
+  async findAssistantByUserId(
+    userId: string,
+  ): Promise<StoredConversation | undefined> {
+    const doc = await this.conversationModel
+      .findOne({ type: 'assistant', participantIds: userId })
+      .lean<ConversationLean | null>()
+      .exec();
+    return doc ? mapDocToStored(doc) : undefined;
   }
 
   async insertDirect(
@@ -96,6 +108,17 @@ export class ConversationsRepository {
       pinnedAt,
       lastMessage,
       lastMessageAt: lastMessage ? lastMessage.sentAt : null,
+    });
+  }
+
+  async insertAssistant(id: string, userId: string): Promise<void> {
+    await this.conversationModel.create({
+      _id: id,
+      type: 'assistant',
+      participantIds: [userId],
+      pinnedAt: null,
+      lastMessage: null,
+      lastMessageAt: null,
     });
   }
 
@@ -162,6 +185,10 @@ function mapDocToStored(doc: ConversationLean): StoredConversation {
       createdBy: doc.group.createdBy,
       avatar: doc.group.avatar ?? null,
     };
+  }
+
+  if (doc.type === 'assistant') {
+    return { ...base, type: 'assistant' };
   }
 
   return { ...base, type: 'direct' };
