@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useToastContext } from '@/features/app/Toast/context/ToastContext'
+import { streamAssistantReply } from '@/api/assistantStream.api'
 import { MESSAGES_ACTIONS, ASSISTANT_SENDER } from '../constants'
 import {
   buildOptimisticMessage,
   buildAssistantPlaceholder,
+  postMessage,
 } from '../utils/messages.utils'
-import { streamAssistantReply } from '../api/assistantStream.api'
 import type { Message, MessagesAction } from '../types'
 import type { User } from '@/features/user/types'
 
@@ -42,7 +43,13 @@ export function useSendAssistantMessage(
     let replyText = ''
 
     try {
-      await streamAssistantReply(conversationId, content, {
+      const confirmedUser = await postMessage(conversationId, content)
+      dispatch({
+        type:    MESSAGES_ACTIONS.CONFIRM_MESSAGE,
+        payload: { tempId: userTempId, message: confirmedUser },
+      })
+
+      await streamAssistantReply(conversationId, {
         onDelta: (text) => {
           replyText += text
           dispatch({
@@ -53,10 +60,6 @@ export function useSendAssistantMessage(
         onDone: (messageId) => {
           dispatch({
             type:    MESSAGES_ACTIONS.CONFIRM_MESSAGE,
-            payload: { tempId: userTempId, message: { ...userMessage, status: 'sent' } },
-          })
-          dispatch({
-            type:    MESSAGES_ACTIONS.CONFIRM_MESSAGE,
             payload: {
               tempId:  assistantTempId,
               message: buildFinalReply(conversationId, messageId, replyText),
@@ -65,6 +68,8 @@ export function useSendAssistantMessage(
         },
         onError: rollback,
       })
+    } catch {
+      rollback()
     } finally {
       setIsStreaming(false)
     }
