@@ -1,4 +1,5 @@
-import { Logger } from '@nestjs/common';
+import { Logger, type MessageEvent } from '@nestjs/common';
+import { firstValueFrom, toArray } from 'rxjs';
 import type { ClientSession } from 'mongoose';
 import type { ConversationsService } from '../conversations/conversations.service';
 import type { StoredConversation } from '../conversations/conversations.types';
@@ -8,7 +9,6 @@ import type { TransactionRunner } from '../mongo/transaction.runner';
 import type { LlmProvider } from '../ai-assistant/llm-abstraction/llm-provider';
 import type { ProviderStreamEvent } from '../ai-assistant/llm-abstraction/llm.types';
 import type { User } from '../users/users.types';
-import type { SseWriter } from './sse-writer';
 import { StreamAssistantReplyOrchestrator } from './stream-assistant-reply.orchestrator';
 
 const ohad: User = {
@@ -39,17 +39,6 @@ function assistantConversation(): StoredConversation {
   };
 }
 
-function userMessage(): Message {
-  return {
-    id: 'msg-u',
-    conversationId: 'conv-1',
-    sender: { id: 'user-1', name: 'Ohad Daniel', avatarInitials: 'OD', avatarUrl: null },
-    content: 'hi',
-    sentAt: new Date().toISOString(),
-    status: 'sent',
-  };
-}
-
 function assistantMessage(): Message {
   return {
     id: 'msg-ai',
@@ -69,19 +58,14 @@ async function* scriptedStream(
   }
 }
 
-function fakeSse(): SseWriter {
-  return {
-    open: jest.fn(),
-    delta: jest.fn(),
-    done: jest.fn(),
-    error: jest.fn(),
-    end: jest.fn(),
-  } as unknown as SseWriter;
+function collect(
+  orchestrator: StreamAssistantReplyOrchestrator,
+): Promise<MessageEvent[]> {
+  return firstValueFrom(orchestrator.execute('conv-1', ohad).pipe(toArray()));
 }
 
 describe('StreamAssistantReplyOrchestrator', () => {
   it('streams the reply, persists it, and signals done', async () => {
-    const sse = fakeSse();
     const llmProvider = {
       streamMessage: jest.fn(() =>
         scriptedStream([
@@ -95,7 +79,6 @@ describe('StreamAssistantReplyOrchestrator', () => {
       Promise.resolve(assistantMessage()),
     );
     const messages = {
-      create: jest.fn(() => Promise.resolve(userMessage())),
       loadRecent: jest.fn(() => Promise.resolve([])),
       createAssistantMessage,
     } as unknown as MessagesService;
@@ -111,29 +94,31 @@ describe('StreamAssistantReplyOrchestrator', () => {
       llmProvider,
     );
 
-    await orchestrator.execute('conv-1', ohad, { content: 'hi' }, sse);
+    const events = await collect(orchestrator);
 
-    expect(sse.open).toHaveBeenCalled();
-    expect(sse.delta).toHaveBeenNthCalledWith(1, 'Hel');
-    expect(sse.delta).toHaveBeenNthCalledWith(2, 'lo');
+    expect(events).toEqual([
+      { type: 'delta', data: { text: 'Hel' } },
+      { type: 'delta', data: { text: 'lo' } },
+      { type: 'done', data: { messageId: 'msg-ai' } },
+    ]);
     expect(createAssistantMessage).toHaveBeenCalledWith(
       'conv-1',
       'Hello',
       fakeSession,
     );
-    expect(sse.done).toHaveBeenCalledWith('msg-ai');
-    expect(sse.end).toHaveBeenCalled();
   });
 
-  it('rejects a non-assistant conversation and never opens the stream', async () => {
-    const sse = fakeSse();
-    const create = jest.fn();
+  it('emits a not-found error for a non-assistant conversation and never streams', async () => {
+    const createAssistantMessage = jest.fn();
     const conversations = {
       getForParticipant: jest.fn(() =>
         Promise.resolve({ ...assistantConversation(), type: 'direct' }),
       ),
     } as unknown as ConversationsService;
-    const messages = { create } as unknown as MessagesService;
+    const messages = {
+      loadRecent: jest.fn(),
+      createAssistantMessage,
+    } as unknown as MessagesService;
     const llmProvider = { streamMessage: jest.fn() } as unknown as LlmProvider;
 
     const orchestrator = new StreamAssistantReplyOrchestrator(
@@ -143,26 +128,25 @@ describe('StreamAssistantReplyOrchestrator', () => {
       llmProvider,
     );
 
-    await expect(
-      orchestrator.execute('conv-1', ohad, { content: 'hi' }, sse),
-    ).rejects.toMatchObject({ code: 'CONVERSATION_NOT_FOUND' });
+    const events = await collect(orchestrator);
 
-    expect(sse.open).not.toHaveBeenCalled();
-    expect(create).not.toHaveBeenCalled();
+    expect(events).toEqual([
+      { type: 'error', data: { code: 'CONVERSATION_NOT_FOUND' } },
+    ]);
+    expect(llmProvider.streamMessage).not.toHaveBeenCalled();
+    expect(createAssistantMessage).not.toHaveBeenCalled();
   });
 
-  it('emits an error event and ends the stream when the model call fails', async () => {
+  it('emits an error event and does not persist when the model call fails', async () => {
     const errorLog = jest
       .spyOn(Logger.prototype, 'error')
       .mockImplementation(() => undefined);
-    const sse = fakeSse();
     async function* boom(): AsyncGenerator<ProviderStreamEvent> {
       yield { type: 'text_delta', text: 'partial' };
       throw new Error('provider exploded');
     }
     const createAssistantMessage = jest.fn();
     const messages = {
-      create: jest.fn(() => Promise.resolve(userMessage())),
       loadRecent: jest.fn(() => Promise.resolve([])),
       createAssistantMessage,
     } as unknown as MessagesService;
@@ -181,18 +165,17 @@ describe('StreamAssistantReplyOrchestrator', () => {
       llmProvider,
     );
 
-    await orchestrator.execute('conv-1', ohad, { content: 'hi' }, sse);
+    const events = await collect(orchestrator);
 
-    expect(sse.delta).toHaveBeenCalledWith('partial');
+    expect(events).toEqual([
+      { type: 'delta', data: { text: 'partial' } },
+      { type: 'error', data: { code: 'ASSISTANT_STREAM_FAILED' } },
+    ]);
     expect(createAssistantMessage).not.toHaveBeenCalled();
-    expect(sse.error).toHaveBeenCalledWith('ASSISTANT_STREAM_FAILED');
-    expect(sse.done).not.toHaveBeenCalled();
-    expect(sse.end).toHaveBeenCalled();
     errorLog.mockRestore();
   });
 
   it('runs a requested tool, feeds the result back, then streams the answer', async () => {
-    const sse = fakeSse();
     const streamMessage = jest
       .fn()
       .mockReturnValueOnce(
@@ -228,7 +211,6 @@ describe('StreamAssistantReplyOrchestrator', () => {
       Promise.resolve(assistantMessage()),
     );
     const messages = {
-      create: jest.fn(() => Promise.resolve(userMessage())),
       loadRecent: jest.fn(() => Promise.resolve([])),
       createAssistantMessage,
       findRecentBySender,
@@ -245,21 +227,19 @@ describe('StreamAssistantReplyOrchestrator', () => {
       llmProvider,
     );
 
-    await orchestrator.execute(
-      'conv-1',
-      ohad,
-      { content: 'summarize my messages' },
-      sse,
-    );
+    const events = await collect(orchestrator);
 
     expect(streamMessage).toHaveBeenCalledTimes(2);
     expect(findRecentBySender).toHaveBeenCalledWith('user-1', 3);
-    expect(sse.delta).toHaveBeenCalledWith('You sent 3 messages.');
+    expect(events).toContainEqual({
+      type: 'delta',
+      data: { text: 'You sent 3 messages.' },
+    });
+    expect(events).toContainEqual({ type: 'done', data: { messageId: 'msg-ai' } });
     expect(createAssistantMessage).toHaveBeenCalledWith(
       'conv-1',
       'You sent 3 messages.',
       fakeSession,
     );
-    expect(sse.done).toHaveBeenCalledWith('msg-ai');
   });
 });

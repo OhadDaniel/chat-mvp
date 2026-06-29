@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type { MessageEvent } from '@nestjs/common';
+import { from, type Observable } from 'rxjs';
 import { ConversationsService } from '../conversations/conversations.service';
-import { ConversationNotFoundError } from '../conversations/errors/conversation-not-found.error';
 import { MessagesService } from '../messages/messages.service';
 import { TransactionRunner } from '../mongo/transaction.runner';
 import { LlmProvider } from '../ai-assistant/llm-abstraction/llm-provider';
@@ -8,11 +9,9 @@ import { ASSISTANT_SYSTEM_PROMPT } from '../ai-assistant/prompts/system.prompt';
 import { buildHistory, HISTORY_LIMIT } from './conversation-history';
 import { runTool, toProviderToolSpecs } from './tools/assistant-tools';
 import type { ToolContext } from './tools/define-tool';
-import type { SseWriter } from './sse-writer';
 import type { User } from '../users/users.types';
 import type { Message } from '../messages/messages.types';
 import type { LastMessageSnapshot } from '../conversations/conversations.types';
-import type { CreateMessageDto } from '../messages/dto/create-message.request.dto';
 import type {
   ProviderMessage,
   ProviderToolCall,
@@ -20,6 +19,10 @@ import type {
 } from '../ai-assistant/llm-abstraction/llm.types';
 
 const STREAM_ERROR_CODE = 'ASSISTANT_STREAM_FAILED';
+const NOT_ASSISTANT_CODE = 'CONVERSATION_NOT_FOUND';
+const EVENT_DELTA = 'delta';
+const EVENT_DONE = 'done';
+const EVENT_ERROR = 'error';
 const MAX_TOOL_ROUNDS = 3;
 
 type Turn = { text: string; toolUses: ToolUseEvent[] };
@@ -35,21 +38,23 @@ export class StreamAssistantReplyOrchestrator {
     private readonly llmProvider: LlmProvider,
   ) {}
 
-  async execute(
+  execute(conversationId: string, user: User): Observable<MessageEvent> {
+    return from(this.run(conversationId, user));
+  }
+
+  private async *run(
     conversationId: string,
     user: User,
-    dto: CreateMessageDto,
-    sse: SseWriter,
-  ): Promise<void> {
+  ): AsyncGenerator<MessageEvent> {
     const conversation = await this.conversationsService.getForParticipant(
       conversationId,
       user.id,
     );
     if (conversation.type !== 'assistant') {
-      throw new ConversationNotFoundError();
+      yield errorEvent(NOT_ASSISTANT_CODE);
+      return;
     }
 
-    await this.saveUserMessage(conversationId, user, dto);
     const history = buildHistory(
       await this.messagesService.loadRecent(conversationId, HISTORY_LIMIT),
     );
@@ -58,29 +63,25 @@ export class StreamAssistantReplyOrchestrator {
       messages: this.messagesService,
     };
 
-    sse.open();
     try {
-      const replyText = await this.generateReply(history, sse, context);
+      const replyText = yield* this.generateReply(history, context);
       const reply = await this.saveAssistantMessage(conversationId, replyText);
-      sse.done(reply.id);
+      yield doneEvent(reply.id);
     } catch (error) {
       this.logger.error('Assistant reply stream failed', error);
-      sse.error(STREAM_ERROR_CODE);
-    } finally {
-      sse.end();
+      yield errorEvent(STREAM_ERROR_CODE);
     }
   }
 
-  private async generateReply(
+  private async *generateReply(
     history: ProviderMessage[],
-    sse: SseWriter,
     context: ToolContext,
-  ): Promise<string> {
+  ): AsyncGenerator<MessageEvent, string> {
     const messages: ProviderMessage[] = [...history];
     let replyText = '';
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-      const turn = await this.runTurn(messages, sse);
+      const turn = yield* this.runTurn(messages);
       replyText += turn.text;
       if (turn.toolUses.length === 0) {
         return replyText;
@@ -96,10 +97,9 @@ export class StreamAssistantReplyOrchestrator {
     return replyText;
   }
 
-  private async runTurn(
+  private async *runTurn(
     messages: ProviderMessage[],
-    sse: SseWriter,
-  ): Promise<Turn> {
+  ): AsyncGenerator<MessageEvent, Turn> {
     let text = '';
     const toolUses: ToolUseEvent[] = [];
     const stream = this.llmProvider.streamMessage({
@@ -110,32 +110,12 @@ export class StreamAssistantReplyOrchestrator {
     for await (const event of stream) {
       if (event.type === 'text_delta') {
         text += event.text;
-        sse.delta(event.text);
+        yield deltaEvent(event.text);
       } else if (event.type === 'tool_use') {
         toolUses.push(event);
       }
     }
     return { text, toolUses };
-  }
-
-  private saveUserMessage(
-    conversationId: string,
-    user: User,
-    dto: CreateMessageDto,
-  ): Promise<void> {
-    return this.transactionRunner.run(async (session) => {
-      const message = await this.messagesService.create(
-        conversationId,
-        user,
-        dto,
-        session,
-      );
-      await this.conversationsService.updateLastMessage(
-        conversationId,
-        toSnapshot(message),
-        session,
-      );
-    });
   }
 
   private saveAssistantMessage(
@@ -156,6 +136,18 @@ export class StreamAssistantReplyOrchestrator {
       return message;
     });
   }
+}
+
+function deltaEvent(text: string): MessageEvent {
+  return { type: EVENT_DELTA, data: { text } };
+}
+
+function doneEvent(messageId: string): MessageEvent {
+  return { type: EVENT_DONE, data: { messageId } };
+}
+
+function errorEvent(code: string): MessageEvent {
+  return { type: EVENT_ERROR, data: { code } };
 }
 
 function toAssistantTurn(text: string, toolUses: ToolUseEvent[]): ProviderMessage {
