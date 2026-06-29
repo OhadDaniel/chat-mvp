@@ -21,12 +21,7 @@ import type {
 } from './conversations.types';
 import type { PatchConversationDto } from './dto/patch-conversation.request.dto';
 
-/**
- * Owns the conversations domain: the pair rules (distinct users, one
- * conversation per pair), pinning, and the participant authorization rule.
- * It deals in participant *ids only* — joining in the current user profiles
- * is the orchestrators' job.
- */
+
 @Injectable()
 export class ConversationsService implements OnModuleInit {
   constructor(
@@ -58,9 +53,6 @@ export class ConversationsService implements OnModuleInit {
         pairKey,
       );
     } catch (error) {
-      // The unique pairKey index is the only real guard against duplicates:
-      // a collision — including from a concurrent create — is rejected here
-      // and mapped to 409. (A read-then-write pre-check can't be race-safe.)
       if (isDuplicateKeyError(error)) {
         throw new ConversationAlreadyExistsError();
       }
@@ -70,11 +62,7 @@ export class ConversationsService implements OnModuleInit {
     return this.getByIdOrThrow(id);
   }
 
-  /**
-   * Create a group. Unlike a DM there is no uniqueness rule — two groups may
-   * share the same members (the title tells them apart), so there's no pairKey
-   * and no duplicate to guard against. The creator is always a member.
-   */
+
   async createGroup(
     currentUserId: string,
     name: string,
@@ -91,6 +79,23 @@ export class ConversationsService implements OnModuleInit {
     return this.getByIdOrThrow(id);
   }
 
+  async createAssistant(userId: string): Promise<StoredConversation> {
+    const id = randomUUID();
+    try {
+      await this.conversationsRepository.insertAssistant(id, userId);
+      return this.getByIdOrThrow(id);
+    } catch (error) {
+      if (isDuplicateKeyError(error)) {
+        const existing =
+          await this.conversationsRepository.findAssistantByUserId(userId);
+        if (existing) {
+          return existing;
+        }
+      }
+      throw error;
+    }
+  }
+
   async setPinned(
     conversationId: string,
     userId: string,
@@ -101,7 +106,6 @@ export class ConversationsService implements OnModuleInit {
     return this.getByIdOrThrow(conversationId);
   }
 
-  /** Rename a group — creator only. Title is a plain field, nothing derives from it. */
   async renameGroup(
     conversationId: string,
     userId: string,
@@ -112,7 +116,7 @@ export class ConversationsService implements OnModuleInit {
     return this.getByIdOrThrow(conversationId);
   }
 
-  /** Point a group at its uploaded photo — creator only. */
+ 
   async setGroupAvatar(
     conversationId: string,
     userId: string,
@@ -123,11 +127,7 @@ export class ConversationsService implements OnModuleInit {
     return this.getByIdOrThrow(conversationId);
   }
 
-  /**
-   * Clear a group's photo — creator only. Like the user avatar, the stored
-   * object is left in place (overwritten on the next upload), so there is no
-   * post-commit delete that could fail an already-saved change.
-   */
+  
   async removeGroupAvatar(
     conversationId: string,
     userId: string,
@@ -137,11 +137,7 @@ export class ConversationsService implements OnModuleInit {
     return this.getByIdOrThrow(conversationId);
   }
 
-  /**
-   * Refresh the denormalized last-message snapshot. Called inside the
-   * send-message transaction (session) so the message write and this update
-   * commit together. lastMessage is immutable, so this is safe to denormalize.
-   */
+
   updateLastMessage(
     conversationId: string,
     snapshot: LastMessageSnapshot,
@@ -154,10 +150,7 @@ export class ConversationsService implements OnModuleInit {
     );
   }
 
-  /**
-   * The authorization rule, in one place: 404 if the conversation doesn't
-   * exist, 403 if the caller isn't one of its two users.
-   */
+
   async getForParticipant(
     conversationId: string,
     userId: string,
@@ -169,11 +162,7 @@ export class ConversationsService implements OnModuleInit {
     return conversation;
   }
 
-  /**
-   * Lightweight authorization for writes that don't need the full read:
-   * reads only the participant id list (projection), 404 if missing, 403 if
-   * the caller isn't one of the two users. Used by pinning and send-message.
-   */
+
   async assertParticipant(
     conversationId: string,
     userId: string,
@@ -188,11 +177,7 @@ export class ConversationsService implements OnModuleInit {
     }
   }
 
-  /**
-   * Authorization for editing a group (title or photo): 404 if it's not an
-   * existing group, 403 if the caller didn't create it. Used by rename and the
-   * group-avatar endpoints.
-   */
+
   async assertGroupOwner(
     conversationId: string,
     userId: string,
@@ -214,7 +199,7 @@ export class ConversationsService implements OnModuleInit {
     return conversation;
   }
 
-  /** Demo conversations between the seeded users. Data lives in seed-data.ts. */
+  
   private async seedDemoConversations(): Promise<void> {
     if ((await this.conversationsRepository.count()) > 0) {
       return;

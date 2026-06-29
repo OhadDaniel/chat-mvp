@@ -23,7 +23,9 @@ export type GroupConversation = ConversationBase & {
   avatarUrl: string | null
 }
 
-export type Conversation = DirectConversation | GroupConversation
+export type AssistantConversation = ConversationBase & { type: 'assistant' }
+
+export type Conversation = DirectConversation | GroupConversation | AssistantConversation
 
 export type ConversationDisplay = {
   title:     string

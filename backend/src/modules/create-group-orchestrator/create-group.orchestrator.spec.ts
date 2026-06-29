@@ -31,7 +31,7 @@ describe('CreateGroupOrchestrator', () => {
     );
 
     await expect(
-      orchestrator.execute(ohad, { name: 'Crew', participantIds: ['user-2', 'ghost'] }),
+      orchestrator.execute(ohad, 'Crew', ['user-2', 'ghost']),
     ).rejects.toMatchObject({ code: 'USER_NOT_FOUND' });
 
     expect(createGroup).not.toHaveBeenCalled();
@@ -45,10 +45,7 @@ describe('CreateGroupOrchestrator', () => {
       { createGroup } as unknown as ConversationsService,
     );
 
-    const result = await orchestrator.execute(ohad, {
-      name: 'Crew',
-      participantIds: ['user-2'],
-    });
+    const result = await orchestrator.execute(ohad, 'Crew', ['user-2']);
 
     expect(createGroup).toHaveBeenCalledWith('user-1', 'Crew', ['user-2']);
     expect(result.conversation.type).toBe('group');

@@ -9,6 +9,7 @@ import type { Message, MessagePage, StoredMessage } from './messages.types';
 import type { CreateMessageDto } from './dto/create-message.request.dto';
 import type { GetMessagesQueryDto } from './dto/get-messages.query.dto';
 import { MessagesRepository } from './messages.repository';
+import { ASSISTANT_PROFILE, ASSISTANT_SENDER_ID } from './messages.constants';
 
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 50;
@@ -64,6 +65,38 @@ export class MessagesService implements OnModuleInit {
     );
   }
 
+  async createAssistantMessage(
+    conversationId: string,
+    content: string,
+    session?: ClientSession,
+  ): Promise<Message> {
+    return this.messagesRepository.insertAssistant(
+      randomUUID(),
+      conversationId,
+      content,
+      session,
+    );
+  }
+
+  async loadRecent(
+    conversationId: string,
+    limit: number,
+  ): Promise<StoredMessage[]> {
+    const page = await this.messagesRepository.findPageBefore(
+      conversationId,
+      undefined,
+      limit,
+    );
+    return page.messages;
+  }
+
+  findRecentBySender(
+    senderId: string,
+    limit: number,
+  ): Promise<StoredMessage[]> {
+    return this.messagesRepository.findRecentBySender(senderId, limit);
+  }
+
   private async seedDemoMessages(): Promise<void> {
     if ((await this.messagesRepository.count()) > 0) {
       return;
@@ -86,18 +119,29 @@ function toMessage(
   stored: StoredMessage,
   senderById: Map<string, UserProfile>,
 ): Message {
-  const sender = senderById.get(stored.senderId) ?? {
-    id: stored.senderId,
-    name: '',
-    avatarInitials: '',
-    avatarUrl: null,
-  };
   return {
     id: stored.id,
     conversationId: stored.conversationId,
-    sender,
+    sender: resolveSender(stored.senderId, senderById),
     content: stored.content,
     sentAt: stored.sentAt,
     status: MESSAGE_STATUS_SENT,
   };
+}
+
+function resolveSender(
+  senderId: string,
+  senderById: Map<string, UserProfile>,
+): UserProfile {
+  if (senderId === ASSISTANT_SENDER_ID) {
+    return ASSISTANT_PROFILE;
+  }
+  return (
+    senderById.get(senderId) ?? {
+      id: senderId,
+      name: '',
+      avatarInitials: '',
+      avatarUrl: null,
+    }
+  );
 }

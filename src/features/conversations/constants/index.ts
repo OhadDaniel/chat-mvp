@@ -12,3 +12,6 @@ export const CONVERSATIONS_STATUS = {
   LOADING: 'loading',
   ERROR:   'error',
 } as const
+
+export const ASSISTANT_DISPLAY_TITLE    = 'Maxwell'
+export const ASSISTANT_DISPLAY_INITIALS = 'M'

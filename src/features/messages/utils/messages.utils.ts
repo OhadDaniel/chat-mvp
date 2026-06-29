@@ -1,4 +1,5 @@
 import { messagesApi }    from '@/features/messages/api/messages.api'
+import { ASSISTANT_SENDER } from '../constants'
 import type { Message }   from '../types'
 import type { User }      from '@/features/user/types'
 
@@ -29,6 +30,20 @@ export function buildOptimisticMessage(
     conversationId,
     sender:         user,
     content,
+    sentAt:         new Date().toISOString(),
+    status:         'sending',
+  }
+}
+
+export function buildAssistantPlaceholder(
+  conversationId: string,
+  tempId:         string,
+): Message {
+  return {
+    id:             tempId,
+    conversationId,
+    sender:         ASSISTANT_SENDER,
+    content:        '',
     sentAt:         new Date().toISOString(),
     status:         'sending',
   }

@@ -4,6 +4,7 @@ import { ClientSession, Model } from 'mongoose';
 import type { UserProfile } from '../users/users.types';
 import { buildPageFilter } from './messages.helpers';
 import { MESSAGE_STATUS_SENT, MessageDocument } from './messages.schema';
+import { ASSISTANT_PROFILE, ASSISTANT_SENDER_ID } from './messages.constants';
 import type {
   CursorPoint,
   Message,
@@ -55,6 +56,19 @@ export class MessagesRepository {
     return { messages: page.map(mapDocToStoredMessage), hasMore };
   }
 
+  async findRecentBySender(
+    senderId: string,
+    limit: number,
+  ): Promise<StoredMessage[]> {
+    const rows = await this.messageModel
+      .find({ senderId })
+      .sort({ sentAt: -1, _id: -1 })
+      .limit(limit)
+      .lean<MessageLean[]>()
+      .exec();
+    return rows.map(mapDocToStoredMessage);
+  }
+
   async insert(
     id: string,
     conversationId: string,
@@ -71,6 +85,27 @@ export class MessagesRepository {
       id,
       conversationId,
       sender,
+      content,
+      sentAt: created.sentAt.toISOString(),
+      status: MESSAGE_STATUS_SENT,
+    };
+  }
+
+  async insertAssistant(
+    id: string,
+    conversationId: string,
+    content: string,
+    session?: ClientSession,
+  ): Promise<Message> {
+    const [created] = await this.messageModel.create(
+      [{ _id: id, conversationId, senderId: ASSISTANT_SENDER_ID, content }],
+      { session },
+    );
+
+    return {
+      id,
+      conversationId,
+      sender: ASSISTANT_PROFILE,
       content,
       sentAt: created.sentAt.toISOString(),
       status: MESSAGE_STATUS_SENT,

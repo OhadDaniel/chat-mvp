@@ -1,5 +1,6 @@
 import { ConversationSearchContainer } from '../SearchBar/ConversationSearchContainer'
 import { ConversationListContainer }   from '../ConversationList/ConversationListContainer'
+import { StartAssistantContainer }     from '../StartAssistant/StartAssistantContainer'
 import { NewDirectMessageProvider }    from '../NewDirectMessage/NewDirectMessage.context'
 import { NewDirectMessage }            from '../NewDirectMessage/NewDirectMessage'
 import { NewGroupProvider }            from '../NewGroup/NewGroup.context'
@@ -21,6 +22,7 @@ export function ConversationSidebar() {
           </div>
         </div>
         <div className="flex items-center gap-1.5">
+          <StartAssistantContainer />
           <NewDirectMessageProvider>
             <NewDirectMessage />
           </NewDirectMessageProvider>
