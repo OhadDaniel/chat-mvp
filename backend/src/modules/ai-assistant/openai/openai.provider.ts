@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { buildOpenAiClient } from '../../../common/openai/build-openai-client';
 import { DEFAULT_OPENAI_MODEL } from '../ai-assistant.constants';
 import { AssistantUnavailableError } from '../errors/assistant-unavailable.error';
 import { LlmProvider } from '../llm-abstraction/llm-provider';
@@ -38,11 +39,10 @@ export class OpenAIProvider extends LlmProvider {
   }
 
   private getClient(): OpenAI {
-    if (!this.apiKey) {
-      throw new AssistantUnavailableError();
-    }
     if (!this.client) {
-      this.client = new OpenAI({ apiKey: this.apiKey });
+      this.client = buildOpenAiClient(this.apiKey, () => {
+        throw new AssistantUnavailableError();
+      });
     }
     return this.client;
   }
