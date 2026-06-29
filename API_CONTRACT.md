@@ -11,9 +11,10 @@
 1. [Auth](#1-auth)
 2. [Conversations](#2-conversations)
 3. [Messages](#3-messages)
-4. [Shared Types](#4-shared-types)
-5. [Error Format](#5-error-format)
-6. [Change Log](#6-change-log)
+4. [Knowledge Base](#4-knowledge-base)
+5. [Shared Types](#5-shared-types)
+6. [Error Format](#6-error-format)
+7. [Change Log](#7-change-log)
 
 ---
 
@@ -201,7 +202,83 @@ Send a new message. The frontend applies an optimistic update before this resolv
 ---
 
 
-## 4. Shared Types
+## 4. Knowledge Base
+
+Per-user, per-tutor knowledge base used by the `tutor` conversation type. All requests require `Authorization: Bearer <token>`.
+
+### `POST /knowledge/documents`
+
+Upload a document and run ingestion synchronously (chunk → embed → store in Atlas Vector Search). Supported formats: `.txt`, `.md` (max 1 MB). Re-uploading the same file name replaces that document's chunks; identical content is skipped (no duplicate chunks).
+
+**Request:** `multipart/form-data`
+
+```ts
+{
+  file: File        // the .txt or .md document
+  tutorId: string   // the tutor whose knowledge base this belongs to
+}
+```
+
+**Response `201`**
+```ts
+{
+  document: {
+    id: string
+    source: string                              // file name
+    status: 'pending' | 'ready' | 'failed'
+    chunkCount: number
+    createdAt: string
+  }
+}
+```
+
+**Response `400`**
+```ts
+{ error: { code: 'INVALID_DOCUMENT', message: string } }
+```
+
+---
+
+### `GET /knowledge/documents`
+
+List the authenticated user's documents for a given tutor.
+
+**Query params**
+```ts
+{
+  tutorId: string   // required
+}
+```
+
+**Response `200`**
+```ts
+{
+  documents: Array<{
+    id: string
+    source: string
+    status: 'pending' | 'ready' | 'failed'
+    chunkCount: number
+    createdAt: string
+  }>
+}
+```
+
+---
+
+### `DELETE /knowledge/documents/:id`
+
+Remove a document and all of its chunks. Scoped to the authenticated user.
+
+**Response `204`** — no content.
+
+**Response `404`**
+```ts
+{ error: { code: 'DOCUMENT_NOT_FOUND', message: string } }
+```
+
+---
+
+## 5. Shared Types
 
 ```ts
 type User = {
@@ -240,7 +317,7 @@ type Message = {
 
 ---
 
-## 5. Error Format
+## 6. Error Format
 
 All error responses follow this shape:
 
@@ -269,7 +346,7 @@ HTTP status codes used:
 
 ---
 
-## 6. Change Log
+## 7. Change Log
 
 | Date | Change |
 |------|--------|
@@ -281,3 +358,8 @@ HTTP status codes used:
 | 2026-06-10 | Week 4 auth: `POST /auth/signup`, `GET /me`; login uses `email` + `password`; `User` includes `email` |
 | 2026-06-29 | Conversation creation unified: `POST /conversations` takes a discriminated `type` (`direct` \| `group` \| `assistant`); removed `POST /conversations/groups` and `POST /conversations/assistant` |
 | 2026-06-29 | Assistant reply stream moved to `GET /conversations/:id/assistant` (SSE via Nest `@Sse`); send the user message via `POST /conversations/:id/messages` first |
+| 2026-06-29 | Week 7: `POST /knowledge/documents` added (multipart upload → synchronous ingestion; returns a document summary) |
+| 2026-06-29 | Week 7: `GET /knowledge/documents` (list by tutor) and `DELETE /knowledge/documents/:id` (remove document + chunks) added |
+| 2026-06-29 | Week 7: `POST /conversations` accepts `type: 'tutor'` (+ `name`); adds the `tutor` conversation type (many per user, with name + avatar) |
+| 2026-06-29 | Week 7: tutor name + avatar — `PATCH /conversations/tutors/:id` (rename), `POST /conversations/tutors/:id/avatar/upload-url`, `PUT /conversations/tutors/:id/avatar`, `DELETE /conversations/tutors/:id/avatar` (mirror the group-avatar flow) |
+| 2026-06-29 | Week 7: `GET /conversations/:id/assistant` (SSE) now serves `tutor` conversations via a RAG reply; a tutor's `done` event carries `citations: { chunkId, documentName, text }[]`, and tutor `Message`s include an optional `citations` array. Upload guarded by a per-file 1 MB limit and a per-tutor document cap. |
