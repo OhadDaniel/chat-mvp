@@ -1,8 +1,3 @@
-/**
- * Shared transport-level types. Per-feature request/response shapes now
- * live beside their feature (features/<x>/api/); only the cross-cutting
- * error contract stays here.
- */
 export type ApiErrorCode =
   | 'UNAUTHORIZED'
   | 'INVALID_CREDENTIALS'
@@ -22,4 +17,22 @@ export type ApiError = {
     message:  string
     details?: unknown
   }
+}
+
+export type KnowledgeDocumentStatus = 'pending' | 'ready' | 'failed'
+
+export type KnowledgeDocument = {
+  id: string
+  source: string
+  status: KnowledgeDocumentStatus
+  chunkCount: number
+  createdAt: string
+}
+
+export type ListDocumentsResponse = {
+  documents: KnowledgeDocument[]
+}
+
+export type UploadDocumentResponse = {
+  document: KnowledgeDocument
 }
