@@ -19,18 +19,19 @@ export const conversationsApi = {
   createDirect: (body: CreateDirectRequest): Promise<ConversationResponse> =>
     request('/conversations', {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: JSON.stringify({ type: 'direct', ...body }),
     }),
 
   createGroup: (body: CreateGroupRequest): Promise<ConversationResponse> =>
-    request('/conversations/groups', {
+    request('/conversations', {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: JSON.stringify({ type: 'group', ...body }),
     }),
 
   createAssistant: (): Promise<ConversationResponse> =>
-    request('/conversations/assistant', {
+    request('/conversations', {
       method: 'POST',
+      body: JSON.stringify({ type: 'assistant' }),
     }),
 
   renameGroup: (
