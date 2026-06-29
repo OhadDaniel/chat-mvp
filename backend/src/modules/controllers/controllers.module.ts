@@ -14,16 +14,24 @@ import { RenameGroupModule } from '../rename-group-orchestrator/rename-group.mod
 import { RequestGroupAvatarUploadModule } from '../request-group-avatar-upload-orchestrator/request-group-avatar-upload.module';
 import { SetGroupAvatarModule } from '../set-group-avatar-orchestrator/set-group-avatar.module';
 import { RemoveGroupAvatarModule } from '../remove-group-avatar-orchestrator/remove-group-avatar.module';
+import { RenameTutorModule } from '../rename-tutor-orchestrator/rename-tutor.module';
+import { RequestTutorAvatarUploadModule } from '../request-tutor-avatar-upload-orchestrator/request-tutor-avatar-upload.module';
+import { SetTutorAvatarModule } from '../set-tutor-avatar-orchestrator/set-tutor-avatar.module';
+import { RemoveTutorAvatarModule } from '../remove-tutor-avatar-orchestrator/remove-tutor-avatar.module';
 import { SetPinnedModule } from '../set-pinned-orchestrator/set-pinned.module';
 import { GetMessagesModule } from '../get-messages-orchestrator/get-messages.module';
 import { CreateMessageModule } from '../create-message-orchestrator/create-message.module';
-import { StreamAssistantReplyModule } from '../stream-assistant-reply-orchestrator/stream-assistant-reply.module';
+import { StreamReplyRouterModule } from '../stream-reply-router-orchestrator/stream-reply-router.module';
+import { IngestDocumentModule } from '../ingest-document-orchestrator/ingest-document.module';
+import { ListDocumentsModule } from '../list-documents-orchestrator/list-documents.module';
+import { DeleteDocumentModule } from '../delete-document-orchestrator/delete-document.module';
 import { AuthController } from './auth.controller';
 import { ProfileController } from './profile.controller';
 import { UsersController } from './users.controller';
 import { ConversationsController } from './conversations.controller';
 import { MessagesController } from './messages.controller';
 import { AssistantController } from './assistant.controller';
+import { KnowledgeController } from './knowledge.controller';
 
 @Module({
   imports: [
@@ -42,10 +50,17 @@ import { AssistantController } from './assistant.controller';
     RequestGroupAvatarUploadModule,
     SetGroupAvatarModule,
     RemoveGroupAvatarModule,
+    RenameTutorModule,
+    RequestTutorAvatarUploadModule,
+    SetTutorAvatarModule,
+    RemoveTutorAvatarModule,
     SetPinnedModule,
     GetMessagesModule,
     CreateMessageModule,
-    StreamAssistantReplyModule,
+    StreamReplyRouterModule,
+    IngestDocumentModule,
+    ListDocumentsModule,
+    DeleteDocumentModule,
   ],
   controllers: [
     AuthController,
@@ -54,6 +69,7 @@ import { AssistantController } from './assistant.controller';
     ConversationsController,
     MessagesController,
     AssistantController,
+    KnowledgeController,
   ],
 })
 export class ControllersModule {}

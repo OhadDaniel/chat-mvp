@@ -2,6 +2,20 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 export const MESSAGE_STATUS_SENT = 'sent';
 
+@Schema({ _id: false, versionKey: false })
+export class CitationDocument {
+  @Prop({ type: String, required: true })
+  chunkId!: string;
+
+  @Prop({ type: String, required: true })
+  documentName!: string;
+
+  @Prop({ type: String, required: true })
+  text!: string;
+}
+
+export const CitationSchema = SchemaFactory.createForClass(CitationDocument);
+
 @Schema({ collection: 'messages', versionKey: false })
 export class MessageDocument {
   @Prop({ type: String })
@@ -21,6 +35,9 @@ export class MessageDocument {
 
   @Prop({ type: String, default: MESSAGE_STATUS_SENT })
   status!: string;
+
+  @Prop({ type: [CitationSchema], default: [] })
+  citations!: CitationDocument[];
 }
 
 export const MessageSchema = SchemaFactory.createForClass(MessageDocument);

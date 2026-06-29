@@ -6,6 +6,7 @@ import { buildPageFilter } from './messages.helpers';
 import { MESSAGE_STATUS_SENT, MessageDocument } from './messages.schema';
 import { ASSISTANT_PROFILE, ASSISTANT_SENDER_ID } from './messages.constants';
 import type {
+  Citation,
   CursorPoint,
   Message,
   StoredMessage,
@@ -18,6 +19,7 @@ type MessageLean = {
   senderId: string;
   content: string;
   sentAt: Date;
+  citations?: Citation[];
 };
 
 @Injectable()
@@ -96,9 +98,18 @@ export class MessagesRepository {
     conversationId: string,
     content: string,
     session?: ClientSession,
+    citations?: Citation[],
   ): Promise<Message> {
     const [created] = await this.messageModel.create(
-      [{ _id: id, conversationId, senderId: ASSISTANT_SENDER_ID, content }],
+      [
+        {
+          _id: id,
+          conversationId,
+          senderId: ASSISTANT_SENDER_ID,
+          content,
+          citations: citations ?? [],
+        },
+      ],
       { session },
     );
 
@@ -109,6 +120,7 @@ export class MessagesRepository {
       content,
       sentAt: created.sentAt.toISOString(),
       status: MESSAGE_STATUS_SENT,
+      ...(citations && citations.length > 0 ? { citations } : {}),
     };
   }
 
@@ -134,11 +146,13 @@ export class MessagesRepository {
 }
 
 function mapDocToStoredMessage(doc: MessageLean): StoredMessage {
+  const citations = doc.citations ?? [];
   return {
     id: doc._id,
     conversationId: doc.conversationId,
     senderId: doc.senderId,
     content: doc.content,
     sentAt: doc.sentAt.toISOString(),
+    ...(citations.length > 0 ? { citations } : {}),
   };
 }
