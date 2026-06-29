@@ -21,8 +21,6 @@ export class SetGroupAvatarOrchestrator {
     conversationId: string,
     userId: string,
   ): Promise<PatchConversationResponse> {
-    // The key is derived from the conversation, not sent by the client, and the
-    // upload overwrote it in place — so there's nothing to validate or delete.
     const key = buildGroupAvatarKey(conversationId);
     const avatar = { storageKey: key, srcUrl: this.storage.srcUrlFor(key) };
     const stored = await this.conversationsService.setGroupAvatar(

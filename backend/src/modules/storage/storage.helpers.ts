@@ -26,3 +26,12 @@ export function buildAvatarKey(userId: string): string {
 export function buildGroupAvatarKey(conversationId: string): string {
   return `groups/${conversationId}/avatar`;
 }
+
+/**
+ * One fixed object per tutor, derived server-side from the conversation id —
+ * same idempotent, overwrite-in-place scheme as the group avatar, just a
+ * different prefix. Never sent by the client, so there is nothing to validate.
+ */
+export function buildTutorAvatarKey(conversationId: string): string {
+  return `tutors/${conversationId}/avatar`;
+}

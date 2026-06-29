@@ -29,7 +29,15 @@ type GroupLean = LeanBase & {
 
 type AssistantLean = LeanBase & { type: 'assistant' };
 
-type ConversationLean = DirectLean | GroupLean | AssistantLean;
+type TutorLean = LeanBase & {
+  type: 'tutor';
+  tutor: {
+    name: string;
+    avatar: { storageKey: string; srcUrl: string } | null;
+  };
+};
+
+type ConversationLean = DirectLean | GroupLean | AssistantLean | TutorLean;
 
 @Injectable()
 export class ConversationsRepository {
@@ -122,6 +130,18 @@ export class ConversationsRepository {
     });
   }
 
+  async insertTutor(id: string, userId: string, name: string): Promise<void> {
+    await this.conversationModel.create({
+      _id: id,
+      type: 'tutor',
+      participantIds: [userId],
+      tutor: { name, avatar: null },
+      pinnedAt: null,
+      lastMessage: null,
+      lastMessageAt: null,
+    });
+  }
+
   async setPinned(id: string, pinned: boolean): Promise<void> {
     await this.conversationModel
       .updateOne(
@@ -140,6 +160,18 @@ export class ConversationsRepository {
   async setGroupAvatar(id: string, avatar: Avatar | null): Promise<void> {
     await this.conversationModel
       .updateOne({ _id: id }, { $set: { 'group.avatar': avatar } })
+      .exec();
+  }
+
+  async setTutorName(id: string, name: string): Promise<void> {
+    await this.conversationModel
+      .updateOne({ _id: id }, { $set: { 'tutor.name': name } })
+      .exec();
+  }
+
+  async setTutorAvatar(id: string, avatar: Avatar | null): Promise<void> {
+    await this.conversationModel
+      .updateOne({ _id: id }, { $set: { 'tutor.avatar': avatar } })
       .exec();
   }
 
@@ -189,6 +221,15 @@ function mapDocToStored(doc: ConversationLean): StoredConversation {
 
   if (doc.type === 'assistant') {
     return { ...base, type: 'assistant' };
+  }
+
+  if (doc.type === 'tutor') {
+    return {
+      ...base,
+      type: 'tutor',
+      name: doc.tutor.name,
+      avatar: doc.tutor.avatar ?? null,
+    };
   }
 
   return { ...base, type: 'direct' };

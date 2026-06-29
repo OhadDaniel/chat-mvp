@@ -5,6 +5,7 @@ import type { CreateConversationDto } from '../conversations/dto/create-conversa
 import { CreateConversationOrchestrator } from '../create-conversation-orchestrator/create-conversation.orchestrator';
 import { CreateGroupOrchestrator } from '../create-group-orchestrator/create-group.orchestrator';
 import { CreateAssistantConversationOrchestrator } from '../create-assistant-conversation-orchestrator/create-assistant-conversation.orchestrator';
+import { CreateTutorConversationOrchestrator } from '../create-tutor-conversation-orchestrator/create-tutor-conversation.orchestrator';
 
 @Injectable()
 export class CreateConversationRouterOrchestrator {
@@ -12,6 +13,7 @@ export class CreateConversationRouterOrchestrator {
     private readonly createDirectConversationOrchestrator: CreateConversationOrchestrator,
     private readonly createGroupOrchestrator: CreateGroupOrchestrator,
     private readonly createAssistantConversationOrchestrator: CreateAssistantConversationOrchestrator,
+    private readonly createTutorConversationOrchestrator: CreateTutorConversationOrchestrator,
   ) {}
 
   execute(
@@ -27,6 +29,9 @@ export class CreateConversationRouterOrchestrator {
     }
     if (dto.type === 'assistant') {
       return this.createAssistantConversationOrchestrator.execute(user);
+    }
+    if (dto.type === 'tutor') {
+      return this.createTutorConversationOrchestrator.execute(user, dto.name!);
     }
     return this.createDirectConversationOrchestrator.execute(
       user,
