@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseSseFrames } from './assistantStream.api'
+import { parseSseFrames } from './sse.helpers'
 
 describe('parseSseFrames', () => {
   it('parses complete frames and keeps the incomplete remainder in rest', () => {
