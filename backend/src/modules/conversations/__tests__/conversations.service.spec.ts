@@ -284,25 +284,10 @@ describe('ConversationsService.setPinned', () => {
 });
 
 describe('ConversationsService.createAssistant (get-or-create, one per user)', () => {
-  it('returns the existing thread without inserting when one already exists', async () => {
-    const insertAssistant = jest.fn(() => Promise.resolve());
-    const existing = storedAssistant('user-1');
-    const service = new ConversationsService(
-      fakeRepository({
-        findAssistantByUserId: () => Promise.resolve(existing),
-        insertAssistant,
-      }),
-    );
-
-    await expect(service.createAssistant('user-1')).resolves.toEqual(existing);
-    expect(insertAssistant).not.toHaveBeenCalled();
-  });
-
   it('creates the thread for the caller when none exists yet', async () => {
     const insertAssistant = jest.fn(() => Promise.resolve());
     const service = new ConversationsService(
       fakeRepository({
-        findAssistantByUserId: () => Promise.resolve(undefined),
         insertAssistant,
         findById: () => Promise.resolve(storedAssistant('user-1')),
       }),
@@ -317,22 +302,31 @@ describe('ConversationsService.createAssistant (get-or-create, one per user)', (
     });
   });
 
-  it('recovers from a concurrent duplicate (11000) by returning the winning thread', async () => {
+  it('returns the existing thread when the unique index rejects a duplicate insert', async () => {
     const existing = storedAssistant('user-1');
-    const findAssistantByUserId = jest
-      .fn()
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(existing);
     const service = new ConversationsService(
       fakeRepository({
-        findAssistantByUserId,
         insertAssistant: () =>
           Promise.reject(
             Object.assign(new Error('duplicate key'), { code: 11000 }),
           ),
+        findAssistantByUserId: () => Promise.resolve(existing),
       }),
     );
 
     await expect(service.createAssistant('user-1')).resolves.toEqual(existing);
+  });
+
+  it('rethrows when the insert fails for a non-duplicate reason', async () => {
+    const findAssistantByUserId = jest.fn(() => Promise.resolve(undefined));
+    const service = new ConversationsService(
+      fakeRepository({
+        findAssistantByUserId,
+        insertAssistant: () => Promise.reject(new Error('db down')),
+      }),
+    );
+
+    await expect(service.createAssistant('user-1')).rejects.toThrow('db down');
+    expect(findAssistantByUserId).not.toHaveBeenCalled();
   });
 });

@@ -80,26 +80,20 @@ export class ConversationsService implements OnModuleInit {
   }
 
   async createAssistant(userId: string): Promise<StoredConversation> {
-    const existing =
-      await this.conversationsRepository.findAssistantByUserId(userId);
-    if (existing) {
-      return existing;
-    }
-
     const id = randomUUID();
     try {
       await this.conversationsRepository.insertAssistant(id, userId);
+      return this.getByIdOrThrow(id);
     } catch (error) {
       if (isDuplicateKeyError(error)) {
-        const winner =
+        const existing =
           await this.conversationsRepository.findAssistantByUserId(userId);
-        if (winner) {
-          return winner;
+        if (existing) {
+          return existing;
         }
       }
       throw error;
     }
-    return this.getByIdOrThrow(id);
   }
 
   async setPinned(
