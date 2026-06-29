@@ -17,6 +17,10 @@ export type CreateGroupRequest = {
   participantIds: string[]
 }
 
+export type CreateTutorRequest = {
+  name: string
+}
+
 export type RenameGroupRequest = {
   name: string
 }
@@ -30,6 +34,19 @@ export type RequestGroupAvatarUploadRequest = {
 }
 
 export type RequestGroupAvatarUploadResponse = {
+  url:    string
+  fields: Record<string, string>
+}
+
+export type RenameTutorRequest = {
+  name: string
+}
+
+export type RequestTutorAvatarUploadRequest = {
+  contentType: string
+}
+
+export type RequestTutorAvatarUploadResponse = {
   url:    string
   fields: Record<string, string>
 }

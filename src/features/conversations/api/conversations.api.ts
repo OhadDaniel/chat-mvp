@@ -4,10 +4,14 @@ import type {
   ConversationResponse,
   CreateDirectRequest,
   CreateGroupRequest,
+  CreateTutorRequest,
   RenameGroupRequest,
   PatchConversationRequest,
   RequestGroupAvatarUploadRequest,
   RequestGroupAvatarUploadResponse,
+  RenameTutorRequest,
+  RequestTutorAvatarUploadRequest,
+  RequestTutorAvatarUploadResponse,
 } from './conversations.types'
 
 export const conversationsApi = {
@@ -32,6 +36,12 @@ export const conversationsApi = {
     request('/conversations', {
       method: 'POST',
       body: JSON.stringify({ type: 'assistant' }),
+    }),
+
+  createTutor: (body: CreateTutorRequest): Promise<ConversationResponse> =>
+    request('/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ type: 'tutor', ...body }),
     }),
 
   renameGroup: (
@@ -68,6 +78,34 @@ export const conversationsApi = {
 
   removeGroupAvatar: (id: string): Promise<ConversationResponse> =>
     request(`/conversations/groups/${id}/avatar`, {
+      method: 'DELETE',
+    }),
+
+  renameTutor: (
+    id: string,
+    body: RenameTutorRequest,
+  ): Promise<ConversationResponse> =>
+    request(`/conversations/tutors/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  requestTutorAvatarUpload: (
+    id: string,
+    body: RequestTutorAvatarUploadRequest,
+  ): Promise<RequestTutorAvatarUploadResponse> =>
+    request(`/conversations/tutors/${id}/avatar/upload-url`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  setTutorAvatar: (id: string): Promise<ConversationResponse> =>
+    request(`/conversations/tutors/${id}/avatar`, {
+      method: 'PUT',
+    }),
+
+  removeTutorAvatar: (id: string): Promise<ConversationResponse> =>
+    request(`/conversations/tutors/${id}/avatar`, {
       method: 'DELETE',
     }),
 }
