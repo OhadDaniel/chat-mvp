@@ -1,0 +1,17 @@
+[
+  { "id": "rag-001", "question": "How fast is binary search?", "expectedSource": "algorithms.md", "mustInclude": ["log n"] },
+  { "id": "rag-002", "question": "How does binary search work?", "expectedSource": "algorithms.md", "mustInclude": ["half"] },
+  { "id": "rag-003", "question": "Is bubble sort fast or slow?", "expectedSource": "algorithms.md", "mustInclude": ["slow"] },
+  { "id": "rag-004", "question": "What is the average lookup time of a hash table?", "expectedSource": "algorithms.md", "mustInclude": ["o(1)"] },
+  { "id": "rag-005", "question": "What does a 404 status code mean?", "expectedSource": "http.md", "mustInclude": ["not found"] },
+  { "id": "rag-006", "question": "What does a 200 status code mean?", "expectedSource": "http.md", "mustInclude": ["succeed"] },
+  { "id": "rag-007", "question": "Which HTTP method creates a new resource?", "expectedSource": "http.md", "mustInclude": ["post"] },
+  { "id": "rag-008", "question": "What does the DELETE method do?", "expectedSource": "http.md", "mustInclude": ["remove"] },
+  { "id": "rag-009", "question": "What is the powerhouse of the cell?", "expectedSource": "cells.md", "mustInclude": ["mitochondria"] },
+  { "id": "rag-010", "question": "What does the nucleus hold?", "expectedSource": "cells.md", "mustInclude": ["dna"] },
+  { "id": "rag-011", "question": "What do plant cells have that animal cells lack?", "expectedSource": "cells.md", "mustInclude": ["cell wall"] },
+  { "id": "rag-012", "question": "What are the inputs to photosynthesis?", "expectedSource": "photosynthesis.md", "mustInclude": ["carbon dioxide"] },
+  { "id": "rag-013", "question": "What gas does photosynthesis release?", "expectedSource": "photosynthesis.md", "mustInclude": ["oxygen"] },
+  { "id": "rag-014", "question": "Where does photosynthesis take place?", "expectedSource": "photosynthesis.md", "mustInclude": ["chloroplast"] },
+  { "id": "rag-015", "question": "What are the two stages of photosynthesis?", "expectedSource": "photosynthesis.md", "mustInclude": ["calvin"] }
+]
