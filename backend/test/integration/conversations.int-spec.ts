@@ -22,7 +22,7 @@ describe('Conversations (integration)', () => {
     await http(app).get('/conversations').expect(401);
     await http(app)
       .post('/conversations')
-      .send({ participantId: 'x' })
+      .send({ type: 'direct', participantId: 'x' })
       .expect(401);
     await http(app)
       .patch('/conversations/conv-1')
@@ -115,6 +115,7 @@ describe('Conversations (integration)', () => {
         .post('/conversations')
         .set('Authorization', `Bearer ${ohad}`)
         .send({
+          type: 'direct',
           participantId: (
             (await http(app).get('/me').set('Authorization', `Bearer ${eve}`))
               .body as { user: { id: string } }
@@ -131,7 +132,7 @@ describe('Conversations (integration)', () => {
       await http(app)
         .post('/conversations')
         .set('Authorization', `Bearer ${eve}`)
-        .send({ participantId: 'user-1' })
+        .send({ type: 'direct', participantId: 'user-1' })
         .expect(409);
     });
 
@@ -139,13 +140,13 @@ describe('Conversations (integration)', () => {
       await http(app)
         .post('/conversations')
         .set('Authorization', `Bearer ${ohad}`)
-        .send({ participantId: 'user-1' })
+        .send({ type: 'direct', participantId: 'user-1' })
         .expect(400);
 
       await http(app)
         .post('/conversations')
         .set('Authorization', `Bearer ${ohad}`)
-        .send({ participantId: 'ghost-99' })
+        .send({ type: 'direct', participantId: 'ghost-99' })
         .expect(404);
     });
   });
@@ -200,19 +201,19 @@ describe('Conversations (integration)', () => {
     });
   });
 
-  describe('POST /conversations/groups', () => {
+  describe('POST /conversations — group creation', () => {
     it('is behind the guard: 401 without a token', async () => {
       await http(app)
-        .post('/conversations/groups')
-        .send({ name: 'x', participantIds: [] })
+        .post('/conversations')
+        .send({ type: 'group', name: 'x', participantIds: [] })
         .expect(401);
     });
 
     it('201 creates a group with title, creator, and all members joined', async () => {
       const created = await http(app)
-        .post('/conversations/groups')
+        .post('/conversations')
         .set('Authorization', `Bearer ${ohad}`)
-        .send({ name: 'Planning', participantIds: ['user-2', 'user-3'] })
+        .send({ type: 'group', name: 'Planning', participantIds: ['user-2', 'user-3'] })
         .expect(201);
 
       const { conversation } = created.body as { conversation: Conversation };
@@ -242,15 +243,16 @@ describe('Conversations (integration)', () => {
 
     it('400 for an empty title, and 400 for more than 30 members', async () => {
       await http(app)
-        .post('/conversations/groups')
+        .post('/conversations')
         .set('Authorization', `Bearer ${ohad}`)
-        .send({ name: '', participantIds: [] })
+        .send({ type: 'group', name: '', participantIds: [] })
         .expect(400);
 
       await http(app)
-        .post('/conversations/groups')
+        .post('/conversations')
         .set('Authorization', `Bearer ${ohad}`)
         .send({
+          type: 'group',
           name: 'Too big',
           participantIds: Array.from({ length: 31 }, (_, i) => `u${i}`),
         })
@@ -259,9 +261,9 @@ describe('Conversations (integration)', () => {
 
     it('404 when a picked participant does not exist', async () => {
       await http(app)
-        .post('/conversations/groups')
+        .post('/conversations')
         .set('Authorization', `Bearer ${ohad}`)
-        .send({ name: 'Ghosts', participantIds: ['ghost-99'] })
+        .send({ type: 'group', name: 'Ghosts', participantIds: ['ghost-99'] })
         .expect(404);
     });
   });

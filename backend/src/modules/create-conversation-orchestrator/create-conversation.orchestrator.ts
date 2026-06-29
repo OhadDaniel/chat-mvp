@@ -8,7 +8,6 @@ import {
   toConversation,
 } from '../conversations/conversations.helpers';
 import type { CreateConversationResponse } from '../conversations/conversations.types';
-import type { CreateConversationDto } from '../conversations/dto/create-conversation.request.dto';
 
 @Injectable()
 export class CreateConversationOrchestrator {
@@ -19,9 +18,9 @@ export class CreateConversationOrchestrator {
 
   async execute(
     currentUser: User,
-    dto: CreateConversationDto,
+    participantId: string,
   ): Promise<CreateConversationResponse> {
-    const participant = await this.usersService.findById(dto.participantId);
+    const participant = await this.usersService.findById(participantId);
     if (!participant) {
       throw new UserNotFoundError('Participant not found');
     }

@@ -19,16 +19,13 @@ import type {
   PatchConversationResponse,
 } from '../conversations/conversations.types';
 import { CreateConversationDto } from '../conversations/dto/create-conversation.request.dto';
-import { CreateGroupDto } from '../conversations/dto/create-group.request.dto';
 import { GetConversationsQueryDto } from '../conversations/dto/get-conversations.query.dto';
 import { PatchConversationDto } from '../conversations/dto/patch-conversation.request.dto';
 import { RenameGroupDto } from '../conversations/dto/rename-group.request.dto';
 import { RequestGroupAvatarUploadDto } from '../conversations/dto/request-group-avatar-upload.request.dto';
 import type { RequestGroupAvatarUploadResponse } from '../conversations/dto/request-group-avatar-upload.response.dto';
 import { ListConversationsOrchestrator } from '../list-conversations-orchestrator/list-conversations.orchestrator';
-import { CreateConversationOrchestrator } from '../create-conversation-orchestrator/create-conversation.orchestrator';
-import { CreateAssistantConversationOrchestrator } from '../create-assistant-conversation-orchestrator/create-assistant-conversation.orchestrator';
-import { CreateGroupOrchestrator } from '../create-group-orchestrator/create-group.orchestrator';
+import { CreateConversationRouterOrchestrator } from '../create-conversation-router-orchestrator/create-conversation-router.orchestrator';
 import { RenameGroupOrchestrator } from '../rename-group-orchestrator/rename-group.orchestrator';
 import { RequestGroupAvatarUploadOrchestrator } from '../request-group-avatar-upload-orchestrator/request-group-avatar-upload.orchestrator';
 import { SetGroupAvatarOrchestrator } from '../set-group-avatar-orchestrator/set-group-avatar.orchestrator';
@@ -41,9 +38,7 @@ import { SetPinnedOrchestrator } from '../set-pinned-orchestrator/set-pinned.orc
 export class ConversationsController {
   constructor(
     private readonly listConversationsOrchestrator: ListConversationsOrchestrator,
-    private readonly createConversationOrchestrator: CreateConversationOrchestrator,
-    private readonly createAssistantConversationOrchestrator: CreateAssistantConversationOrchestrator,
-    private readonly createGroupOrchestrator: CreateGroupOrchestrator,
+    private readonly createConversationRouterOrchestrator: CreateConversationRouterOrchestrator,
     private readonly renameGroupOrchestrator: RenameGroupOrchestrator,
     private readonly requestGroupAvatarUploadOrchestrator: RequestGroupAvatarUploadOrchestrator,
     private readonly setGroupAvatarOrchestrator: SetGroupAvatarOrchestrator,
@@ -64,22 +59,7 @@ export class ConversationsController {
     @CurrentUser() user: User,
     @Body() dto: CreateConversationDto,
   ): Promise<CreateConversationResponse> {
-    return this.createConversationOrchestrator.execute(user, dto);
-  }
-
-  @Post('assistant')
-  createAssistant(
-    @CurrentUser() user: User,
-  ): Promise<CreateConversationResponse> {
-    return this.createAssistantConversationOrchestrator.execute(user);
-  }
-
-  @Post('groups')
-  createGroup(
-    @CurrentUser() user: User,
-    @Body() dto: CreateGroupDto,
-  ): Promise<CreateConversationResponse> {
-    return this.createGroupOrchestrator.execute(user, dto);
+    return this.createConversationRouterOrchestrator.execute(user, dto);
   }
 
   @Patch('groups/:id')

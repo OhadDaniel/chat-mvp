@@ -27,7 +27,7 @@ describe('CreateConversationOrchestrator', () => {
     );
 
     await expect(
-      orchestrator.execute(ohad, { participantId: 'ghost-99' }),
+      orchestrator.execute(ohad, 'ghost-99'),
     ).rejects.toMatchObject({ code: 'USER_NOT_FOUND' });
 
     expect(create).not.toHaveBeenCalled();
@@ -49,7 +49,7 @@ describe('CreateConversationOrchestrator', () => {
       { create } as unknown as ConversationsService,
     );
 
-    const result = await orchestrator.execute(ohad, { participantId: 'user-2' });
+    const result = await orchestrator.execute(ohad, 'user-2');
 
     expect(create).toHaveBeenCalledWith('user-1', 'user-2');
     expect(result.conversation.participants.map((p) => p.id)).toEqual([

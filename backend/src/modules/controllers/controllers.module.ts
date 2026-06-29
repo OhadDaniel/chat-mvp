@@ -9,9 +9,7 @@ import { RequestAvatarUploadModule } from '../request-avatar-upload-orchestrator
 import { SetAvatarModule } from '../set-avatar-orchestrator/set-avatar.module';
 import { RemoveAvatarModule } from '../remove-avatar-orchestrator/remove-avatar.module';
 import { ListConversationsModule } from '../list-conversations-orchestrator/list-conversations.module';
-import { CreateConversationModule } from '../create-conversation-orchestrator/create-conversation.module';
-import { CreateAssistantConversationModule } from '../create-assistant-conversation-orchestrator/create-assistant-conversation.module';
-import { CreateGroupModule } from '../create-group-orchestrator/create-group.module';
+import { CreateConversationRouterModule } from '../create-conversation-router-orchestrator/create-conversation-router.module';
 import { RenameGroupModule } from '../rename-group-orchestrator/rename-group.module';
 import { RequestGroupAvatarUploadModule } from '../request-group-avatar-upload-orchestrator/request-group-avatar-upload.module';
 import { SetGroupAvatarModule } from '../set-group-avatar-orchestrator/set-group-avatar.module';
@@ -39,9 +37,7 @@ import { AssistantController } from './assistant.controller';
     SetAvatarModule,
     RemoveAvatarModule,
     ListConversationsModule,
-    CreateConversationModule,
-    CreateAssistantConversationModule,
-    CreateGroupModule,
+    CreateConversationRouterModule,
     RenameGroupModule,
     RequestGroupAvatarUploadModule,
     SetGroupAvatarModule,

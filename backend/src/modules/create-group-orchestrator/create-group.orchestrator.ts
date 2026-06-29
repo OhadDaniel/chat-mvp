@@ -8,7 +8,6 @@ import {
   toConversation,
 } from '../conversations/conversations.helpers';
 import type { CreateConversationResponse } from '../conversations/conversations.types';
-import type { CreateGroupDto } from '../conversations/dto/create-group.request.dto';
 
 @Injectable()
 export class CreateGroupOrchestrator {
@@ -19,18 +18,18 @@ export class CreateGroupOrchestrator {
 
   async execute(
     currentUser: User,
-    dto: CreateGroupDto,
+    name: string,
+    participantIds: string[],
   ): Promise<CreateConversationResponse> {
-    const others = await this.usersService.findByIds(dto.participantIds);
-    // findByIds only returns the ids that exist; a short count means one was bogus.
-    if (others.length !== dto.participantIds.length) {
+    const others = await this.usersService.findByIds(participantIds);
+    if (others.length !== participantIds.length) {
       throw new UserNotFoundError('One or more participants not found');
     }
 
     const stored = await this.conversationsService.createGroup(
       currentUser.id,
-      dto.name,
-      dto.participantIds,
+      name,
+      participantIds,
     );
     const profiles = profilesById([currentUser, ...others]);
     return { conversation: toConversation(stored, profiles) };
