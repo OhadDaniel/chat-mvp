@@ -5,10 +5,11 @@ import {
   SSE_EVENT_DONE,
   SSE_EVENT_ERROR,
 } from './sse.constants'
+import type { Citation } from '@/features/messages/types'
 
 export type AssistantStreamHandlers = {
   onDelta: (text: string) => void
-  onDone:  (messageId: string) => void
+  onDone:  (messageId: string, citations: Citation[]) => void
   onError: () => void
 }
 
@@ -64,7 +65,11 @@ function dispatchFrame(
     handlers.onDelta((JSON.parse(frame.data) as { text: string }).text)
   } else if (frame.event === SSE_EVENT_DONE) {
     markSettled()
-    handlers.onDone((JSON.parse(frame.data) as { messageId: string }).messageId)
+    const done = JSON.parse(frame.data) as {
+      messageId: string
+      citations?: Citation[]
+    }
+    handlers.onDone(done.messageId, done.citations ?? [])
   } else if (frame.event === SSE_EVENT_ERROR) {
     markSettled()
     handlers.onError()

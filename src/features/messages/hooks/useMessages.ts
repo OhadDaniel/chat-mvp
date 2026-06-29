@@ -16,15 +16,17 @@ export function useMessages(conversationId: string | null) {
   const { sendMessage: sendAssistantMessage, isStreaming } =
     useSendAssistantMessage(conversationId, user, dispatch)
 
-  const isAssistant = conversations.some(
-    c => c.id === conversationId && c.type === 'assistant',
+  const isAiReply = conversations.some(
+    c =>
+      c.id === conversationId &&
+      (c.type === 'assistant' || c.type === 'tutor'),
   )
 
   return {
     messages:          state.messages,
     status:            state.status,
-    sendMessage:       isAssistant ? sendAssistantMessage : sendDirectMessage,
+    sendMessage:       isAiReply ? sendAssistantMessage : sendDirectMessage,
     retryLoadMessages: retryFetch,
-    isStreaming:       isAssistant && isStreaming,
+    isStreaming:       isAiReply && isStreaming,
   }
 }

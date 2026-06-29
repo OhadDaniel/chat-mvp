@@ -8,7 +8,7 @@ import {
 }                                    from './utils/bubble.utils'
 import { Bubble }                    from './Bubble'
 
-export function BubbleContainer({ content, sentAt, senderName, senderInitials, senderAvatarUrl, isFromCurrentUser }: BubbleContainerProps) {
+export function BubbleContainer({ content, sentAt, senderName, senderInitials, senderAvatarUrl, isFromCurrentUser, citations }: BubbleContainerProps) {
   const classes = {
     wrapper:        buildWrapperClass(isFromCurrentUser),
     bubble:         buildBubbleClass(isFromCurrentUser),
@@ -25,6 +25,7 @@ export function BubbleContainer({ content, sentAt, senderName, senderInitials, s
       senderInitials={senderInitials}
       senderAvatarUrl={senderAvatarUrl}
       showSenderName={!isFromCurrentUser}
+      citations={citations}
     />
   )
 }

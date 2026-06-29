@@ -7,7 +7,7 @@ import {
   buildAssistantPlaceholder,
   postMessage,
 } from '../utils/messages.utils'
-import type { Message, MessagesAction } from '../types'
+import type { Citation, Message, MessagesAction } from '../types'
 import type { User } from '@/features/user/types'
 
 const SEND_ERROR_MESSAGE = 'Maxwell could not reply — please try again'
@@ -57,12 +57,12 @@ export function useSendAssistantMessage(
             payload: { id: assistantTempId, text },
           })
         },
-        onDone: (messageId) => {
+        onDone: (messageId, citations) => {
           dispatch({
             type:    MESSAGES_ACTIONS.CONFIRM_MESSAGE,
             payload: {
               tempId:  assistantTempId,
-              message: buildFinalReply(conversationId, messageId, replyText),
+              message: buildFinalReply(conversationId, messageId, replyText, citations),
             },
           })
         },
@@ -82,6 +82,7 @@ function buildFinalReply(
   conversationId: string,
   id:             string,
   content:        string,
+  citations:      Citation[],
 ): Message {
   return {
     id,
@@ -90,5 +91,6 @@ function buildFinalReply(
     content,
     sentAt:  new Date().toISOString(),
     status:  'sent',
+    citations,
   }
 }

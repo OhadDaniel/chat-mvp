@@ -3,6 +3,18 @@ import { MESSAGES_ACTIONS, MESSAGES_STATUS }  from '../constants'
 
 export type MessageStatus = 'sent' | 'sending' | 'failed'
 
+export type Citation = {
+  chunkId:      string
+  documentName: string
+  text:         string
+}
+
+export type AiSender = {
+  name:      string
+  initials:  string
+  avatarUrl: string | null
+}
+
 export type Message = {
   id:             string
   conversationId: string
@@ -10,6 +22,7 @@ export type Message = {
   content:        string
   sentAt:         string
   status:         MessageStatus
+  citations?:     Citation[]
 }
 
 export type MessagesStatus = typeof MESSAGES_STATUS[keyof typeof MESSAGES_STATUS]
