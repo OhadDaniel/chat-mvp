@@ -279,3 +279,5 @@ HTTP status codes used:
 | 2026-06-03 | `DELETE /conversations/:id/messages/:messageId` removed |
 | 2026-06-03 | `POST /conversations` added |
 | 2026-06-10 | Week 4 auth: `POST /auth/signup`, `GET /me`; login uses `email` + `password`; `User` includes `email` |
+| 2026-06-29 | Conversation creation unified: `POST /conversations` takes a discriminated `type` (`direct` \| `group` \| `assistant`); removed `POST /conversations/groups` and `POST /conversations/assistant` |
+| 2026-06-29 | Assistant reply stream moved to `GET /conversations/:id/assistant` (SSE via Nest `@Sse`); send the user message via `POST /conversations/:id/messages` first |
