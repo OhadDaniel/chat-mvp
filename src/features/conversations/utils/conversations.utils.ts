@@ -1,4 +1,40 @@
-import type { Conversation } from '../types'
+import { ASSISTANT_AVATAR_URL } from '@/shared/constants'
+import type { Conversation, ConversationDisplay } from '../types'
+import { ASSISTANT_DISPLAY_TITLE, ASSISTANT_DISPLAY_INITIALS } from '../constants'
+
+export function getConversationDisplay(
+  conversation: Conversation,
+  currentUserId: string,
+): ConversationDisplay {
+  if (conversation.type === 'group') {
+    return {
+      title:     conversation.name,
+      avatarUrl: conversation.avatarUrl,
+      initials:  '',
+      isGroup:   true,
+    }
+  }
+
+  if (conversation.type === 'assistant') {
+    return {
+      title:     ASSISTANT_DISPLAY_TITLE,
+      avatarUrl: ASSISTANT_AVATAR_URL,
+      initials:  ASSISTANT_DISPLAY_INITIALS,
+      isGroup:   false,
+    }
+  }
+
+  const other =
+    conversation.participants.find(p => p.id !== currentUserId) ??
+    conversation.participants[0]
+
+  return {
+    title:     other.name,
+    avatarUrl: other.avatarUrl,
+    initials:  other.avatarInitials,
+    isGroup:   false,
+  }
+}
 
 export function applyTogglePin(
   conversations: Conversation[],
@@ -8,6 +44,13 @@ export function applyTogglePin(
   return conversations.map(c =>
     c.id === id ? { ...c, pinnedAt } : c
   )
+}
+
+export function applyConversationUpdate(
+  conversations: Conversation[],
+  updated:       Conversation,
+): Conversation[] {
+  return conversations.map(c => (c.id === updated.id ? updated : c))
 }
 
 export function sortConversations(conversations: Conversation[]): Conversation[] {

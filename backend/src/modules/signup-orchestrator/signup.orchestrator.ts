@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { mapToPublicUser } from '../users/users.types';
+import { mapToPublicUser } from '../users/users.mappers';
 import { UsersService } from '../users/users.service';
 import { AuthService } from '../auth/auth.service';
 import type { AuthResponse } from '../auth/auth.types';

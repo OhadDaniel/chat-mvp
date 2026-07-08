@@ -1,8 +1,6 @@
-import type { UserProfile } from '../users/users.types';
+import type { Avatar, UserProfile } from '../users/users.types';
 
-/** All types for the conversations module, in one place. */
 
-/* ── Domain (API shape — frozen since week 3) ───────────── */
 
 export type LastMessage = {
   content: string;
@@ -10,7 +8,9 @@ export type LastMessage = {
   senderId: string;
 };
 
-export type Conversation = {
+
+
+type ConversationBase = {
   id: string;
   participants: UserProfile[];
   lastMessage: LastMessage | null;
@@ -18,7 +18,23 @@ export type Conversation = {
   pinnedAt: string | null;
 };
 
-/* ── API response envelopes ─────────────────────────────── */
+export type DirectConversation = ConversationBase & { type: 'direct' };
+
+export type GroupConversation = ConversationBase & {
+  type: 'group';
+  name: string;
+  createdBy: string;
+  avatarUrl: string | null;
+};
+
+export type AssistantConversation = ConversationBase & { type: 'assistant' };
+
+export type Conversation =
+  | DirectConversation
+  | GroupConversation
+  | AssistantConversation;
+
+
 
 export type GetConversationsResponse = {
   conversations: Conversation[];
@@ -32,9 +48,9 @@ export type PatchConversationResponse = {
   conversation: Conversation;
 };
 
-/* ── Stored shape (participants by reference — joined on read) ── */
 
-export type StoredConversation = {
+
+type StoredConversationBase = {
   id: string;
   participantIds: string[];
   lastMessage: LastMessage | null;
@@ -42,7 +58,27 @@ export type StoredConversation = {
   pinnedAt: string | null;
 };
 
-/** Written onto a conversation when a message is sent. */
+export type StoredDirectConversation = StoredConversationBase & {
+  type: 'direct';
+};
+
+export type StoredGroupConversation = StoredConversationBase & {
+  type: 'group';
+  name: string;
+  createdBy: string;
+  avatar: Avatar | null;
+};
+
+export type StoredAssistantConversation = StoredConversationBase & {
+  type: 'assistant';
+};
+
+export type StoredConversation =
+  | StoredDirectConversation
+  | StoredGroupConversation
+  | StoredAssistantConversation;
+
+
 export type LastMessageSnapshot = {
   content: string;
   sentAt: Date;

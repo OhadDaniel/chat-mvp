@@ -44,15 +44,22 @@ type RemoveMessageAction = {
   payload: string
 }
 
+type AppendDeltaAction = {
+  type:    typeof MESSAGES_ACTIONS.APPEND_DELTA
+  payload: { id: string; text: string }
+}
+
 export type MessagesAction =
   | SetMessagesAction
   | SetStatusAction
   | AddMessageAction
   | ConfirmMessageAction
   | RemoveMessageAction
+  | AppendDeltaAction
 
 export type UseMessagesReturn = {
   messages:    Message[]
   status:      MessagesStatus
   sendMessage: (content: string) => Promise<void>
+  isStreaming: boolean
 }

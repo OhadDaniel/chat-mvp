@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import type { ClientSession } from 'mongoose';
+import type { Avatar } from '../users/users.types';
 import { isDuplicateKeyError } from '../mongo/mongo-errors';
 import { daysAgo, SEED_CONVERSATIONS } from '../mongo/seed-data';
 import {
@@ -13,18 +14,14 @@ import { ConversationAlreadyExistsError } from './errors/conversation-already-ex
 import { ConversationNotFoundError } from './errors/conversation-not-found.error';
 import { InvalidParticipantError } from './errors/invalid-participant.error';
 import { NotAParticipantError } from './errors/not-a-participant.error';
+import { NotGroupOwnerError } from './errors/not-group-owner.error';
 import type {
   LastMessageSnapshot,
   StoredConversation,
 } from './conversations.types';
 import type { PatchConversationDto } from './dto/patch-conversation.request.dto';
 
-/**
- * Owns the conversations domain: the pair rules (distinct users, one
- * conversation per pair), pinning, and the participant authorization rule.
- * It deals in participant *ids only* — joining in the current user profiles
- * is the orchestrators' job.
- */
+
 @Injectable()
 export class ConversationsService implements OnModuleInit {
   constructor(
@@ -50,15 +47,12 @@ export class ConversationsService implements OnModuleInit {
     const pairKey = buildPairKey(currentUserId, participantId);
     const id = randomUUID();
     try {
-      await this.conversationsRepository.insert(
+      await this.conversationsRepository.insertDirect(
         id,
         canonicalPair(currentUserId, participantId),
         pairKey,
       );
     } catch (error) {
-      // The unique pairKey index is the only real guard against duplicates:
-      // a collision — including from a concurrent create — is rejected here
-      // and mapped to 409. (A read-then-write pre-check can't be race-safe.)
       if (isDuplicateKeyError(error)) {
         throw new ConversationAlreadyExistsError();
       }
@@ -66,6 +60,40 @@ export class ConversationsService implements OnModuleInit {
     }
 
     return this.getByIdOrThrow(id);
+  }
+
+
+  async createGroup(
+    currentUserId: string,
+    name: string,
+    participantIds: string[],
+  ): Promise<StoredConversation> {
+    const id = randomUUID();
+    const members = [...new Set([currentUserId, ...participantIds])];
+    await this.conversationsRepository.insertGroup(
+      id,
+      members,
+      name,
+      currentUserId,
+    );
+    return this.getByIdOrThrow(id);
+  }
+
+  async createAssistant(userId: string): Promise<StoredConversation> {
+    const id = randomUUID();
+    try {
+      await this.conversationsRepository.insertAssistant(id, userId);
+      return this.getByIdOrThrow(id);
+    } catch (error) {
+      if (isDuplicateKeyError(error)) {
+        const existing =
+          await this.conversationsRepository.findAssistantByUserId(userId);
+        if (existing) {
+          return existing;
+        }
+      }
+      throw error;
+    }
   }
 
   async setPinned(
@@ -78,11 +106,38 @@ export class ConversationsService implements OnModuleInit {
     return this.getByIdOrThrow(conversationId);
   }
 
-  /**
-   * Refresh the denormalized last-message snapshot. Called inside the
-   * send-message transaction (session) so the message write and this update
-   * commit together. lastMessage is immutable, so this is safe to denormalize.
-   */
+  async renameGroup(
+    conversationId: string,
+    userId: string,
+    name: string,
+  ): Promise<StoredConversation> {
+    await this.assertGroupOwner(conversationId, userId);
+    await this.conversationsRepository.setGroupName(conversationId, name);
+    return this.getByIdOrThrow(conversationId);
+  }
+
+ 
+  async setGroupAvatar(
+    conversationId: string,
+    userId: string,
+    avatar: Avatar,
+  ): Promise<StoredConversation> {
+    await this.assertGroupOwner(conversationId, userId);
+    await this.conversationsRepository.setGroupAvatar(conversationId, avatar);
+    return this.getByIdOrThrow(conversationId);
+  }
+
+  
+  async removeGroupAvatar(
+    conversationId: string,
+    userId: string,
+  ): Promise<StoredConversation> {
+    await this.assertGroupOwner(conversationId, userId);
+    await this.conversationsRepository.setGroupAvatar(conversationId, null);
+    return this.getByIdOrThrow(conversationId);
+  }
+
+
   updateLastMessage(
     conversationId: string,
     snapshot: LastMessageSnapshot,
@@ -95,10 +150,7 @@ export class ConversationsService implements OnModuleInit {
     );
   }
 
-  /**
-   * The authorization rule, in one place: 404 if the conversation doesn't
-   * exist, 403 if the caller isn't one of its two users.
-   */
+
   async getForParticipant(
     conversationId: string,
     userId: string,
@@ -110,11 +162,7 @@ export class ConversationsService implements OnModuleInit {
     return conversation;
   }
 
-  /**
-   * Lightweight authorization for writes that don't need the full read:
-   * reads only the participant id list (projection), 404 if missing, 403 if
-   * the caller isn't one of the two users. Used by pinning and send-message.
-   */
+
   async assertParticipant(
     conversationId: string,
     userId: string,
@@ -129,6 +177,20 @@ export class ConversationsService implements OnModuleInit {
     }
   }
 
+
+  async assertGroupOwner(
+    conversationId: string,
+    userId: string,
+  ): Promise<void> {
+    const conversation = await this.getByIdOrThrow(conversationId);
+    if (conversation.type !== 'group') {
+      throw new ConversationNotFoundError();
+    }
+    if (conversation.createdBy !== userId) {
+      throw new NotGroupOwnerError();
+    }
+  }
+
   private async getByIdOrThrow(id: string): Promise<StoredConversation> {
     const conversation = await this.conversationsRepository.findById(id);
     if (!conversation) {
@@ -137,20 +199,35 @@ export class ConversationsService implements OnModuleInit {
     return conversation;
   }
 
-  /** Demo conversations between the seeded users. Data lives in seed-data.ts. */
+  
   private async seedDemoConversations(): Promise<void> {
     if ((await this.conversationsRepository.count()) > 0) {
       return;
     }
 
     for (const seed of SEED_CONVERSATIONS) {
-      await this.conversationsRepository.insert(
-        seed.id,
-        canonicalPair(seed.userAId, seed.userBId),
-        buildPairKey(seed.userAId, seed.userBId),
-        seed.pinnedDaysAgo !== undefined ? daysAgo(seed.pinnedDaysAgo) : null,
-        buildSeedLastMessage(seed.id),
-      );
+      const pinnedAt =
+        seed.pinnedDaysAgo !== undefined ? daysAgo(seed.pinnedDaysAgo) : null;
+      const lastMessage = buildSeedLastMessage(seed.id);
+
+      if (seed.type === 'group') {
+        await this.conversationsRepository.insertGroup(
+          seed.id,
+          seed.memberIds,
+          seed.name,
+          seed.createdBy,
+          pinnedAt,
+          lastMessage,
+        );
+      } else {
+        await this.conversationsRepository.insertDirect(
+          seed.id,
+          canonicalPair(seed.userAId, seed.userBId),
+          buildPairKey(seed.userAId, seed.userBId),
+          pinnedAt,
+          lastMessage,
+        );
+      }
     }
   }
 }

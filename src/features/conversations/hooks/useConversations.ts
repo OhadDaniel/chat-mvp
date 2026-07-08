@@ -10,8 +10,8 @@ import type { UseConversationsReturn } from '../types'
 const SEARCH_DEBOUNCE_MS = 300
 
 export function useConversations(): UseConversationsReturn {
-  const { user }                                                          = useAuth()
-  const { state, setConversations, setStatus, setSearch, applyTogglePin } = useConversationsState()
+  const { user }                                                                                               = useAuth()
+  const { state, setConversations, addConversation, updateConversation, setStatus, setSearch, applyTogglePin } = useConversationsState()
 
   const fetchConversations = async (search?: string) => {
     setStatus(CONVERSATIONS_STATUS.LOADING)
@@ -49,5 +49,7 @@ export function useConversations(): UseConversationsReturn {
     search:        state.search,
     setSearch:     handleSearch,
     togglePin,
+    addConversation,
+    updateConversation,
   }
 }

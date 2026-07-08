@@ -66,4 +66,23 @@ describe('messagesReducer', () => {
 
     expect(state.status).toBe(MESSAGES_STATUS.LOADING)
   })
+
+  it('APPEND_DELTA appends streamed text to the matching message', () => {
+    const placeholder = makeMessage({ id: 'temp-assistant', content: '', status: 'sending' })
+    const withPlaceholder = messagesReducer(initialState, {
+      type:    MESSAGES_ACTIONS.ADD_MESSAGE,
+      payload: placeholder,
+    })
+
+    const afterFirst = messagesReducer(withPlaceholder, {
+      type:    MESSAGES_ACTIONS.APPEND_DELTA,
+      payload: { id: 'temp-assistant', text: 'Hel' },
+    })
+    const afterSecond = messagesReducer(afterFirst, {
+      type:    MESSAGES_ACTIONS.APPEND_DELTA,
+      payload: { id: 'temp-assistant', text: 'lo' },
+    })
+
+    expect(afterSecond.messages[0].content).toBe('Hello')
+  })
 })

@@ -1,9 +1,3 @@
-import type { User } from '@/features/user/types'
-
-export function getOtherParticipant(participants: User[], currentUserId: string): User {
-  return participants.find(p => p.id !== currentUserId) ?? participants[0]
-}
-
 export function formatTime(isoString: string | null): string {
   if (!isoString) return ''
 

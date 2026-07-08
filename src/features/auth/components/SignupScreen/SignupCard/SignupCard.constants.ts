@@ -1,4 +1,4 @@
-export const SIGNUP_CARD_CLASS          = 'w-full max-w-sm bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl shadow-black/40'
-export const SIGNUP_CARD_TITLE_CLASS    = 'text-2xl font-bold text-white mb-1 tracking-tight'
-export const SIGNUP_CARD_SUBTITLE_CLASS = 'text-sm text-slate-400 mb-8'
+export const SIGNUP_CARD_CLASS          = 'w-full max-w-sm bg-panel border border-line-strong rounded-2xl p-8 shadow-2xl shadow-ink/5'
+export const SIGNUP_CARD_TITLE_CLASS    = 'text-3xl font-semibold text-ink mb-1 tracking-tight'
+export const SIGNUP_CARD_SUBTITLE_CLASS = 'font-mono text-[10px] uppercase tracking-[0.2em] text-muted mb-8'
 export const SIGNUP_CARD_BODY_CLASS     = 'flex flex-col gap-4'

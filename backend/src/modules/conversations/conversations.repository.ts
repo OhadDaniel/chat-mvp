@@ -2,18 +2,34 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model } from 'mongoose';
 import { ConversationDocument } from './conversations.schema';
+import type { Avatar } from '../users/users.types';
 import type {
   LastMessageSnapshot,
   StoredConversation,
 } from './conversations.types';
 
-type ConversationLean = {
+type LeanBase = {
   _id: string;
   participantIds: string[];
   lastMessage: { content: string; sentAt: Date; senderId: string } | null;
   lastMessageAt: Date | null;
   pinnedAt: Date | null;
 };
+
+type DirectLean = LeanBase & { type: 'direct' };
+
+type GroupLean = LeanBase & {
+  type: 'group';
+  group: {
+    name: string;
+    createdBy: string;
+    avatar: { storageKey: string; srcUrl: string } | null;
+  };
+};
+
+type AssistantLean = LeanBase & { type: 'assistant' };
+
+type ConversationLean = DirectLean | GroupLean | AssistantLean;
 
 @Injectable()
 export class ConversationsRepository {
@@ -48,7 +64,17 @@ export class ConversationsRepository {
     return doc ? doc.participantIds : undefined;
   }
 
-  async insert(
+  async findAssistantByUserId(
+    userId: string,
+  ): Promise<StoredConversation | undefined> {
+    const doc = await this.conversationModel
+      .findOne({ type: 'assistant', participantIds: userId })
+      .lean<ConversationLean | null>()
+      .exec();
+    return doc ? mapDocToStored(doc) : undefined;
+  }
+
+  async insertDirect(
     id: string,
     participantIds: string[],
     pairKey: string,
@@ -57,11 +83,42 @@ export class ConversationsRepository {
   ): Promise<void> {
     await this.conversationModel.create({
       _id: id,
+      type: 'direct',
       participantIds,
-      pairKey,
+      direct: { pairKey },
       pinnedAt,
       lastMessage,
       lastMessageAt: lastMessage ? lastMessage.sentAt : null,
+    });
+  }
+
+  async insertGroup(
+    id: string,
+    participantIds: string[],
+    name: string,
+    createdBy: string,
+    pinnedAt: Date | null = null,
+    lastMessage: LastMessageSnapshot | null = null,
+  ): Promise<void> {
+    await this.conversationModel.create({
+      _id: id,
+      type: 'group',
+      participantIds,
+      group: { name, createdBy, avatar: null },
+      pinnedAt,
+      lastMessage,
+      lastMessageAt: lastMessage ? lastMessage.sentAt : null,
+    });
+  }
+
+  async insertAssistant(id: string, userId: string): Promise<void> {
+    await this.conversationModel.create({
+      _id: id,
+      type: 'assistant',
+      participantIds: [userId],
+      pinnedAt: null,
+      lastMessage: null,
+      lastMessageAt: null,
     });
   }
 
@@ -71,6 +128,18 @@ export class ConversationsRepository {
         { _id: id },
         { $set: { pinnedAt: pinned ? new Date() : null } },
       )
+      .exec();
+  }
+
+  async setGroupName(id: string, name: string): Promise<void> {
+    await this.conversationModel
+      .updateOne({ _id: id }, { $set: { 'group.name': name } })
+      .exec();
+  }
+
+  async setGroupAvatar(id: string, avatar: Avatar | null): Promise<void> {
+    await this.conversationModel
+      .updateOne({ _id: id }, { $set: { 'group.avatar': avatar } })
       .exec();
   }
 
@@ -94,7 +163,7 @@ export class ConversationsRepository {
 }
 
 function mapDocToStored(doc: ConversationLean): StoredConversation {
-  return {
+  const base = {
     id: doc._id,
     participantIds: doc.participantIds,
     lastMessage: doc.lastMessage
@@ -107,4 +176,20 @@ function mapDocToStored(doc: ConversationLean): StoredConversation {
     lastMessageAt: doc.lastMessageAt ? doc.lastMessageAt.toISOString() : null,
     pinnedAt: doc.pinnedAt ? doc.pinnedAt.toISOString() : null,
   };
+
+  if (doc.type === 'group') {
+    return {
+      ...base,
+      type: 'group',
+      name: doc.group.name,
+      createdBy: doc.group.createdBy,
+      avatar: doc.group.avatar ?? null,
+    };
+  }
+
+  if (doc.type === 'assistant') {
+    return { ...base, type: 'assistant' };
+  }
+
+  return { ...base, type: 'direct' };
 }

@@ -34,6 +34,16 @@ export function messagesReducer(
         messages: state.messages.filter(m => m.id !== action.payload),
       }
 
+    case MESSAGES_ACTIONS.APPEND_DELTA:
+      return {
+        ...state,
+        messages: state.messages.map(m =>
+          m.id === action.payload.id
+            ? { ...m, content: m.content + action.payload.text }
+            : m,
+        ),
+      }
+
     default: {
       const _exhaustive: never = action
       return _exhaustive

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { mapToPublicUser } from '../users/users.types';
+import { mapToPublicUser } from '../users/users.mappers';
 import type { RemoveAvatarResponse } from '../users/dto/remove-avatar.response.dto';
 
 @Injectable()

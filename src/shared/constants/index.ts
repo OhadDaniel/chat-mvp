@@ -17,3 +17,7 @@ export const TOAST_DURATION_MS = 4000
 
 
 export const MESSAGE_MAX_LENGTH = 2000
+
+
+
+export const ASSISTANT_AVATAR_URL = '/maxwell-avatar.png'

@@ -35,6 +35,15 @@ export class UsersRepository {
     return docs.map(mapDocToUser);
   }
 
+  async findAll(): Promise<User[]> {
+    const docs = await this.userModel
+      .find()
+      .sort({ firstName: 1, lastName: 1 })
+      .lean<UserDocument[]>()
+      .exec();
+    return docs.map(mapDocToUser);
+  }
+
   async insert(user: User): Promise<User> {
     await this.userModel.create({
       _id: user.id,

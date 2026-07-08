@@ -1,4 +1,4 @@
-export const LOGIN_SCREEN_CLASS    = 'min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950'
+export const LOGIN_SCREEN_CLASS    = 'min-h-screen flex items-center justify-center bg-canvas px-4'
 
 export const LOGIN_SCREEN_TITLE    = 'FellowshipChat'
 export const LOGIN_SCREEN_SUBTITLE = 'Sign in to continue'

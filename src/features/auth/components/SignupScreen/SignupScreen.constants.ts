@@ -1,4 +1,4 @@
-export const SIGNUP_SCREEN_CLASS    = 'min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950'
+export const SIGNUP_SCREEN_CLASS    = 'min-h-screen flex items-center justify-center bg-canvas px-4'
 
 export const SIGNUP_SCREEN_TITLE    = 'FellowshipChat'
 export const SIGNUP_SCREEN_SUBTITLE = 'Create your account'

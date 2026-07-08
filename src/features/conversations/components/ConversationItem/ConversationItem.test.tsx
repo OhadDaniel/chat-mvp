@@ -9,6 +9,7 @@ const defaultContext: ConversationItemContextValue = {
   initials:    'AL',
   name:        'Alice Levi',
   avatarUrl:   null,
+  isGroup:     false,
   lastMessage: 'sounds good!',
   time:        '2m',
   unreadCount: 0,

@@ -17,3 +17,12 @@ export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 export function buildAvatarKey(userId: string): string {
   return `avatars/${userId}/avatar`;
 }
+
+/**
+ * One fixed object per group, derived server-side from the conversation id —
+ * same idempotent, overwrite-in-place scheme as the user avatar, just a
+ * different prefix. Never sent by the client, so there is nothing to validate.
+ */
+export function buildGroupAvatarKey(conversationId: string): string {
+  return `groups/${conversationId}/avatar`;
+}

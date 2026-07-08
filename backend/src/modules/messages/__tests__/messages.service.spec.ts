@@ -2,6 +2,7 @@ import type { User, UserProfile } from '../../users/users.types';
 import type { MessagesRepository } from '../messages.repository';
 import { MessagesService } from '../messages.service';
 import type { Message, StoredMessage } from '../messages.types';
+import { ASSISTANT_PROFILE, ASSISTANT_SENDER_ID } from '../messages.constants';
 
 const ohad: User = {
   id: 'user-1',
@@ -46,6 +47,7 @@ function fakeRepository(overrides: RepoOverrides = {}): MessagesRepository {
       Promise.resolve({ messages: [], hasMore: false }),
     ),
     insert: jest.fn(() => Promise.resolve(sentMessage('msg-new'))),
+    insertAssistant: jest.fn(() => Promise.resolve(sentMessage('msg-ai'))),
     insertSeed: jest.fn(() => Promise.resolve()),
     count: jest.fn(() => Promise.resolve(0)),
     ...overrides,
@@ -128,5 +130,43 @@ describe('MessagesService.create', () => {
     expect(senderArg).not.toHaveProperty('passwordHash');
     expect(senderArg).not.toHaveProperty('email');
     expect(senderArg).toMatchObject({ id: 'user-1' });
+  });
+});
+
+describe('MessagesService.createAssistantMessage', () => {
+  it('persists an assistant-authored reply with a generated id', async () => {
+    const insertAssistant = jest.fn(() =>
+      Promise.resolve(sentMessage('msg-ai')),
+    );
+    const service = makeService({ insertAssistant });
+
+    await service.createAssistantMessage('conv-1', 'hello from the AI');
+
+    expect(insertAssistant).toHaveBeenCalledWith(
+      expect.any(String),
+      'conv-1',
+      'hello from the AI',
+      undefined,
+    );
+  });
+});
+
+describe('MessagesService assistant sender resolution', () => {
+  it('renders an assistant-authored message as the assistant profile', async () => {
+    const assistantStored: StoredMessage = {
+      id: 'msg-ai',
+      conversationId: 'conv-1',
+      senderId: ASSISTANT_SENDER_ID,
+      content: 'I can help with that',
+      sentAt: new Date().toISOString(),
+    };
+    const service = makeService({
+      findPageBefore: () =>
+        Promise.resolve({ messages: [assistantStored], hasMore: false }),
+    });
+
+    const { items } = await service.getPage('conv-1', {}, participants);
+
+    expect(items[0].sender).toEqual(ASSISTANT_PROFILE);
   });
 });

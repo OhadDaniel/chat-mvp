@@ -1,9 +1,9 @@
-import type { User }                                       from '@/features/user/types'
+import type { UserProfile }                                 from '@/features/user/types'
 import { CONVERSATIONS_ACTIONS, CONVERSATIONS_STATUS }      from '../constants'
 
-export type Conversation = {
+type ConversationBase = {
   id:            string
-  participants:  User[]
+  participants:  UserProfile[]
   lastMessage: {
     content:  string
     sentAt:   string
@@ -12,6 +12,26 @@ export type Conversation = {
   lastMessageAt: string | null
   pinnedAt:      string | null
   unreadCount:   number
+}
+
+export type DirectConversation = ConversationBase & { type: 'direct' }
+
+export type GroupConversation = ConversationBase & {
+  type:      'group'
+  name:      string
+  createdBy: string
+  avatarUrl: string | null
+}
+
+export type AssistantConversation = ConversationBase & { type: 'assistant' }
+
+export type Conversation = DirectConversation | GroupConversation | AssistantConversation
+
+export type ConversationDisplay = {
+  title:     string
+  avatarUrl: string | null
+  initials:  string
+  isGroup:   boolean
 }
 
 export type ConversationsStatus = typeof CONVERSATIONS_STATUS[keyof typeof CONVERSATIONS_STATUS]
@@ -25,6 +45,16 @@ export type ConversationsState = {
 type SetConversationsAction = {
   type:    typeof CONVERSATIONS_ACTIONS.SET_CONVERSATIONS
   payload: Conversation[]
+}
+
+type AddConversationAction = {
+  type:    typeof CONVERSATIONS_ACTIONS.ADD_CONVERSATION
+  payload: Conversation
+}
+
+type UpdateConversationAction = {
+  type:    typeof CONVERSATIONS_ACTIONS.UPDATE_CONVERSATION
+  payload: Conversation
 }
 
 type SetStatusAction = {
@@ -44,14 +74,18 @@ type TogglePinAction = {
 
 export type ConversationsAction =
   | SetConversationsAction
+  | AddConversationAction
+  | UpdateConversationAction
   | SetStatusAction
   | SetSearchAction
   | TogglePinAction
 
 export type UseConversationsReturn = {
-  conversations: Conversation[]
-  status:        ConversationsStatus
-  search:        string
-  setSearch:     (value: string) => void
-  togglePin:     (id: string, currentlyPinned: boolean) => Promise<void>
+  conversations:      Conversation[]
+  status:             ConversationsStatus
+  search:             string
+  setSearch:          (value: string) => void
+  togglePin:          (id: string, currentlyPinned: boolean) => Promise<void>
+  addConversation:    (conversation: Conversation) => void
+  updateConversation: (conversation: Conversation) => void
 }
