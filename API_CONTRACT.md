@@ -201,6 +201,24 @@ Send a new message. The frontend applies an optimistic update before this resolv
 
 ---
 
+### `GET /conversations/:id/assistant` (SSE)
+
+Streams the reply for `assistant` and `tutor` conversations as Server-Sent Events (Nest `@Sse`). Send the user's message via `POST /conversations/:id/messages` first, then open this stream. Backed by a LangGraph agent with MongoDB checkpointing (agent state keyed by the conversation id, so a mid-conversation restart resumes).
+
+**Events** — each frame is an `event:` name plus a JSON `data:` payload.
+
+| Event | Data | Meaning |
+|---|---|---|
+| `delta` | `{ text: string }` | A chunk of the answer; append to the current reply. |
+| `tool_call` | `{ id: string, name: string }` | The agent started a tool (`retrieve_docs`, `summarize_my_recent_messages`, …); show progress. |
+| `tool_result` | `{ id: string, name: string }` | That tool finished. |
+| `done` | `{ messageId: string, citations: Citation[] }` | Terminal — the persisted reply id and citations (tutor answers cite sources; the assistant sends `[]`). |
+| `error` | `{ code: string }` | Terminal failure: `CONVERSATION_NOT_FOUND`, `NO_QUESTION`, or `AGENT_STREAM_FAILED`. |
+
+Retrieval and tools are scoped to the authenticated user. Only `assistant` and `tutor` conversations stream; other types emit a single `error` with `CONVERSATION_NOT_FOUND`.
+
+---
+
 
 ## 4. Knowledge Base
 
@@ -363,3 +381,4 @@ HTTP status codes used:
 | 2026-06-29 | Week 7: `POST /conversations` accepts `type: 'tutor'` (+ `name`); adds the `tutor` conversation type (many per user, with name + avatar) |
 | 2026-06-29 | Week 7: tutor name + avatar — `PATCH /conversations/tutors/:id` (rename), `POST /conversations/tutors/:id/avatar/upload-url`, `PUT /conversations/tutors/:id/avatar`, `DELETE /conversations/tutors/:id/avatar` (mirror the group-avatar flow) |
 | 2026-06-29 | Week 7: `GET /conversations/:id/assistant` (SSE) now serves `tutor` conversations via a RAG reply; a tutor's `done` event carries `citations: { chunkId, documentName, text }[]`, and tutor `Message`s include an optional `citations` array. Upload guarded by a per-file 1 MB limit and a per-tutor document cap. |
+| 2026-07-08 | Week 8: both `assistant` and `tutor` replies now run through one LangGraph agent (MongoDB-checkpointed, resumable). `GET /conversations/:id/assistant` (SSE) adds `tool_call` and `tool_result` events (`{ id, name }`) alongside `delta`/`done`/`error`, surfacing the agent's tool progress to the client. |
