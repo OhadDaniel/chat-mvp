@@ -2,8 +2,7 @@ import { firstValueFrom, of, toArray } from 'rxjs';
 import type { MessageEvent } from '@nestjs/common';
 import { StreamReplyRouterOrchestrator } from './stream-reply-router.orchestrator';
 import type { ConversationsService } from '../conversations/conversations.service';
-import type { StreamAssistantReplyOrchestrator } from '../stream-assistant-reply-orchestrator/stream-assistant-reply.orchestrator';
-import type { StreamTutorReplyOrchestrator } from '../stream-tutor-reply-orchestrator/stream-tutor-reply.orchestrator';
+import type { StreamAgentReplyOrchestrator } from '../stream-agent-reply-orchestrator/stream-agent-reply.orchestrator';
 import type { StoredConversation } from '../conversations/conversations.types';
 import type { User } from '../users/users.types';
 
@@ -16,9 +15,7 @@ const USER: User = {
   avatar: null,
 };
 
-function conversation(
-  type: StoredConversation['type'],
-): StoredConversation {
+function conversation(type: StoredConversation['type']): StoredConversation {
   const base = {
     id: 'conv-1',
     participantIds: ['user-1'],
@@ -46,26 +43,19 @@ function conversation(
 
 describe('StreamReplyRouterOrchestrator', () => {
   let conversations: jest.Mocked<Pick<ConversationsService, 'getForParticipant'>>;
-  let assistant: jest.Mocked<Pick<StreamAssistantReplyOrchestrator, 'execute'>>;
-  let tutor: jest.Mocked<Pick<StreamTutorReplyOrchestrator, 'execute'>>;
+  let agent: jest.Mocked<Pick<StreamAgentReplyOrchestrator, 'execute'>>;
   let orchestrator: StreamReplyRouterOrchestrator;
 
   beforeEach(() => {
     conversations = { getForParticipant: jest.fn() };
-    assistant = {
+    agent = {
       execute: jest
         .fn()
-        .mockReturnValue(of({ type: 'done', data: { from: 'assistant' } })),
-    };
-    tutor = {
-      execute: jest
-        .fn()
-        .mockReturnValue(of({ type: 'done', data: { from: 'tutor' } })),
+        .mockReturnValue(of({ type: 'done', data: { from: 'agent' } })),
     };
     orchestrator = new StreamReplyRouterOrchestrator(
       conversations as unknown as ConversationsService,
-      assistant as unknown as StreamAssistantReplyOrchestrator,
-      tutor as unknown as StreamTutorReplyOrchestrator,
+      agent as unknown as StreamAgentReplyOrchestrator,
     );
   });
 
@@ -73,24 +63,22 @@ describe('StreamReplyRouterOrchestrator', () => {
     return firstValueFrom(orchestrator.execute('conv-1', USER).pipe(toArray()));
   }
 
-  it('routes an assistant conversation to the Maxwell orchestrator', async () => {
+  it('routes an assistant conversation to the agent orchestrator', async () => {
     conversations.getForParticipant.mockResolvedValue(conversation('assistant'));
 
     const events = await collect();
 
-    expect(assistant.execute).toHaveBeenCalledWith('conv-1', USER);
-    expect(tutor.execute).not.toHaveBeenCalled();
-    expect(events[0].data).toEqual({ from: 'assistant' });
+    expect(agent.execute).toHaveBeenCalledWith('conv-1', USER);
+    expect(events[0].data).toEqual({ from: 'agent' });
   });
 
-  it('routes a tutor conversation to the tutor RAG orchestrator', async () => {
+  it('routes a tutor conversation to the agent orchestrator', async () => {
     conversations.getForParticipant.mockResolvedValue(conversation('tutor'));
 
     const events = await collect();
 
-    expect(tutor.execute).toHaveBeenCalledWith('conv-1', USER);
-    expect(assistant.execute).not.toHaveBeenCalled();
-    expect(events[0].data).toEqual({ from: 'tutor' });
+    expect(agent.execute).toHaveBeenCalledWith('conv-1', USER);
+    expect(events[0].data).toEqual({ from: 'agent' });
   });
 
   it('emits an error for a non-repliable conversation type', async () => {
@@ -100,7 +88,6 @@ describe('StreamReplyRouterOrchestrator', () => {
 
     expect(events).toHaveLength(1);
     expect(events[0].type).toBe('error');
-    expect(assistant.execute).not.toHaveBeenCalled();
-    expect(tutor.execute).not.toHaveBeenCalled();
+    expect(agent.execute).not.toHaveBeenCalled();
   });
 });
