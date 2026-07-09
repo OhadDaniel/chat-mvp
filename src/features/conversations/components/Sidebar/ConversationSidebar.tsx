@@ -1,13 +1,20 @@
-import { ConversationSearchContainer } from '../SearchBar/ConversationSearchContainer'
-import { ConversationListContainer }   from '../ConversationList/ConversationListContainer'
-import { SIDEBAR_CLASS }               from './ConversationSidebar.constants'
+import { ConversationSearchContainer } from './components/SearchBar/ConversationSearchContainer'
+import { ConversationListContainer }   from './components/List/ConversationListContainer'
+import {
+  SIDEBAR_CLASS,
+  SIDEBAR_HEADER_CLASS,
+  SIDEBAR_TITLE_CLASS,
+  SIDEBAR_SUBTITLE_CLASS,
+  SIDEBAR_TITLE,
+  SIDEBAR_SUBTITLE,
+}                                      from './ConversationSidebar.constants'
 
 export function ConversationSidebar() {
   return (
     <div className={SIDEBAR_CLASS}>
-      <div className="px-5 py-5 border-b border-slate-700/50">
-        <h1 className="text-lg font-bold text-white tracking-tight">FellowshipChat</h1>
-        <p className="text-xs text-slate-500 mt-0.5">Messages</p>
+      <div className={SIDEBAR_HEADER_CLASS}>
+        <h1 className={SIDEBAR_TITLE_CLASS}>{SIDEBAR_TITLE}</h1>
+        <p className={SIDEBAR_SUBTITLE_CLASS}>{SIDEBAR_SUBTITLE}</p>
       </div>
       <ConversationSearchContainer />
       <ConversationListContainer />

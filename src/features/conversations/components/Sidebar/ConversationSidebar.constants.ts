@@ -1,1 +1,6 @@
-export const SIDEBAR_CLASS = 'flex flex-col w-80 h-full bg-slate-900 border-r border-slate-700/50 shrink-0'
+export const SIDEBAR_CLASS        = 'flex flex-col w-80 h-full bg-slate-900 border-r border-slate-700/50 shrink-0'
+export const SIDEBAR_HEADER_CLASS = 'px-5 py-5 border-b border-slate-700/50'
+export const SIDEBAR_TITLE_CLASS  = 'text-lg font-bold text-white tracking-tight'
+export const SIDEBAR_SUBTITLE_CLASS = 'text-xs text-slate-500 mt-0.5'
+export const SIDEBAR_TITLE        = 'FellowshipChat'
+export const SIDEBAR_SUBTITLE     = 'Messages'

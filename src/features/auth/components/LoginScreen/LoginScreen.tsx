@@ -1,6 +1,6 @@
-import { LoginCard }          from '@/features/auth/components/LoginCard/LoginCard'
-import { LoginForm }          from '@/features/auth/components/LoginForm/LoginForm'
-import { LOGIN_SCREEN_CLASS } from './LoginScreen.constants'
+import { LoginCard }          from './components/LoginCard/LoginCard'
+import { LoginForm }          from './components/LoginCard/components/LoginForm/LoginForm'
+import { LOGIN_SCREEN_CLASS } from './constants/LoginScreen.constants'
 
 export function LoginScreen() {
   return (

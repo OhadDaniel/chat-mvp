@@ -1,15 +1,21 @@
-import { createContext, type ReactNode } from 'react'
-import type { User } from '@/features/user/types'
-import { useAuthState } from '@/features/auth/hooks/useAuthState'
+import { createContext, useContext, type ReactNode } from 'react'
+import type { User }        from '@/features/user/types'
+import { useAuthState }     from '@/features/auth/hooks/useAuthState'
 
 export type AuthContextValue = {
-  user: User | null
+  user:      User | null
   isLoading: boolean
-  login: (name: string, password: string) => Promise<void>
-  logout: () => void
+  login:     (name: string, password: string) => Promise<void>
+  logout:    () => void
 }
 
-export const AuthContext = createContext<AuthContextValue | null>(null)
+const AuthContext = createContext<AuthContextValue | null>(null)
+
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>')
+  return ctx
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const auth = useAuthState()

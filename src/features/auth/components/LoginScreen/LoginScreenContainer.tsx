@@ -1,13 +1,13 @@
-import { LoginContext } from './LoginScreen.context'
-import { useLoginScreen } from './hooks/useLoginScreen'
-import { LoginScreen } from './LoginScreen'
+import { LoginProvider }    from './context/LoginScreen.context'
+import { useLoginScreen }   from './hooks/useLoginScreen'
+import { LoginScreen }      from './LoginScreen'
 
 export function LoginScreenContainer() {
   const contextValue = useLoginScreen()
 
   return (
-    <LoginContext.Provider value={contextValue}>
+    <LoginProvider value={contextValue}>
       <LoginScreen />
-    </LoginContext.Provider>
+    </LoginProvider>
   )
 }

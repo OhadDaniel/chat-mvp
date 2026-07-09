@@ -1,5 +1,5 @@
 import { useEffect, useCallback }      from 'react'
-import { useAuth }                     from '@/features/auth/hooks/useAuth'
+import { useAuth }                     from '@/features/auth/context/AuthContext'
 import { conversationsApi }            from '@/api/apiClient'
 import { CONVERSATIONS_STATUS }        from '../constants'
 import { sortConversations }           from '../utils/conversations.utils'

@@ -1,4 +1,4 @@
-import { useAuth }                from '@/features/auth/hooks/useAuth'
+import { useAuth }                from '@/features/auth/context/AuthContext'
 import { LoginScreenContainer }  from '@/features/auth/components/LoginScreen/LoginScreenContainer'
 import { AppLayoutContainer }    from './AppLayoutContainer'
 
