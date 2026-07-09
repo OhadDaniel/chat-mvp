@@ -12,6 +12,9 @@ FellowshipChat is the capstone of an eight-week, AI-native engineering fellowshi
 
 The thesis: disciplined layering makes a system cheap to extend. Week 2 defined the HTTP contract. Week 4 enforced `Controller → Orchestrator → Service → Repository`. Week 6 added LLM streaming behind orchestrators. Week 7 added vector retrieval. Week 8 swapped the reply engine for a checkpointed state graph — **without changing the public API surface**.
 
+<img width="1710" height="1225" alt="Screenshot 2026-07-09 at 16 32 03" src="https://github.com/user-attachments/assets/96f7bea0-d2cc-41fe-b6ad-3f20c40021c2" />
+
+
 ---
 
 ## Highlights
