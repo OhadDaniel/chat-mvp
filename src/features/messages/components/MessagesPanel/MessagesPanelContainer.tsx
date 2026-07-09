@@ -1,6 +1,7 @@
 import { useMessages }              from '@/features/messages/hooks/useMessages'
 import { MESSAGES_STATUS }          from '@/features/messages/constants'
 import { MessageListContainer }     from '../MessageList/MessageListContainer'
+import { AgentProgressContainer }    from '../AgentProgress/AgentProgressContainer'
 import { MessageComposerContainer } from '../MessageComposer/MessageComposerContainer'
 import { SkeletonContainer }        from '../Skeleton/SkeletonContainer'
 import { NoMessages }               from '../EmptyState/NoMessages/NoMessages'
@@ -27,7 +28,8 @@ function MessageContent({ conversationId, messages, retryLoadMessages, isLoading
 }
 
 export function MessagesPanelContainer({ conversationId, conversationName, actions }: MessagesPanelContainerProps) {
-  const { messages, status, sendMessage, retryLoadMessages, isStreaming } = useMessages(conversationId)
+  const { messages, status, sendMessage, retryLoadMessages, isStreaming, toolActivity } =
+    useMessages(conversationId)
 
   const isLoading          = status === MESSAGES_STATUS.LOADING
   const isError            = status === MESSAGES_STATUS.ERROR
@@ -42,6 +44,7 @@ export function MessagesPanelContainer({ conversationId, conversationName, actio
         isLoading={isLoading}
         isError={isError}
       />
+      <AgentProgressContainer toolActivity={toolActivity} />
       {conversationId && (
         <MessageComposerContainer sendMessage={sendMessage} isDisabled={isComposerDisabled} />
       )}

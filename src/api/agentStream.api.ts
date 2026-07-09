@@ -4,18 +4,27 @@ import {
   SSE_EVENT_DELTA,
   SSE_EVENT_DONE,
   SSE_EVENT_ERROR,
+  SSE_EVENT_TOOL_CALL,
+  SSE_EVENT_TOOL_RESULT,
 } from './sse.constants'
 import type { Citation } from '@/features/messages/types'
 
-export type AssistantStreamHandlers = {
-  onDelta: (text: string) => void
-  onDone:  (messageId: string, citations: Citation[]) => void
-  onError: () => void
+export type AgentToolEvent = {
+  id:   string
+  name: string
 }
 
-export async function streamAssistantReply(
+export type AgentStreamHandlers = {
+  onDelta:      (text: string) => void
+  onToolCall:   (tool: AgentToolEvent) => void
+  onToolResult: (tool: AgentToolEvent) => void
+  onDone:       (messageId: string, citations: Citation[]) => void
+  onError:      () => void
+}
+
+export async function streamAgentReply(
   conversationId: string,
-  handlers:       AssistantStreamHandlers,
+  handlers:       AgentStreamHandlers,
 ): Promise<void> {
   let settled = false
   const markSettled = () => {
@@ -58,11 +67,15 @@ export async function streamAssistantReply(
 
 function dispatchFrame(
   frame:       SseFrame,
-  handlers:    AssistantStreamHandlers,
+  handlers:    AgentStreamHandlers,
   markSettled: () => void,
 ): void {
   if (frame.event === SSE_EVENT_DELTA) {
     handlers.onDelta((JSON.parse(frame.data) as { text: string }).text)
+  } else if (frame.event === SSE_EVENT_TOOL_CALL) {
+    handlers.onToolCall(JSON.parse(frame.data) as AgentToolEvent)
+  } else if (frame.event === SSE_EVENT_TOOL_RESULT) {
+    handlers.onToolResult(JSON.parse(frame.data) as AgentToolEvent)
   } else if (frame.event === SSE_EVENT_DONE) {
     markSettled()
     const done = JSON.parse(frame.data) as {

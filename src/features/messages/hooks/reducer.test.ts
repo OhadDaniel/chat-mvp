@@ -85,4 +85,26 @@ describe('messagesReducer', () => {
 
     expect(afterSecond.messages[0].content).toBe('Hello')
   })
+
+  it('TOOL_STARTED records the active tool', () => {
+    const state = messagesReducer(initialState, {
+      type:    MESSAGES_ACTIONS.TOOL_STARTED,
+      payload: { name: 'retrieve_docs' },
+    })
+
+    expect(state.toolActivity).toEqual({ name: 'retrieve_docs' })
+  })
+
+  it('TOOL_FINISHED clears the active tool', () => {
+    const running = messagesReducer(initialState, {
+      type:    MESSAGES_ACTIONS.TOOL_STARTED,
+      payload: { name: 'summarize_my_recent_messages' },
+    })
+
+    const cleared = messagesReducer(running, {
+      type: MESSAGES_ACTIONS.TOOL_FINISHED,
+    })
+
+    expect(cleared.toolActivity).toBeNull()
+  })
 })

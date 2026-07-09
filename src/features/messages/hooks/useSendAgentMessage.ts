@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useToastContext } from '@/features/app/Toast/context/ToastContext'
-import { streamAssistantReply } from '@/api/assistantStream.api'
+import { streamAgentReply } from '@/api/agentStream.api'
 import { MESSAGES_ACTIONS, ASSISTANT_SENDER } from '../constants'
 import {
   buildOptimisticMessage,
@@ -10,9 +10,9 @@ import {
 import type { Citation, Message, MessagesAction } from '../types'
 import type { User } from '@/features/user/types'
 
-const SEND_ERROR_MESSAGE = 'Maxwell could not reply — please try again'
+const SEND_ERROR_MESSAGE = 'The assistant could not reply — please try again'
 
-export function useSendAssistantMessage(
+export function useSendAgentMessage(
   conversationId: string | null,
   user:           User | null,
   dispatch:       React.Dispatch<MessagesAction>,
@@ -49,13 +49,22 @@ export function useSendAssistantMessage(
         payload: { tempId: userTempId, message: confirmedUser },
       })
 
-      await streamAssistantReply(conversationId, {
+      await streamAgentReply(conversationId, {
         onDelta: (text) => {
           replyText += text
           dispatch({
             type:    MESSAGES_ACTIONS.APPEND_DELTA,
             payload: { id: assistantTempId, text },
           })
+        },
+        onToolCall: (tool) => {
+          dispatch({
+            type:    MESSAGES_ACTIONS.TOOL_STARTED,
+            payload: { name: tool.name },
+          })
+        },
+        onToolResult: () => {
+          dispatch({ type: MESSAGES_ACTIONS.TOOL_FINISHED })
         },
         onDone: (messageId, citations) => {
           dispatch({
@@ -71,6 +80,7 @@ export function useSendAssistantMessage(
     } catch {
       rollback()
     } finally {
+      dispatch({ type: MESSAGES_ACTIONS.TOOL_FINISHED })
       setIsStreaming(false)
     }
   }
