@@ -15,7 +15,7 @@ import {
   TUTOR_SYSTEM_PROMPT,
   buildContextBlock,
   buildUserPrompt,
-} from '../src/modules/stream-tutor-reply-orchestrator/tutor.prompt'
+} from '../src/modules/agent/prompts/tutor.prompt'
 import {
   DEFAULT_TOP_K,
   EMBEDDING_PATH,

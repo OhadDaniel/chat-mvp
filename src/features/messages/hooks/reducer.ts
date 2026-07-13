@@ -2,8 +2,9 @@ import { MESSAGES_ACTIONS, MESSAGES_STATUS }          from '../constants'
 import type { MessagesState, MessagesAction }          from '../types'
 
 export const initialState: MessagesState = {
-  messages: [],
-  status:   MESSAGES_STATUS.IDLE,
+  messages:     [],
+  status:       MESSAGES_STATUS.IDLE,
+  toolActivity: null,
 }
 
 export function messagesReducer(
@@ -43,6 +44,12 @@ export function messagesReducer(
             : m,
         ),
       }
+
+    case MESSAGES_ACTIONS.TOOL_STARTED:
+      return { ...state, toolActivity: { name: action.payload.name } }
+
+    case MESSAGES_ACTIONS.TOOL_FINISHED:
+      return { ...state, toolActivity: null }
 
     default: {
       const _exhaustive: never = action

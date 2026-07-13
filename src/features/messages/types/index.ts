@@ -25,11 +25,16 @@ export type Message = {
   citations?:     Citation[]
 }
 
+export type ToolActivity = {
+  name: string
+}
+
 export type MessagesStatus = typeof MESSAGES_STATUS[keyof typeof MESSAGES_STATUS]
 
 export type MessagesState = {
-  messages: Message[]
-  status:   MessagesStatus
+  messages:     Message[]
+  status:       MessagesStatus
+  toolActivity: ToolActivity | null
 }
 
 type SetMessagesAction = {
@@ -62,6 +67,15 @@ type AppendDeltaAction = {
   payload: { id: string; text: string }
 }
 
+type ToolStartedAction = {
+  type:    typeof MESSAGES_ACTIONS.TOOL_STARTED
+  payload: { name: string }
+}
+
+type ToolFinishedAction = {
+  type: typeof MESSAGES_ACTIONS.TOOL_FINISHED
+}
+
 export type MessagesAction =
   | SetMessagesAction
   | SetStatusAction
@@ -69,10 +83,13 @@ export type MessagesAction =
   | ConfirmMessageAction
   | RemoveMessageAction
   | AppendDeltaAction
+  | ToolStartedAction
+  | ToolFinishedAction
 
 export type UseMessagesReturn = {
-  messages:    Message[]
-  status:      MessagesStatus
-  sendMessage: (content: string) => Promise<void>
-  isStreaming: boolean
+  messages:     Message[]
+  status:       MessagesStatus
+  sendMessage:  (content: string) => Promise<void>
+  isStreaming:  boolean
+  toolActivity: ToolActivity | null
 }
