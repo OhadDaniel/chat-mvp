@@ -29,10 +29,17 @@ export type GroupConversation = ConversationBase & {
 
 export type AssistantConversation = ConversationBase & { type: 'assistant' };
 
+export type TutorConversation = ConversationBase & {
+  type: 'tutor';
+  name: string;
+  avatarUrl: string | null;
+};
+
 export type Conversation =
   | DirectConversation
   | GroupConversation
-  | AssistantConversation;
+  | AssistantConversation
+  | TutorConversation;
 
 
 
@@ -73,10 +80,17 @@ export type StoredAssistantConversation = StoredConversationBase & {
   type: 'assistant';
 };
 
+export type StoredTutorConversation = StoredConversationBase & {
+  type: 'tutor';
+  name: string;
+  avatar: Avatar | null;
+};
+
 export type StoredConversation =
   | StoredDirectConversation
   | StoredGroupConversation
-  | StoredAssistantConversation;
+  | StoredAssistantConversation
+  | StoredTutorConversation;
 
 
 export type LastMessageSnapshot = {

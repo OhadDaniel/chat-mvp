@@ -147,6 +147,7 @@ describe('MessagesService.createAssistantMessage', () => {
       'conv-1',
       'hello from the AI',
       undefined,
+      undefined,
     );
   });
 });

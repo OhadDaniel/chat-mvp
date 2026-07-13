@@ -5,6 +5,8 @@ export type BubbleClasses = {
   time:           string
 }
 
+import type { Citation } from '@/features/messages/types'
+
 export type BubbleProps = {
   classes:         BubbleClasses
   content:         string
@@ -13,6 +15,7 @@ export type BubbleProps = {
   senderInitials:  string
   senderAvatarUrl: string | null
   showSenderName:  boolean
+  citations:       Citation[]
 }
 
 export type BubbleContainerProps = {
@@ -22,4 +25,5 @@ export type BubbleContainerProps = {
   senderInitials:  string
   senderAvatarUrl: string | null
   isFromCurrentUser:          boolean
+  citations:       Citation[]
 }

@@ -1,12 +1,35 @@
 import { messagesApi }    from '@/features/messages/api/messages.api'
 import { ASSISTANT_SENDER } from '../constants'
-import type { Message }   from '../types'
+import type { AiSender, Message }   from '../types'
 import type { User }      from '@/features/user/types'
 
 export type ApiMessage = Omit<Message, 'status'>
 
+export type BubbleSenderDisplay = {
+  name:      string
+  initials:  string
+  avatarUrl: string | null
+}
+
 export function toMessage(apiMsg: ApiMessage): Message {
   return { ...apiMsg, status: 'sent' }
+}
+
+export function resolveSenderDisplay(
+  message:  Message,
+  aiSender: AiSender,
+): BubbleSenderDisplay {
+  return message.sender.id === ASSISTANT_SENDER.id
+    ? {
+        name:      aiSender.name,
+        initials:  aiSender.initials,
+        avatarUrl: aiSender.avatarUrl,
+      }
+    : {
+        name:      message.sender.name,
+        initials:  message.sender.avatarInitials,
+        avatarUrl: message.sender.avatarUrl,
+      }
 }
 
 export async function loadConversationMessages(conversationId: string): Promise<Message[]> {

@@ -2,6 +2,14 @@ import type { UserProfile } from '../users/users.types';
 
 /** All types for the messages module, in one place. */
 
+/* ── Citations (week 7 — tutor answers only) ────────────── */
+
+export type Citation = {
+  chunkId: string;
+  documentName: string;
+  text: string;
+};
+
 /* ── Domain (API shape — frozen since week 3) ───────────── */
 
 export type Message = {
@@ -11,6 +19,7 @@ export type Message = {
   content: string;
   sentAt: string;
   status: 'sent';
+  citations?: Citation[];
 };
 
 /* ── API response envelopes ─────────────────────────────── */
@@ -50,6 +59,7 @@ export type StoredMessage = {
   senderId: string;
   content: string;
   sentAt: string;
+  citations?: Citation[];
 };
 
 export type StoredMessagePage = {

@@ -50,6 +50,15 @@ export function toConversation(
     return { ...base, type: 'assistant' };
   }
 
+  if (stored.type === 'tutor') {
+    return {
+      ...base,
+      type: 'tutor',
+      name: stored.name,
+      avatarUrl: stored.avatar?.srcUrl ?? null,
+    };
+  }
+
   return { ...base, type: 'direct' };
 }
 

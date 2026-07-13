@@ -48,7 +48,23 @@ export class GroupDocument {
 
 export const GroupSchema = SchemaFactory.createForClass(GroupDocument);
 
-export const CONVERSATION_TYPES = ['direct', 'group', 'assistant'] as const;
+@Schema({ _id: false, versionKey: false })
+export class TutorDocument {
+  @Prop({ type: String, required: true })
+  name!: string;
+
+  @Prop({ type: GroupAvatarSchema, default: null })
+  avatar!: GroupAvatarDocument | null;
+}
+
+export const TutorSchema = SchemaFactory.createForClass(TutorDocument);
+
+export const CONVERSATION_TYPES = [
+  'direct',
+  'group',
+  'assistant',
+  'tutor',
+] as const;
 export type ConversationType = (typeof CONVERSATION_TYPES)[number];
 
 @Schema({ collection: 'conversations', versionKey: false })
@@ -68,6 +84,9 @@ export class ConversationDocument {
 
   @Prop({ type: GroupSchema, default: null })
   group!: GroupDocument | null;
+
+  @Prop({ type: TutorSchema, default: null })
+  tutor!: TutorDocument | null;
 
   @Prop({ type: LastMessageSchema, default: null })
   lastMessage!: LastMessageDocument | null;

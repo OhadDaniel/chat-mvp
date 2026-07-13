@@ -23,7 +23,10 @@ export class CreateConversationDto {
   @IsNotEmpty()
   participantId?: string;
 
-  @ValidateIf((dto: CreateConversationDto) => dto.type === 'group')
+  @ValidateIf(
+    (dto: CreateConversationDto) =>
+      dto.type === 'group' || dto.type === 'tutor',
+  )
   @IsString()
   @IsNotEmpty()
   @MaxLength(MAX_GROUP_TITLE)

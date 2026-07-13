@@ -96,6 +96,15 @@ export class ConversationsService implements OnModuleInit {
     }
   }
 
+  async createTutor(
+    userId: string,
+    name: string,
+  ): Promise<StoredConversation> {
+    const id = randomUUID();
+    await this.conversationsRepository.insertTutor(id, userId, name);
+    return this.getByIdOrThrow(id);
+  }
+
   async setPinned(
     conversationId: string,
     userId: string,
@@ -134,6 +143,35 @@ export class ConversationsService implements OnModuleInit {
   ): Promise<StoredConversation> {
     await this.assertGroupOwner(conversationId, userId);
     await this.conversationsRepository.setGroupAvatar(conversationId, null);
+    return this.getByIdOrThrow(conversationId);
+  }
+
+  async renameTutor(
+    conversationId: string,
+    userId: string,
+    name: string,
+  ): Promise<StoredConversation> {
+    await this.assertTutorOwner(conversationId, userId);
+    await this.conversationsRepository.setTutorName(conversationId, name);
+    return this.getByIdOrThrow(conversationId);
+  }
+
+  async setTutorAvatar(
+    conversationId: string,
+    userId: string,
+    avatar: Avatar,
+  ): Promise<StoredConversation> {
+    await this.assertTutorOwner(conversationId, userId);
+    await this.conversationsRepository.setTutorAvatar(conversationId, avatar);
+    return this.getByIdOrThrow(conversationId);
+  }
+
+  async removeTutorAvatar(
+    conversationId: string,
+    userId: string,
+  ): Promise<StoredConversation> {
+    await this.assertTutorOwner(conversationId, userId);
+    await this.conversationsRepository.setTutorAvatar(conversationId, null);
     return this.getByIdOrThrow(conversationId);
   }
 
@@ -188,6 +226,16 @@ export class ConversationsService implements OnModuleInit {
     }
     if (conversation.createdBy !== userId) {
       throw new NotGroupOwnerError();
+    }
+  }
+
+  async assertTutorOwner(tutorId: string, userId: string): Promise<void> {
+    const conversation = await this.getByIdOrThrow(tutorId);
+    if (conversation.type !== 'tutor') {
+      throw new ConversationNotFoundError();
+    }
+    if (!conversation.participantIds.includes(userId)) {
+      throw new NotAParticipantError();
     }
   }
 

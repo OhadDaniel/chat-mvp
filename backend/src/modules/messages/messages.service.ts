@@ -5,7 +5,12 @@ import { minutesAgo, SEED_MESSAGES } from '../mongo/seed-data';
 import type { User, UserProfile } from '../users/users.types';
 import { mapToUserProfile } from '../users/users.mappers';
 import { MESSAGE_STATUS_SENT } from './messages.schema';
-import type { Message, MessagePage, StoredMessage } from './messages.types';
+import type {
+  Citation,
+  Message,
+  MessagePage,
+  StoredMessage,
+} from './messages.types';
 import type { CreateMessageDto } from './dto/create-message.request.dto';
 import type { GetMessagesQueryDto } from './dto/get-messages.query.dto';
 import { MessagesRepository } from './messages.repository';
@@ -69,12 +74,14 @@ export class MessagesService implements OnModuleInit {
     conversationId: string,
     content: string,
     session?: ClientSession,
+    citations?: Citation[],
   ): Promise<Message> {
     return this.messagesRepository.insertAssistant(
       randomUUID(),
       conversationId,
       content,
       session,
+      citations,
     );
   }
 
@@ -126,6 +133,9 @@ function toMessage(
     content: stored.content,
     sentAt: stored.sentAt,
     status: MESSAGE_STATUS_SENT,
+    ...(stored.citations && stored.citations.length > 0
+      ? { citations: stored.citations }
+      : {}),
   };
 }
 

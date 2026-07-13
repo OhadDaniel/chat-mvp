@@ -24,6 +24,15 @@ export function getConversationDisplay(
     }
   }
 
+  if (conversation.type === 'tutor') {
+    return {
+      title:     conversation.name,
+      avatarUrl: conversation.avatarUrl,
+      initials:  conversation.name.trim().charAt(0).toUpperCase(),
+      isGroup:   false,
+    }
+  }
+
   const other =
     conversation.participants.find(p => p.id !== currentUserId) ??
     conversation.participants[0]
